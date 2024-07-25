@@ -1,62 +1,51 @@
-import logo from "../logo.png";
+import * as React from "react";
+import {
+  FormControlLabel,
+  Checkbox,
+  Grid,
+  Paper,
+  TextField,
+  Stack,
+  Button,
+  Typography,
+  Box,
+} from "@mui/material";
 
 export default function Login() {
   return (
-    <div className="container">
-      <div className="row d-flex flex-column min-vh-100 justify-content-center align-items-center">
-        <div className="col-md-5">
-          <div className="card shadow-sm p-3 mb-5 bg-body-tertiary rounded-0">
-            <div className="card-body d-grid gap-2">
-              <img
-                src={logo}
-                class="rounded mx-auto d-block"
-                alt="..."
-                width="50%"
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="90vh"
+    >
+      <Grid container justifyContent="center">
+        <Grid item lg={3} md={4} sm={6} xs={12}>
+          <Paper>
+            <Stack direction="column" spacing={2} style={{ padding: 15 }}>
+              <Stack direction="column" spacing={0}>
+                <Typography variant="h4" style={{ textAlign: "center" }}>
+                  SPARKS
+                </Typography>
+                <Typography variant="subtitle1" style={{ textAlign: "center" }}>
+                  Marketing and Communications LLC
+                </Typography>
+              </Stack>
+              <Typography variant="h5">ADMIN LOGIN</Typography>
+              <TextField label="Email Address" variant="outlined" fullWidth />
+              <TextField
+                label="Password"
+                variant="outlined"
+                type="password"
+                fullWidth
               />
-              <p className="lead text-center">Management System</p>
-              <h4>ADMIN LOGIN</h4>
-
-              <div className="form-floating mb-3">
-                <input
-                  type="email"
-                  className="form-control"
-                  id="floatingInput"
-                  placeholder="name@example.com"
-                />
-                <label for="floatingInput">Email address</label>
-              </div>
-              <div className="form-floating">
-                <input
-                  type="password"
-                  className="form-control"
-                  id="floatingPassword"
-                  placeholder="Password"
-                />
-                <label for="floatingPassword">Password</label>
-              </div>
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  value=""
-                  id="flexCheckDefault"
-                />
-                <label className="form-check-label" for="flexCheckDefault">
-                  Remember Me
-                </label>
-              </div>
-              <div className="d-grid gap-2">
-                <button className="btn btn-primary" type="button">
-                  LOGIN
-                </button>
-                <a className="btn btn-link" href="/ForgotPassword">
-                  Forgot Password?
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+              <FormControlLabel control={<Checkbox />} label="Remember Me" />
+              <Button variant="contained">LOGIN</Button>
+              <Button variant="text">Forgot Password</Button>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
