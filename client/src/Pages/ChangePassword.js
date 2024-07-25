@@ -9,7 +9,7 @@ import {
   Box,
 } from "@mui/material";
 
-export default function ForgotPassword() {
+export default function ChangePassword() {
   return (
     <Box
       display="flex"
@@ -21,9 +21,20 @@ export default function ForgotPassword() {
         <Grid item lg={3} md={4} sm={6} xs={12}>
           <Paper>
             <Stack direction="column" spacing={2} style={{ padding: 15 }}>
-              <Typography variant="h5">Forgot Password</Typography>
-              <TextField label="Email Address" variant="outlined" fullWidth />
-              <Button variant="contained">Send Verification Link</Button>
+              <Typography variant="h5">Change Password</Typography>
+              <TextField
+                label="New Password"
+                variant="outlined"
+                type="password"
+                fullWidth
+              />
+              <TextField
+                label="Confirm Password"
+                variant="outlined"
+                type="password"
+                fullWidth
+              />
+              <Button variant="contained">Change Password</Button>
             </Stack>
           </Paper>
         </Grid>
