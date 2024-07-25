@@ -33,7 +33,7 @@ export default function ClippedDrawer() {
       >
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
-            Clipped drawer
+            SPARKS MARKETING & COMMUNICATIONS
           </Typography>
         </Toolbar>
       </AppBar>

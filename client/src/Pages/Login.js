@@ -23,6 +23,14 @@ export default function Login() {
         <Grid item lg={3} md={4} sm={6} xs={12}>
           <Paper>
             <Stack direction="column" spacing={2} style={{ padding: 15 }}>
+              <Stack direction="column" spacing={0}>
+                <Typography variant="h4" style={{ textAlign: "center" }}>
+                  SPARKS
+                </Typography>
+                <Typography variant="subtitle1" style={{ textAlign: "center" }}>
+                  Marketing and Communications LLC
+                </Typography>
+              </Stack>
               <Typography variant="h5">ADMIN LOGIN</Typography>
               <TextField label="Email Address" variant="outlined" fullWidth />
               <TextField
