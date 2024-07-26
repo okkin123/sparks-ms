@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./Theme";
 import Login from "./Pages/Login";
+import Register from "./Pages/Register";
 import Dashboard from "./Pages/Dashboard";
 import ForgotPassword from "./Pages/ForgotPassword";
 import ChangePassword from "./Pages/ChangePassword";
@@ -12,9 +13,10 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
-            <Route path="/Dashboard" Component={Dashboard} />
-            <Route path="/ForgotPassword" Component={ForgotPassword} />
-            <Route path="/ChangePassword" Component={ChangePassword} />
+            <Route path="/register" Component={Register} />
+            <Route path="/dashboard" Component={Dashboard} />
+            <Route path="/forgotpassword" Component={ForgotPassword} />
+            <Route path="/changepassword" Component={ChangePassword} />
           </Routes>
         </BrowserRouter>
       </div>
