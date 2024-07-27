@@ -8,12 +8,11 @@ import {
   Box,
 } from "@mui/material";
 
-import Image from "mui-image";
 import bsLogo from "../Assets/BS LOGO.png";
 
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../AxiosInstance";
-import React, { useState } from "react"
+import * as React from "react"
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -28,7 +27,12 @@ const RegisterSchema = Yup.object().shape({
     .max(45, 'Field value is too long!')
     .required('This field is required!'),
   email_address: Yup.string().email('Invalid email')
-  .required('This field is required!'),
+  .required('This field is required!')
+  .test('Unique Email','Email Address is already taken!', 
+    function(value){return new Promise((resolve, reject) => {
+        AxiosInstance.post('/user/findEmail', {'email_address': value})
+        .then(res => {if(res.data.status === 'ERROR'){resolve(false)} resolve(true)})
+  })}),
   password: Yup.string()
     .min(2, 'Field value is too short!')
     .max(45, 'Field value is too long!')
@@ -44,8 +48,7 @@ const RegisterSchema = Yup.object().shape({
       function(value){return new Promise((resolve, reject) => {
           AxiosInstance.post('/user/register', {'token': value})
           .then(res => {if(res.data.message === 'Invalid Token!'){resolve(false)} resolve(true)})
-      })}
-  )
+      })})
 });
 
 
@@ -98,7 +101,7 @@ export default function Register() {
           <Paper>
             <Stack direction="column" spacing={2} style={{ padding: 15 }}>
               <Stack direction="row" justifyContent="center">
-              <Image src={bsLogo} width={250}  />
+              <img src={bsLogo} width={250} alt="logo" />
               </Stack>
               <Typography variant="h5">REGISTER</Typography>
                   <Stack direction="row" justifyContent="space-between" spacing={2}>

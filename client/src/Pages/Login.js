@@ -16,17 +16,59 @@ import {
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import ErrorIcon from '@mui/icons-material/Error';
 
-import Image from "mui-image";
 import bsLogo from "../Assets/BS LOGO.png";
 
 import { useNavigate, useLocation } from "react-router-dom";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import AxiosInstance from "../AxiosInstance";
+
+
+const LoginSchema = Yup.object().shape({
+  email_address: Yup.string().email('Invalid email')
+  .required('This field is required!'),
+  password: Yup.string()
+    .min(2, 'Field value is too short!')
+    .max(45, 'Field value is too long!')
+    .required('This field is required!')
+});
 
 export default function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(true);
+  const [error, setError] = useState(false);
+  const formik = useFormik({
+    initialValues:{
+      email_address: "",
+      password: ""
+    },
+    validationSchema : LoginSchema,
+    onSubmit : (values) => {
+      // same shape as initial values
+      AxiosInstance.post("/user/login", values)
+      .then(function(response){
+          if(response.data.status === "ERROR")
+          {
+            setError(true)
+          }
+          else
+          {
+            console.log(response.data)
+          // navigate('/', { state: {
+          //   status: response.data.status,
+          //   message: response.data.message
+          // }})
+          }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }})
+
   return (
     <Box
       display="flex"
@@ -39,18 +81,39 @@ export default function Login() {
           <Paper>
             <Stack direction="column" spacing={2} style={{ padding: 15 }}>
               <Stack direction="row" justifyContent="center">
-              <Image src={bsLogo} width={250} />
+              <img src={bsLogo} width={250} alt="logo" />
               </Stack>
               <Typography variant="h5">LOGIN</Typography>
-              <TextField label="Email Address" variant="outlined" fullWidth />
+              <TextField label="Email Address" variant="outlined"
+                name="email_address"
+                value={formik.values.email_address} 
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.email_address && Boolean(formik.errors.email_address)} 
+                helperText={formik.touched.email_address && formik.errors.email_address} 
+                fullWidth />
               <TextField
                 label="Password"
                 variant="outlined"
+                name="password"
+                value={formik.values.password} 
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.password && Boolean(formik.errors.password)} 
+                helperText={formik.touched.password && formik.errors.password} 
                 type="password"
                 fullWidth
               />
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
-              {location.state !== null ? 
+              {
+                error !== false ?
+                <Alert
+                sx={{ mb: 2 }}
+                icon={<ErrorIcon fontSize="inherit" />} severity="error">
+                Invalid Email Address or Password!</Alert> : null
+              }
+              {
+              location.state !== null ? 
                <Collapse in={open}>
                 <Alert 
                 action={
@@ -66,12 +129,12 @@ export default function Login() {
                   </IconButton>
                 }
                 sx={{ mb: 2 }}
-                variant="filled" icon={<CheckIcon fontSize="inherit" />} severity="info">
+                  icon={<CheckIcon fontSize="inherit" />} severity="info">
                  <strong>{location.state.status}!</strong>&nbsp;{location.state.message}
                 </Alert>
                 </Collapse>
                 : null}
-              <Button variant="contained">LOGIN</Button>
+              <Button variant="contained" type="button" onClick={formik.handleSubmit}>LOGIN</Button>
               <Button variant="text" color="info">Forgot Password</Button>
               <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
               <Typography variant="subtitle1">Dont have an account?</Typography>
