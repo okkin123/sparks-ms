@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useContext } from "react"; 
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import AppBar from "@mui/material/AppBar";
@@ -17,7 +17,13 @@ import Button from "@mui/material/Button";
 
 const drawerWidth = 240;
 
-export default function ClippedDrawer() {
+
+ 
+
+
+export default function Dashboard() {
+
+    
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />

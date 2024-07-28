@@ -1,7 +1,7 @@
 const dbConnection = require('../config/database');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-
+const jwt = require('jsonwebtoken');
 
 module.exports = {
     findEmail: (req, res)=>
@@ -65,45 +65,7 @@ module.exports = {
                                 )
                             });
                         });
-
             }
         )
-    },
-    loginUser: (req, res)=>
-    {
-        bcrypt.compare(req.body.password, hash, function(err, result) {
-            dbConnection.query("SELECT * FROM vw_users WHERE email_address=? AND password=?", 
-                [req.body.email_address, hash], function(err, data, fields)
-                {
-                    if(err)
-                    {
-                        res.send({
-                            status: "ERROR",
-                            message: err.sqlMessage
-                        });
-                    }
-                    else
-                    {
-                        if(data.length == 0)
-                        {
-                            res.send({
-                                status: "ERROR",
-                                message: "Invalid Email Address or Password!"
-                            })
-                        }
-                        else
-                        {
-                            res.status(201).json({
-                                status: "SUCCESS",
-                                message: "You are logged in successfully!",
-                            })
-                        }
-        
-                    }
-                        
-                }
-            )
-        });
-      
     }
 }

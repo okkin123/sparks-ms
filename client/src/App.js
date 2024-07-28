@@ -10,15 +10,15 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
-            <Route path="/register" Component={Register} />
-            <Route path="/dashboard" Component={Dashboard} />
-            <Route path="/forgotpassword" Component={ForgotPassword} />
-            <Route path="/changepassword" Component={ChangePassword} />
-          </Routes>
-        </BrowserRouter>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
+              <Route path="/register" Component={Register} />
+              <Route path="/dashboard" Component={Dashboard} />
+              <Route path="/forgotpassword" Component={ForgotPassword} />
+              <Route path="/changepassword" Component={ChangePassword} />
+            </Routes>
+          </BrowserRouter>
       </div>
     </ThemeProvider>
   );

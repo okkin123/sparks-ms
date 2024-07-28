@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import AxiosInstance from "../AxiosInstance";
+
 import {
   FormControlLabel,
   Checkbox,
@@ -16,19 +21,19 @@ import {
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import ErrorIcon from '@mui/icons-material/Error';
 
 import bsLogo from "../Assets/BS LOGO.png";
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import AxiosInstance from "../AxiosInstance";
 
 
 const LoginSchema = Yup.object().shape({
   email_address: Yup.string().email('Invalid email')
-  .required('This field is required!'),
+  .required('This field is required!')
+  .test('Email not found!','Email Address not Found!', 
+    function(value){return new Promise((resolve, reject) => {
+        AxiosInstance.post('/auth/login', {'email_address': value})
+        .then(res => {if(res.data.message === 'Email Address not Found!'){resolve(false)} resolve(true)})
+  })}),
   password: Yup.string()
     .min(2, 'Field value is too short!')
     .max(45, 'Field value is too long!')
@@ -40,28 +45,27 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(true);
-  const [error, setError] = useState(false);
   const formik = useFormik({
     initialValues:{
       email_address: "",
       password: ""
     },
     validationSchema : LoginSchema,
-    onSubmit : (values) => {
+    validateOnChange: false,
+    validateOnBlur: false,
+    onSubmit : (values, { validateForm }) => {
       // same shape as initial values
-      AxiosInstance.post("/user/login", values)
+      AxiosInstance.post("/auth/login", values)
       .then(function(response){
-          if(response.data.status === "ERROR")
+          if(response.data.status !== "ERROR")
           {
-            setError(true)
+
+            navigate("/dashboard");
           }
           else
           {
             console.log(response.data)
-          // navigate('/', { state: {
-          //   status: response.data.status,
-          //   message: response.data.message
-          // }})
+            validateForm(values)
           }
       })
       .catch(function(error){
@@ -105,13 +109,7 @@ export default function Login() {
                 fullWidth
               />
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
-              {
-                error !== false ?
-                <Alert
-                sx={{ mb: 2 }}
-                icon={<ErrorIcon fontSize="inherit" />} severity="error">
-                Invalid Email Address or Password!</Alert> : null
-              }
+
               {
               location.state !== null ? 
                <Collapse in={open}>
