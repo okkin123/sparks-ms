@@ -1,14 +1,24 @@
-const jwt = require('jsonwebtoken');
-function verifyToken(req, res, next) {
-const token = req.header('Authorization');
-if (!token) return res.status(401).json({ error: 'Access denied' });
-try {
- const decoded = jwt.verify(token, 'lovekonikz');
- req.userId = decoded.userId;
- next();
- } catch (error) {
- res.status(401).json({ error: 'Invalid token' });
- }
- };
+const jwt = require("jsonwebtoken");
 
-module.exports = verifyToken;
+module.exports = async (request, response, next) => {
+  try {
+    //   get the token from the authorization header
+    const token = await request.headers.authorization.split(" ")[1];
+
+    //check if the token matches the supposed origin
+    const decodedToken = await jwt.verify(token, "lovekonikz");
+
+    // retrieve the user details of the logged in user
+    const user = await decodedToken;
+
+    // pass the user down to the endpoints here
+    request.user = user;
+
+    // pass down functionality to the endpoint
+    next();
+  } catch (error) {
+    response.send({
+      error: "Unathorized request!",
+    });
+  }
+};
