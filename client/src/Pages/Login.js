@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -17,12 +17,27 @@ import {
   Alert,
   Collapse,
   IconButton,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  InputAdornment,
+  FormHelperText
 } from "@mui/material";
+
+
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
 import bsLogo from "../Assets/BS LOGO.png";
+
+import Cookies from "universal-cookie";
+const cookies = new Cookies();
+
+
+const token = cookies.get('TOKEN');
 
 const LoginSchema = Yup.object().shape({
   email_address: Yup.string()
@@ -50,6 +65,14 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
   const formik = useFormik({
     initialValues: {
       email_address: "",
@@ -63,22 +86,32 @@ export default function Login() {
       AxiosInstance.post("/user/login", values)
         .then(function (response) {
           if (response.data.status !== "ERROR") {
-            navigate("/dashboard", {
-              state: {
-                name: response.data.name,
-                email: response.data.email,
-                token: response.data.token,
-              },
+            cookies.set("TOKEN", response.data.token, {
+              path: "/",
             });
+            navigate("/dashboard");
           } else {
+            
             validateForm(values);
           }
+          console.log(response)
         })
         .catch(function (error) {
           console.log(error);
         });
     },
   });
+
+  useEffect(()=>{
+    if(token)
+    {
+      navigate('/dashboard')
+    }
+    else
+    {
+      navigate('/')
+    }
+  },[navigate])
 
   return (
     <Box
@@ -111,7 +144,38 @@ export default function Login() {
                 }
                 fullWidth
               />
-              <TextField
+              <FormControl variant="outlined"
+               error={
+                formik.touched.password && Boolean(formik.errors.password)
+              }
+              >
+              <InputLabel 
+               htmlFor="outlined-adornment-password">Password</InputLabel>
+              <OutlinedInput
+                id="outlined-adornment-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                fullWidth={true}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                }
+                label="Password"
+              />
+              <FormHelperText>{formik.touched.password && formik.errors.password}</FormHelperText>
+            </FormControl>
+              {/* <TextField
                 label="Password"
                 variant="outlined"
                 name="password"
@@ -124,7 +188,7 @@ export default function Login() {
                 helperText={formik.touched.password && formik.errors.password}
                 type="password"
                 fullWidth
-              />
+              /> */}
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
 
               {location.state !== null ? (

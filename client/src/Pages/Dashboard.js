@@ -14,18 +14,35 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import Button from "@mui/material/Button";
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+
 
 import AxiosInstance from "../AxiosInstance";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+const cookies = new Cookies();
+
+const token = cookies.get("TOKEN");
 const drawerWidth = 240;
 
 export default function Dashboard() {
-  const location = useLocation();
-  const { message, setMessage } = useState("");
+  const navigate = useNavigate();
+  const [message, setMessage] = useState("");
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   useEffect(() => {
     // make the API call
     AxiosInstance.get("/auth-endpoint", {
-      headers: { Authorization: `Bearer ${location.state.token}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((result) => {
         // assign the message in our result to the message we initialized above
@@ -35,6 +52,14 @@ export default function Dashboard() {
         console.log(error);
       });
   }, []);
+
+  const logout = () => {
+    handleClose();
+    // destroy the cookie
+    cookies.remove("TOKEN", { path: "/" });
+    // redirect user to the landing page
+    navigate('/')
+  }
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -53,7 +78,35 @@ export default function Dashboard() {
             SPARKS MARKETING & COMMUNICATIONS
           </Typography>
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            <Button sx={{ color: "#fff" }}>{location.state.name}</Button>
+            <Button
+              sx={{ color: "#fff" }}
+              id="basic-button"
+              aria-controls={open ? "basic-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? "true" : undefined}
+              onClick={handleClick}
+            >
+              USER
+            </Button>
+            <Menu
+              id="basic-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left"
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left"
+              }}
+              MenuListProps={{
+                "aria-labelledby": "basic-button"
+              }}
+            >
+              <MenuItem onClick={logout}>Logout</MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>

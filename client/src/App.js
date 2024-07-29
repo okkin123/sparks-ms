@@ -15,11 +15,15 @@ function App() {
       <div className="App">
         <BrowserRouter>
           <Routes>
-            <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
+            <Route path="/" Component={Login}/> {/* 👈 Renders at /app/ */}
             <Route path="/register" Component={Register} />
-            <ProtectedRoutes path="/dashboard" Component={Dashboard} />
             <Route path="/forgotpassword" Component={ForgotPassword} />
             <Route path="/changepassword" Component={ChangePassword} />
+            <Route path="/dashboard" element={
+              <ProtectedRoutes>
+                <Dashboard />
+              </ProtectedRoutes>
+            } />
           </Routes>
         </BrowserRouter>
       </div>

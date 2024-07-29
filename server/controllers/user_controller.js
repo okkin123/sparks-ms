@@ -101,9 +101,7 @@ module.exports = {
 
                   return res.status(200).json({
                     status: "SUCCESS",
-                    name: data[0].fullname,
-                    email: data[0].email_address,
-                    token: token,
+                    token: token
                   });
                 }
               }
@@ -120,4 +118,17 @@ module.exports = {
       res.send({ error: "Login failed!" });
     }
   },
+  userLoggedIn: (req, res) => {
+    dbConnection.query(
+      "SELECT * from vw_users WHERE user_id=?",
+      [req.body.user_id],
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send({
+            data: data
+          });
+        } 
+      }
+    );
+  }
 };
