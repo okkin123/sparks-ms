@@ -24,7 +24,7 @@ module.exports = {
       }
     );
   },
-  registerUser: (req, res) => {
+  register: (req, res) => {
     dbConnection.query(
       "SELECT token_id from tbl_user_tokens WHERE token=? AND status='available'",
       [req.body.token],
@@ -71,7 +71,7 @@ module.exports = {
       }
     );
   },
-  loginUser: (req, res) => {
+  login: (req, res) => {
     try {
       dbConnection.query(
         "SELECT * from vw_users WHERE email_address=?",
@@ -90,8 +90,8 @@ module.exports = {
                 } else {
                   const token = jwt.sign(
                     {
-                      userId: data[0].user_id,
-                      userEmail: data[0].email_address,
+                      user_id: data[0].user_id,
+                      user_email: data[0].email_address,
                     },
                     "lovekonikz",
                     {
@@ -99,9 +99,9 @@ module.exports = {
                     }
                   );
 
-                  return res.status(200).json({
+                  return res.header("Authorization", `Bearer ${token}`).send({
                     status: "SUCCESS",
-                    token: token
+                    token: token,
                   });
                 }
               }
@@ -118,17 +118,15 @@ module.exports = {
       res.send({ error: "Login failed!" });
     }
   },
-  userLoggedIn: (req, res) => {
+  info: (req, res) => {
     dbConnection.query(
       "SELECT * from vw_users WHERE user_id=?",
-      [req.body.user_id],
+      [request.user.user_id],
       function (err, data, fields) {
         if (data.length > 0) {
-          res.send({
-            data: data
-          });
-        } 
+          res.send(data);
+        }
       }
     );
-  }
+  },
 };
