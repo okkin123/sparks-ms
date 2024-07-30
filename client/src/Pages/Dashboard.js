@@ -16,6 +16,7 @@ import MailIcon from "@mui/icons-material/Mail";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
+import logo from "../Assets/BS LOGO White.png";
 
 import AxiosInstance from "../AxiosInstance";
 import { useNavigate } from "react-router-dom";
@@ -41,16 +42,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     // make the API call
-    AxiosInstance.post("/user/info", {
+    setRefresh(false);
+    
+    AxiosInstance.get("/user/info", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((result) => {
         // assign the message in our result to the message we initialized above
-        setName(result.data.name);
+        
+        setName(result.data[0].fullname);
       })
       .catch((error) => {
         console.log(error);
-      });
+      })
+      
   }, [refresh]);
 
   const logout = () => {
@@ -75,7 +80,7 @@ export default function Dashboard() {
             component="div"
             sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
           >
-            SPARKS MARKETING & COMMUNICATIONS
+            <img src={logo} width="125" />
           </Typography>
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             <Button
@@ -86,7 +91,7 @@ export default function Dashboard() {
               aria-expanded={open ? "true" : undefined}
               onClick={handleClick}
             >
-              {name}
+              { name }
             </Button>
             <Menu
               id="basic-menu"
@@ -152,7 +157,7 @@ export default function Dashboard() {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
-        <Typography variant="subtitle1">{message}</Typography>
+        <Typography variant="subtitle1">Welcome to Dashboard</Typography>
       </Box>
     </Box>
   );

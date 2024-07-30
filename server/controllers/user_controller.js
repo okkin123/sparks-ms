@@ -120,7 +120,7 @@ module.exports = {
   info: (req, res) => {
     dbConnection.query(
       "SELECT * from vw_users WHERE user_id=?",
-      [request.user.user_id],
+      [req.user.user_id],
       function (err, data, fields) {
         if (data.length > 0) {
           res.send(data);

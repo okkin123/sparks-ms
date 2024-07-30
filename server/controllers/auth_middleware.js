@@ -4,11 +4,9 @@ const jwt = require("jsonwebtoken");
 module.exports = async (request, response, next) => {
   try {
     //   get the token from the authorization header
+   
     const token = await request.headers.authorization.split(" ")[1];
-    // const token = jwt.sign(
-    //   { user_id: 200, email: "bar@yahoo.com" },
-    //   "lovekonikz"
-    // );
+   
     //check if the token matches the supposed origin
     const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
 

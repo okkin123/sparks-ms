@@ -23,6 +23,7 @@ import {
   InputAdornment,
   FormHelperText,
 } from "@mui/material";
+import LoadingButton from '@mui/lab/LoadingButton';
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -56,7 +57,7 @@ const LoginSchema = Yup.object().shape({
   password: Yup.string()
     .min(2, "Field value is too short!")
     .max(45, "Field value is too long!")
-    .required("This field is required!"),
+    .required("This field is required!")
     .test("Invalid Password!", "Invalid Password!", function (value, context) {
       return new Promise((resolve, reject) => {
         AxiosInstance.post("/user/login", { email_address: context.parent.email_address, password: value }).then(
@@ -78,7 +79,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [refresh, setRefresh] = useState(true);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
-
+  const [loading, setLoading] = useState(false);
   const handleMouseDownPassword = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -95,6 +96,7 @@ export default function Login() {
     validateOnBlur: false,
     onSubmit: (values, { validateForm }) => {
       // same shape as initial values
+      setLoading(true);
       AxiosInstance.post("/user/login", values)
         .then(function (response) {
           if (response.data.status !== "ERROR") {
@@ -105,21 +107,23 @@ export default function Login() {
           } else {
             validateForm(values);
           }
-          console.log(response);
         })
         .catch(function (error) {
           console.log(error);
-        });
+        })
+        .finally(()=>{
+          setLoading(false);
+        })
     },
   });
 
-  useEffect(() => {
-    if (token) {
-      navigate("/dashboard");
-    } else {
-      navigate("/");
-    }
-  }, [refresh]);
+  // useEffect(() => {
+  //   if (token) {
+  //     navigate("/dashboard");
+  //   } else {
+  //     navigate("/");
+  //   }
+  // }, [refresh]);
 
   return (
     <Box
@@ -227,13 +231,14 @@ export default function Login() {
                   </Alert>
                 </Collapse>
               ) : null}
-              <Button
+              <LoadingButton
                 variant="contained"
                 type="button"
                 onClick={formik.handleSubmit}
+                loading={loading}
               >
                 LOGIN
-              </Button>
+              </LoadingButton>
               <Button variant="text" color="info">
                 Forgot Password
               </Button>
