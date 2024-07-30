@@ -37,7 +37,7 @@ export default function Dashboard() {
     setAnchorEl(null);
   };
 
-  const [initiation, setInitiation] = useState(true);
+  const [refresh, setRefresh] = useState(true);
 
   useEffect(() => {
     // make the API call
@@ -51,7 +51,7 @@ export default function Dashboard() {
       .catch((error) => {
         console.log(error);
       });
-  }, [initiation]);
+  }, [refresh]);
 
   const logout = () => {
     handleClose();

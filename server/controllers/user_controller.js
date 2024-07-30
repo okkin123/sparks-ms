@@ -93,12 +93,11 @@ module.exports = {
                       user_id: data[0].user_id,
                       user_email: data[0].email_address,
                     },
-                    "lovekonikz",
+                    process.env.SECRET_KEY,
                     {
                       expiresIn: "1h",
                     }
                   );
-
                   return res.header("Authorization", `Bearer ${token}`).send({
                     status: "SUCCESS",
                     token: token,

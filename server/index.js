@@ -3,17 +3,18 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+require("dotenv").config();
 
 const authMiddleware = require("./controllers/auth_middleware");
-//const userRoutes = require("./routes/user_routes");
+const userRoutes = require("./routes/user_routes");
 
-const port = 3001;
+const port = process.env.PORT || 3002;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
 
-//app.use("/user", userRoutes);
+app.use("/user", userRoutes);
 
 // authentication endpoint
 app.get("/auth-endpoint", authMiddleware, (request, response) => {
