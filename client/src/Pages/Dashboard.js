@@ -14,9 +14,8 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import Button from "@mui/material/Button";
-import MenuItem from '@mui/material/MenuItem';
-import Menu from '@mui/material/Menu';
-
+import MenuItem from "@mui/material/MenuItem";
+import Menu from "@mui/material/Menu";
 
 import AxiosInstance from "../AxiosInstance";
 import { useNavigate } from "react-router-dom";
@@ -28,8 +27,7 @@ const drawerWidth = 240;
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [message, setMessage] = useState("");
-
+  const [name, setName] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -39,27 +37,29 @@ export default function Dashboard() {
     setAnchorEl(null);
   };
 
+  const [initiation, setInitiation] = useState(true);
+
   useEffect(() => {
     // make the API call
-    AxiosInstance.get("/auth-endpoint", {
+    AxiosInstance.post("/user/info", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((result) => {
         // assign the message in our result to the message we initialized above
-        setMessage(result.data.message);
+        setName(result.data.name);
       })
       .catch((error) => {
         console.log(error);
       });
-  }, []);
+  }, [initiation]);
 
   const logout = () => {
     handleClose();
     // destroy the cookie
     cookies.remove("TOKEN", { path: "/" });
     // redirect user to the landing page
-    navigate('/')
-  }
+    navigate("/");
+  };
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -86,7 +86,7 @@ export default function Dashboard() {
               aria-expanded={open ? "true" : undefined}
               onClick={handleClick}
             >
-              USER
+              {name}
             </Button>
             <Menu
               id="basic-menu"
@@ -95,14 +95,14 @@ export default function Dashboard() {
               onClose={handleClose}
               anchorOrigin={{
                 vertical: "bottom",
-                horizontal: "left"
+                horizontal: "left",
               }}
               transformOrigin={{
                 vertical: "top",
-                horizontal: "left"
+                horizontal: "left",
               }}
               MenuListProps={{
-                "aria-labelledby": "basic-button"
+                "aria-labelledby": "basic-button",
               }}
             >
               <MenuItem onClick={logout}>Logout</MenuItem>

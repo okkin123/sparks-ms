@@ -21,12 +21,11 @@ import {
   InputLabel,
   OutlinedInput,
   InputAdornment,
-  FormHelperText
+  FormHelperText,
 } from "@mui/material";
 
-
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -36,8 +35,7 @@ import bsLogo from "../Assets/BS LOGO.png";
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
 
-
-const token = cookies.get('TOKEN');
+const token = cookies.get("TOKEN");
 
 const LoginSchema = Yup.object().shape({
   email_address: Yup.string()
@@ -59,6 +57,18 @@ const LoginSchema = Yup.object().shape({
     .min(2, "Field value is too short!")
     .max(45, "Field value is too long!")
     .required("This field is required!"),
+    .test("Invalid Password!", "Invalid Password!", function (value, context) {
+      return new Promise((resolve, reject) => {
+        AxiosInstance.post("/user/login", { email_address: context.parent.email_address, password: value }).then(
+          (res) => {
+            if (res.data.message === "Invalid Password!") {
+              resolve(false);
+            }
+            resolve(true);
+          }
+        );
+      });
+    })
 });
 
 export default function Login() {
@@ -66,10 +76,12 @@ export default function Login() {
   const location = useLocation();
   const [open, setOpen] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [initiation, setInitiation] = useState(true);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
-  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     event.preventDefault();
   };
 
@@ -91,10 +103,9 @@ export default function Login() {
             });
             navigate("/dashboard");
           } else {
-            
             validateForm(values);
           }
-          console.log(response)
+          console.log(response);
         })
         .catch(function (error) {
           console.log(error);
@@ -102,16 +113,13 @@ export default function Login() {
     },
   });
 
-  useEffect(()=>{
-    if(token)
-    {
-      navigate('/dashboard')
+  useEffect(() => {
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      navigate("/");
     }
-    else
-    {
-      navigate('/')
-    }
-  },[navigate])
+  }, [initiation]);
 
   return (
     <Box
@@ -144,37 +152,41 @@ export default function Login() {
                 }
                 fullWidth
               />
-              <FormControl variant="outlined"
-               error={
-                formik.touched.password && Boolean(formik.errors.password)
-              }
-              >
-              <InputLabel 
-               htmlFor="outlined-adornment-password">Password</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                fullWidth={true}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
+              <FormControl
+                variant="outlined"
+                error={
+                  formik.touched.password && Boolean(formik.errors.password)
                 }
-                label="Password"
-              />
-              <FormHelperText>{formik.touched.password && formik.errors.password}</FormHelperText>
-            </FormControl>
+              >
+                <InputLabel htmlFor="outlined-adornment-password">
+                  Password
+                </InputLabel>
+                <OutlinedInput
+                  id="outlined-adornment-password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  fullWidth={true}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                  label="Password"
+                />
+                <FormHelperText>
+                  {formik.touched.password && formik.errors.password}
+                </FormHelperText>
+              </FormControl>
               {/* <TextField
                 label="Password"
                 variant="outlined"
