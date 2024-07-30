@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 
+
 module.exports = async (request, response, next) => {
   try {
     //   get the token from the authorization header
@@ -9,7 +10,7 @@ module.exports = async (request, response, next) => {
     //   "lovekonikz"
     // );
     //check if the token matches the supposed origin
-    const decodedToken = await jwt.verify(token, "lovekonikz");
+    const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
 
     // retrieve the user details of the logged in user
     const user = await decodedToken;

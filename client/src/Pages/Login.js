@@ -76,7 +76,7 @@ export default function Login() {
   const location = useLocation();
   const [open, setOpen] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [initiation, setInitiation] = useState(true);
+  const [refresh, setRefresh] = useState(true);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   const handleMouseDownPassword = (
@@ -119,7 +119,7 @@ export default function Login() {
     } else {
       navigate("/");
     }
-  }, [initiation]);
+  }, [refresh]);
 
   return (
     <Box
