@@ -8,5 +8,8 @@ router.route("/findEmail").post(controller.findEmail);
 router.route("/register").post(controller.register);
 router.route("/login").post(controller.login);
 router.route("/info").get(authMiddleware, controller.info);
+router
+  .route("/get_registration_code")
+  .get(authMiddleware, controller.get_registration_code);
 
 module.exports = router;

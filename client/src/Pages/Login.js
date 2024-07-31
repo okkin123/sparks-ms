@@ -23,7 +23,7 @@ import {
   InputAdornment,
   FormHelperText,
 } from "@mui/material";
-import LoadingButton from '@mui/lab/LoadingButton';
+import LoadingButton from "@mui/lab/LoadingButton";
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -34,6 +34,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import bsLogo from "../Assets/BS LOGO.png";
 
 import Cookies from "universal-cookie";
+
 const cookies = new Cookies();
 
 const token = cookies.get("TOKEN");
@@ -60,16 +61,17 @@ const LoginSchema = Yup.object().shape({
     .required("This field is required!")
     .test("Invalid Password!", "Invalid Password!", function (value, context) {
       return new Promise((resolve, reject) => {
-        AxiosInstance.post("/user/login", { email_address: context.parent.email_address, password: value }).then(
-          (res) => {
-            if (res.data.message === "Invalid Password!") {
-              resolve(false);
-            }
-            resolve(true);
+        AxiosInstance.post("/user/login", {
+          email_address: context.parent.email_address,
+          password: value,
+        }).then((res) => {
+          if (res.data.message === "Invalid Password!") {
+            resolve(false);
           }
-        );
+          resolve(true);
+        });
       });
-    })
+    }),
 });
 
 export default function Login() {
@@ -111,9 +113,9 @@ export default function Login() {
         .catch(function (error) {
           console.log(error);
         })
-        .finally(()=>{
+        .finally(() => {
           setLoading(false);
-        })
+        });
     },
   });
 

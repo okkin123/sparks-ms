@@ -8,12 +8,11 @@ require("dotenv").config();
 //const authMiddleware = require("./controllers/auth_middleware");
 const userRoutes = require("./routes/user_routes");
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
-
 
 app.use("/user", userRoutes);
 
