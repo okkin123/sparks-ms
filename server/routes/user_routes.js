@@ -12,4 +12,7 @@ router
   .route("/get_registration_code")
   .get(authMiddleware, controller.get_registration_code);
 
+router.route('/generate_registration_code').get(authMiddleware, controller.generate_registration_code);
+
+
 module.exports = router;

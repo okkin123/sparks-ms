@@ -2,6 +2,7 @@ const dbConnection = require("../config/database");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 module.exports = {
   findEmail: (req, res) => {
@@ -26,26 +27,26 @@ module.exports = {
   },
   register: (req, res) => {
     dbConnection.query(
-      "SELECT token_id from tbl_user_tokens WHERE token=? AND status='available'",
-      [req.body.token],
+      "SELECT code_id from tbl_registration_codes WHERE code=? AND status='available'",
+      [req.body.code],
       function (err, data1, fields) {
         if (err) console.log(err);
         else if (data1.length == 0)
           res.send({
             status: "ERROR",
-            message: "Invalid Token!",
+            message: "Invalid Registration Code!",
           });
         else
           bcrypt.genSalt(saltRounds, function (err, salt) {
             bcrypt.hash(req.body.password, salt, function (err, hash) {
               dbConnection.query(
-                "INSERT INTO tbl_users(firstname, lastname, email_address, password, user_token_id) VALUES(?,?,?,?,?)",
+                "INSERT INTO tbl_users(firstname, lastname, email_address, password, code_id) VALUES(?,?,?,?,?)",
                 [
                   req.body.firstname,
                   req.body.lastname,
                   req.body.email_address,
                   hash,
-                  data1[0].token_id,
+                  data1[0].code_id,
                 ],
                 function (err, data2, fields) {
                   if (err) {
@@ -55,8 +56,8 @@ module.exports = {
                     });
                   } else {
                     dbConnection.query(
-                      "UPDATE tbl_user_tokens SET status='not available' WHERE token_id=?",
-                      [data1[0].token_id],
+                      "UPDATE tbl_registration_codes SET status='not available' WHERE code_id=?",
+                      [data1[0].code_id],
                       function (err, data3, fields) {}
                     );
                     res.status(201).json({
@@ -130,7 +131,7 @@ module.exports = {
   },
   get_registration_code: (req, res) => {
     dbConnection.query(
-      "SELECT * from tbl_user_tokens",
+      "SELECT * from tbl_registration_codes",
       function (err, data, fields) {
         if (data.length > 0) {
           res.send(data);
@@ -138,4 +139,8 @@ module.exports = {
       }
     );
   },
+  generate_registration_code: (req, res) => {
+    const code = crypto.randomBytes(100).toString('hex');
+    res.send({registration_code: code})
+  }
 };

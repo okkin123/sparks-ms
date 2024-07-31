@@ -52,12 +52,12 @@ const RegisterSchema = Yup.object().shape({
   confirm_password: Yup.string()
     .required("Please confirm your password")
     .oneOf([Yup.ref("password"), null], "Passwords don't match."),
-  token: Yup.string()
+  code: Yup.string()
     .required("This field is required!")
-    .test("Unique Token", "Invalid Token!", function (value) {
+    .test("Unique Registration Code", "Invalid Registration Code!", function (value) {
       return new Promise((resolve, reject) => {
-        AxiosInstance.post("/user/register", { token: value }).then((res) => {
-          if (res.data.message === "Invalid Token!") {
+        AxiosInstance.post("/user/register", { code: value }).then((res) => {
+          if (res.data.message === "Invalid Registration Code!") {
             resolve(false);
           }
           resolve(true);
@@ -84,7 +84,7 @@ export default function Register() {
       email_address: "",
       password: "",
       confirm_password: "",
-      token: "",
+      code: "",
     },
     validationSchema: RegisterSchema,
     validateOnChange: false,
@@ -205,14 +205,14 @@ export default function Register() {
                 fullWidth
               />
               <TextField
-                label="Token"
-                name="token"
+                label="Registration Code"
+                name="code"
                 variant="outlined"
-                value={formik.values.token}
+                value={formik.values.code}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                error={formik.touched.token && Boolean(formik.errors.token)}
-                helperText={formik.touched.token && formik.errors.token}
+                error={formik.touched.code && Boolean(formik.errors.code)}
+                helperText={formik.touched.code && formik.errors.code}
                 fullWidth
               />
               <Button

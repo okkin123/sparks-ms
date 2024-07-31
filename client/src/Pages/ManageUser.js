@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { styled } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import {
   Box,
   CssBaseline,
@@ -47,8 +47,10 @@ export default function ManageUser() {
   const [open, setOpen] = useState(false);
   const [dense, setDense] = React.useState(false);
   const [registrationCodes, setRegistrationCodes] = useState([]);
+  const [registrationCode, setRegistrationCode] = useState('');
   const navigate = useNavigate();
-
+  const theme = useTheme();
+  
   function RegistrationCode() {
     // make the API call
     setRegistrationCodes([]);
@@ -58,7 +60,7 @@ export default function ManageUser() {
         setRegistrationCodes((registrationCodes) => [
           ...registrationCodes,
           ...result.data.map((element) => ({
-            token: element.token,
+            code: element.code,
             status: element.status,
           })),
         ]);
@@ -67,6 +69,14 @@ export default function ManageUser() {
       .catch((error) => {
         console.log(error);
       });
+  }
+
+  function generateRegistrationCode()
+  {
+    AxiosInstance.get("/user/generate_registration_code")
+    .then((result)=>{
+      setRegistrationCode(result.data.registration_code)
+    })
   }
 
   return (
@@ -113,9 +123,10 @@ export default function ManageUser() {
                             </ListItemAvatar>
                             <ListItemText
                               primary={
-                                registrationCode.token.substring(0, 40) + "..."
+                                registrationCode.code.substring(0, 40) + "..."
                               }
                               secondary={registrationCode.status}
+                              secondaryTypographyProps={ {color: theme.palette.error.main} }
                             />
                           </ListItem>
                         );
@@ -132,12 +143,14 @@ export default function ManageUser() {
                       id="outlined-adornment-registration-code"
                       endAdornment={
                         <InputAdornment position="end">
-                          <Button variant="text" color="info">
+                          <Button variant="text" color="info" onClick={generateRegistrationCode}>
                             Generate Code
                           </Button>
                         </InputAdornment>
                       }
                       label="Registration Code"
+                      placeholder="Registration Code"
+                      value={registrationCode}
                       readOnly
                     />
                   </FormControl>
