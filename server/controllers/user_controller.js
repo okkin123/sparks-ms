@@ -128,4 +128,14 @@ module.exports = {
       }
     );
   },
+  get_registration_code: (req, res) => {
+    dbConnection.query(
+      "SELECT * from tbl_user_tokens",
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send(data);
+        }
+      }
+    );
+  },
 };
