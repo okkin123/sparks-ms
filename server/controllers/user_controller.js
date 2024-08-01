@@ -129,6 +129,17 @@ module.exports = {
       }
     );
   },
+  list: (req, res) => {
+    dbConnection.query(
+      "SELECT * from vw_users WHERE user_id!=?",
+      [req.user.user_id],
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send(data);
+        }
+      }
+    );
+  },
   get_registration_code: (req, res) => {
     dbConnection.query(
       "SELECT * from tbl_registration_codes",
@@ -140,7 +151,36 @@ module.exports = {
     );
   },
   generate_registration_code: (req, res) => {
-    const code = crypto.randomBytes(100).toString('hex');
-    res.send({registration_code: code})
-  }
+    const code = crypto.randomBytes(100).toString("hex");
+    res.send({ registration_code: code });
+  },
+  add_registration_code: (req, res) => {
+    dbConnection.query(
+      "INSERT INTO tbl_registration_codes(code, user_type_id, status) VALUES(?,?,?)",
+      [req.body.registration_code, req.body.role, "available"],
+      function (err, data, fields) {
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage,
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            message: "Registration code added successfully!",
+          });
+        }
+      }
+    );
+  },
+  get_user_types: (req, res) => {
+    dbConnection.query(
+      "SELECT * from tbl_user_types",
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send(data);
+        }
+      }
+    );
+  },
 };

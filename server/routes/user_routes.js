@@ -12,7 +12,13 @@ router
   .route("/get_registration_code")
   .get(authMiddleware, controller.get_registration_code);
 
-router.route('/generate_registration_code').get(authMiddleware, controller.generate_registration_code);
+router
+  .route("/generate_registration_code")
+  .get(authMiddleware, controller.generate_registration_code);
 
+router.route("/add_registration_code").post(controller.add_registration_code);
+
+router.route("/list").get(authMiddleware, controller.list);
+router.route("/get_user_types").get(authMiddleware, controller.get_user_types);
 
 module.exports = router;

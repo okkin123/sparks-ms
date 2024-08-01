@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import Toolbar from "@mui/material/Toolbar";
@@ -10,10 +10,27 @@ import ListItemText from "@mui/material/ListItemText";
 import { Dashboard, ManageAccounts } from "@mui/icons-material";
 import Divider from "@mui/material/Divider";
 import { useNavigate } from "react-router-dom";
+import AxiosInstance from "../AxiosInstance";
 const drawerWidth = 240;
 
 export default function SideMenu(props) {
   const navigate = useNavigate();
+  const [refresh, setRefresh] = useState(false);
+  const [userType, setUserType] = useState("");
+  useEffect(() => {
+    // make the API call
+
+    AxiosInstance.get("/user/info")
+      .then((result) => {
+        // assign the message in our result to the message we initialized above
+
+        setUserType(result.data[0].user_type);
+        setRefresh(!refresh);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, [refresh]);
 
   return (
     <React.Fragment>
@@ -46,18 +63,20 @@ export default function SideMenu(props) {
           </List>
           <Divider />
           <List>
-            <ListItem
-              disablePadding
-              selected={props.mu_selected}
-              onClick={() => navigate("/manageuser")}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  <ManageAccounts />
-                </ListItemIcon>
-                <ListItemText primary="Manage Users" />
-              </ListItemButton>
-            </ListItem>
+            {userType === "OWNER" ? (
+              <ListItem
+                disablePadding
+                selected={props.mu_selected}
+                onClick={() => navigate("/manageuser")}
+              >
+                <ListItemButton>
+                  <ListItemIcon>
+                    <ManageAccounts />
+                  </ListItemIcon>
+                  <ListItemText primary="Manage Users" />
+                </ListItemButton>
+              </ListItem>
+            ) : null}
           </List>
         </Box>
       </Drawer>
