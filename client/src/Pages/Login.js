@@ -37,8 +37,6 @@ import Cookies from "universal-cookie";
 
 const cookies = new Cookies();
 
-const token = cookies.get("TOKEN");
-
 const LoginSchema = Yup.object().shape({
   email_address: Yup.string()
     .email("Invalid email")
@@ -79,7 +77,6 @@ export default function Login() {
   const location = useLocation();
   const [open, setOpen] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [refresh, setRefresh] = useState(true);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const [loading, setLoading] = useState(false);
   const handleMouseDownPassword = (
@@ -102,9 +99,7 @@ export default function Login() {
       AxiosInstance.post("/user/login", values)
         .then(function (response) {
           if (response.data.status !== "ERROR") {
-            cookies.set("TOKEN", response.data.token, {
-              path: "/",
-            });
+            cookies.set("TOKEN", response.data.token);
             navigate("/dashboard");
           } else {
             validateForm(values);
@@ -118,14 +113,6 @@ export default function Login() {
         });
     },
   });
-
-  // useEffect(() => {
-  //   if (token) {
-  //     navigate("/dashboard");
-  //   } else {
-  //     navigate("/");
-  //   }
-  // }, [refresh]);
 
   return (
     <Box
@@ -193,20 +180,6 @@ export default function Login() {
                   {formik.touched.password && formik.errors.password}
                 </FormHelperText>
               </FormControl>
-              {/* <TextField
-                label="Password"
-                variant="outlined"
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={
-                  formik.touched.password && Boolean(formik.errors.password)
-                }
-                helperText={formik.touched.password && formik.errors.password}
-                type="password"
-                fullWidth
-              /> */}
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
 
               {location.state !== null ? (
@@ -226,9 +199,8 @@ export default function Login() {
                     }
                     sx={{ mb: 2 }}
                     icon={<CheckIcon fontSize="inherit" />}
-                    severity="info"
+                    severity="success"
                   >
-                    <strong>{location.state.status}!</strong>&nbsp;
                     {location.state.message}
                   </Alert>
                 </Collapse>
@@ -241,7 +213,7 @@ export default function Login() {
               >
                 LOGIN
               </LoadingButton>
-              <Button variant="text" color="info">
+              <Button variant="text" color="secondary">
                 Forgot Password
               </Button>
               <Stack
