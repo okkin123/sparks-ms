@@ -1,23 +1,37 @@
 import React, { useState, useEffect } from "react";
-
-import Box from "@mui/material/Box";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import MenuItem from "@mui/material/MenuItem";
-import Menu from "@mui/material/Menu";
-import Typography from "@mui/material/Typography";
+import {
+  Box,
+  Drawer,
+  Toolbar,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  CssBaseline,
+  AppBar,
+  Typography,
+  Button,
+  Menu,
+  MenuItem,
+} from "@mui/material";
+import { BarChart, ManageAccounts } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
-
 import AxiosInstance from "../AxiosInstance";
-import { useNavigate } from "react-router-dom";
+
+import Dashboard from "./Dashboard";
+import ManageUser from "./ManageUser";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
+const drawerWidth = 240;
 
-export default function TopBar() {
+export default function SideMenu() {
   const navigate = useNavigate();
+  const [component, setComponent] = useState(<Dashboard />);
   const [name, setName] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -38,10 +52,10 @@ export default function TopBar() {
         // assign the message in our result to the message we initialized above
 
         setName(result.data[0].fullname);
-        setRefresh(true);
+        setRefresh(!refresh);
       })
       .catch((error) => {
-        navigate("/");
+        console.log(error);
       });
   }, [refresh]);
 
@@ -54,7 +68,8 @@ export default function TopBar() {
   };
 
   return (
-    <React.Fragment>
+    <Box sx={{ display: "flex" }}>
+      <CssBaseline />
       <AppBar
         position="fixed"
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
@@ -101,6 +116,53 @@ export default function TopBar() {
           </Box>
         </Toolbar>
       </AppBar>
-    </React.Fragment>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: {
+            width: drawerWidth,
+            boxSizing: "border-box",
+          },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: "auto" }}>
+          <List>
+            <ListItem
+              disablePadding
+              selected={true}
+              onClick={() => setComponent(<Dashboard />)}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <BarChart />
+                </ListItemIcon>
+                <ListItemText primary="Dashboard" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <Divider />
+          <List>
+            <ListItem
+              disablePadding
+              selected={false}
+              onClick={() => setComponent(<ManageUser />)}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <ManageAccounts />
+                </ListItemIcon>
+                <ListItemText primary="Manage Users" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
+      </Drawer>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        {component}
+      </Box>
+    </Box>
   );
 }

@@ -213,7 +213,11 @@ export default function Login() {
               >
                 LOGIN
               </LoadingButton>
-              <Button variant="text" color="secondary">
+              <Button
+                variant="text"
+                color="secondary"
+                onClick={() => navigate("/forgotpassword")}
+              >
                 Forgot Password
               </Button>
               <Stack

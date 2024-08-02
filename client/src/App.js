@@ -3,9 +3,9 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./Theme";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
-import Dashboard from "./Pages/Dashboard";
-import ManageUser from "./Pages/ManageUser";
+import Wrapper from "./Pages/Wrapper";
 import ForgotPassword from "./Pages/ForgotPassword";
+import EnterCode from "./Pages/EnterCode";
 import ChangePassword from "./Pages/ChangePassword";
 
 import ProtectedRoutes from "./ProtectedRoutes";
@@ -19,20 +19,13 @@ function App() {
             <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
             <Route path="/register" Component={Register} />
             <Route path="/forgotpassword" Component={ForgotPassword} />
+            <Route path="/entercode" Component={EnterCode} />
             <Route path="/changepassword" Component={ChangePassword} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoutes>
-                  <Dashboard />
-                </ProtectedRoutes>
-              }
-            />
-            <Route
-              path="/manageuser"
-              element={
-                <ProtectedRoutes>
-                  <ManageUser />
+                  <Wrapper />
                 </ProtectedRoutes>
               }
             />

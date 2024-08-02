@@ -7,6 +7,7 @@ require("dotenv").config();
 
 //const authMiddleware = require("./controllers/auth_middleware");
 const userRoutes = require("./routes/user_routes");
+const forgotRoutes = require("./routes/forgot_routes");
 
 const port = process.env.PORT;
 
@@ -22,7 +23,7 @@ app.use(
 );
 
 app.use("/user", userRoutes);
-
+app.use("/forgot", forgotRoutes);
 // authentication endpoint
 // app.get("/auth-endpoint", authMiddleware, (request, response) => {
 //   //console.log(request.user);

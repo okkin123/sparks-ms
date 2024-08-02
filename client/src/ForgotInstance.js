@@ -3,9 +3,9 @@ import Cookies from "universal-cookie";
 
 const cookies = new Cookies();
 
-const token = cookies.get("TOKEN");
+const token = cookies.get("FORGOT_TOKEN");
 
-const AxiosInstance = axios.create({
+const ForgotInstance = axios.create({
   baseURL: "https://yzm2jg-3001.csb.app/",
   //baseURL: "http://localhost:3001/",
   headers: {
@@ -16,4 +16,4 @@ const AxiosInstance = axios.create({
   // .. other options
 });
 
-export default AxiosInstance;
+export default ForgotInstance;
