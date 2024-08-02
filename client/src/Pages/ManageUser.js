@@ -32,8 +32,7 @@ import { useFormik } from "formik";
 import AxiosInstance from "../AxiosInstance";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import TopBar from "./TopBar";
-import SideMenu from "./SideMenu";
+import SideMenu from "./Wrapper";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 const columns: GridColDef[] = [
@@ -177,214 +176,205 @@ export default function ManageUser() {
   }
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <TopBar />
-      <SideMenu mu_selected={true} />
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Toolbar />
-        <Grid container direction="column" spacing={2}>
-          <Grid item container justifyContent="space-between">
-            <Typography variant="subtitle1">Manage Users</Typography>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={OpenRegistrationCodes}
-            >
-              Registration Codes
-            </Button>
-            <Modal
-              open={open}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-              <Box sx={style}>
-                <Grid container direction="column" spacing={2}>
-                  <Grid item container justifyContent="space-between">
-                    <Grid item>
-                      <Typography variant="subtitle1">
-                        REGISTRATION CODES
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="text"
-                        color="primary"
-                        onClick={() => setOpen(false)}
-                      >
-                        CLOSE
-                      </Button>
-                    </Grid>
+    <React.Fragment>
+      <Toolbar />
+      <Grid container direction="column" spacing={2}>
+        <Grid item container justifyContent="space-between">
+          <Typography variant="subtitle1">Manage Users</Typography>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={OpenRegistrationCodes}
+          >
+            Registration Codes
+          </Button>
+          <Modal
+            open={open}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <Grid container direction="column" spacing={2}>
+                <Grid item container justifyContent="space-between">
+                  <Grid item>
+                    <Typography variant="subtitle1">
+                      REGISTRATION CODES
+                    </Typography>
                   </Grid>
                   <Grid item>
-                    {registrationCodes.length > 0 ? (
-                      <Demo>
-                        <List
-                          style={{ maxHeight: "300px", overflow: "auto" }}
-                          dense={dense}
-                        >
-                          {registrationCodes.map((registrationCode, key) => {
-                            return (
-                              <ListItem
-                                key={key}
-                                secondaryAction={
-                                  <IconButton
-                                    edge="end"
-                                    aria-label="copy"
-                                    onMouseDown={handleMouseDownCopy}
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(
-                                        registrationCode.code
-                                      );
-                                      setRegistrationCodes(
-                                        (registrationCodes) =>
-                                          registrationCodes.map((code, index) =>
-                                            index === key
-                                              ? { ...code, isCopied: true }
-                                              : { ...code, isCopied: false }
-                                          )
-                                      );
-                                    }}
-                                  >
-                                    {registrationCode.isCopied ? (
-                                      <Typography variant="body1">
-                                        Copied!
-                                      </Typography>
-                                    ) : (
-                                      <ContentCopyIcon />
-                                    )}
-                                  </IconButton>
-                                }
-                              >
-                                <ListItemAvatar>
-                                  <Avatar>
-                                    <QrCodeScannerIcon />
-                                  </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                  primary={
-                                    registrationCode.code.substring(0, 40) +
-                                    "..."
-                                  }
-                                  secondary={registrationCode.status}
-                                  secondaryTypographyProps={{
-                                    color:
-                                      registrationCode.status === "available"
-                                        ? theme.palette.success.main
-                                        : theme.palette.error.main,
-                                  }}
-                                />
-                              </ListItem>
-                            );
-                          })}
-                        </List>
-                      </Demo>
-                    ) : (
-                      <Typography variant="subtitle1">Loading...</Typography>
-                    )}
-                  </Grid>
-                  <Grid item>
-                    <FormControl
-                      variant="outlined"
-                      fullWidth
-                      error={
-                        formik.touched.registration_code &&
-                        Boolean(formik.errors.registration_code)
-                      }
+                    <Button
+                      variant="text"
+                      color="primary"
+                      onClick={() => setOpen(false)}
                     >
-                      <InputLabel htmlFor="outlined-adornment-registration-code">
-                        Registration Code
-                      </InputLabel>
-                      <OutlinedInput
-                        id="outlined-adornment-registration-code"
-                        name="registration_code"
-                        endAdornment={
-                          <InputAdornment position="end">
-                            <LoadingButton
-                              variant="text"
-                              color="secondary"
-                              onClick={generateRegistrationCode}
-                              loading={generateState.loading}
-                              disabled={generateState.disabled}
-                            >
-                              Generate Code
-                            </LoadingButton>
-                          </InputAdornment>
-                        }
-                        label="Registration Code"
-                        placeholder="Registration Code"
-                        value={formik.values.registration_code}
-                        onBlur={formik.handleBlur}
-                        onChange={formik.handleChange}
-                        readOnly
-                      />
-                      <FormHelperText>
-                        {formik.touched.registration_code &&
-                          formik.errors.registration_code}
-                      </FormHelperText>
-                    </FormControl>
-                  </Grid>
-                  <Grid item>
-                    <FormControl
-                      fullWidth
-                      error={formik.touched.role && Boolean(formik.errors.role)}
-                    >
-                      <InputLabel id="demo-simple-select-label">
-                        Role
-                      </InputLabel>
-                      <Select
-                        name="role"
-                        value={formik.values.role}
-                        label="Role"
-                        onBlur={formik.handleBlur}
-                        onChange={formik.handleChange}
-                      >
-                        {userTypes.map((userType, key) => {
-                          return (
-                            <MenuItem value={userType.user_type_id}>
-                              {userType.user_type}
-                            </MenuItem>
-                          );
-                        })}
-                      </Select>
-                      <FormHelperText>
-                        {formik.touched.role && formik.errors.role}
-                      </FormHelperText>
-                    </FormControl>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="body1">{response}</Typography>
-                  </Grid>
-                  <Grid item>
-                    <LoadingButton
-                      variant="contained"
-                      type="button"
-                      color="secondary"
-                      loading={false}
-                      onClick={formik.handleSubmit}
-                    >
-                      Add Registration Code
-                    </LoadingButton>
+                      CLOSE
+                    </Button>
                   </Grid>
                 </Grid>
-              </Box>
-            </Modal>
-          </Grid>
-          <Grid item style={{ height: 500, width: "100%" }}>
-            <DataGrid
-              rows={users}
-              columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 10 },
-                },
-              }}
-              pageSizeOptions={[5, 10]}
-              checkboxSelection
-            />
-          </Grid>
+                <Grid item>
+                  {registrationCodes.length > 0 ? (
+                    <Demo>
+                      <List
+                        style={{ maxHeight: "300px", overflow: "auto" }}
+                        dense={dense}
+                      >
+                        {registrationCodes.map((registrationCode, key) => {
+                          return (
+                            <ListItem
+                              key={key}
+                              secondaryAction={
+                                <IconButton
+                                  edge="end"
+                                  aria-label="copy"
+                                  onMouseDown={handleMouseDownCopy}
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      registrationCode.code
+                                    );
+                                    setRegistrationCodes((registrationCodes) =>
+                                      registrationCodes.map((code, index) =>
+                                        index === key
+                                          ? { ...code, isCopied: true }
+                                          : { ...code, isCopied: false }
+                                      )
+                                    );
+                                  }}
+                                >
+                                  {registrationCode.isCopied ? (
+                                    <Typography variant="body1">
+                                      Copied!
+                                    </Typography>
+                                  ) : (
+                                    <ContentCopyIcon />
+                                  )}
+                                </IconButton>
+                              }
+                            >
+                              <ListItemAvatar>
+                                <Avatar>
+                                  <QrCodeScannerIcon />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={
+                                  registrationCode.code.substring(0, 40) + "..."
+                                }
+                                secondary={registrationCode.status}
+                                secondaryTypographyProps={{
+                                  color:
+                                    registrationCode.status === "available"
+                                      ? theme.palette.success.main
+                                      : theme.palette.error.main,
+                                }}
+                              />
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </Demo>
+                  ) : (
+                    <Typography variant="subtitle1">Loading...</Typography>
+                  )}
+                </Grid>
+                <Grid item>
+                  <FormControl
+                    variant="outlined"
+                    fullWidth
+                    error={
+                      formik.touched.registration_code &&
+                      Boolean(formik.errors.registration_code)
+                    }
+                  >
+                    <InputLabel htmlFor="outlined-adornment-registration-code">
+                      Registration Code
+                    </InputLabel>
+                    <OutlinedInput
+                      id="outlined-adornment-registration-code"
+                      name="registration_code"
+                      endAdornment={
+                        <InputAdornment position="end">
+                          <LoadingButton
+                            variant="text"
+                            color="secondary"
+                            onClick={generateRegistrationCode}
+                            loading={generateState.loading}
+                            disabled={generateState.disabled}
+                          >
+                            Generate Code
+                          </LoadingButton>
+                        </InputAdornment>
+                      }
+                      label="Registration Code"
+                      placeholder="Registration Code"
+                      value={formik.values.registration_code}
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      readOnly
+                    />
+                    <FormHelperText>
+                      {formik.touched.registration_code &&
+                        formik.errors.registration_code}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+                <Grid item>
+                  <FormControl
+                    fullWidth
+                    error={formik.touched.role && Boolean(formik.errors.role)}
+                  >
+                    <InputLabel id="demo-simple-select-label">Role</InputLabel>
+                    <Select
+                      name="role"
+                      value={formik.values.role}
+                      label="Role"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                    >
+                      {userTypes.map((userType, key) => {
+                        return (
+                          <MenuItem value={userType.user_type_id}>
+                            {userType.user_type}
+                          </MenuItem>
+                        );
+                      })}
+                    </Select>
+                    <FormHelperText>
+                      {formik.touched.role && formik.errors.role}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+                <Grid item>
+                  <Typography variant="body1">{response}</Typography>
+                </Grid>
+                <Grid item>
+                  <LoadingButton
+                    variant="contained"
+                    type="button"
+                    color="secondary"
+                    loading={false}
+                    onClick={formik.handleSubmit}
+                  >
+                    Add Registration Code
+                  </LoadingButton>
+                </Grid>
+              </Grid>
+            </Box>
+          </Modal>
         </Grid>
-      </Box>
-    </Box>
+        <Grid item style={{ height: 500, width: "100%" }}>
+          <DataGrid
+            rows={users}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 10 },
+              },
+            }}
+            pageSizeOptions={[5, 10]}
+            checkboxSelection
+          />
+        </Grid>
+      </Grid>
+    </React.Fragment>
   );
 }
