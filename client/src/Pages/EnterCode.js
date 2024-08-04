@@ -6,12 +6,13 @@ import {
   Stack,
   Button,
   Typography,
-  Box,
+  Box
 } from "@mui/material";
 
 import * as Yup from "yup";
 import { useFormik } from "formik";
-import ForgotInstance from "../ForgotInstance";
+import AxiosInstance from "../AxiosInstance";
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CodeSchema = Yup.object().shape({
   first_pin: Yup.number()
@@ -53,7 +54,9 @@ export default function EnterCode() {
   const secondPin = useRef(null);
   const thirdPin = useRef(null);
   const fourthPin = useRef(null);
-
+  const location = useLocation();
+  const [message, setMessage] = useState(location.state.message);
+  const navigate = useNavigate();
   const handleChange = (event, nextRef) => {
     const { name, value } = event.target;
     formik.setFieldValue(name, value);
@@ -72,9 +75,21 @@ export default function EnterCode() {
     validateOnBlur: false,
     onSubmit: (values, { validateForm }) => {
       // same shape as initial values
-
-      ForgotInstance.post("/forgot/verify_code", values)
-        .then(function (response) {})
+      AxiosInstance.post("/forgot/verify_code", values)
+        .then(function (response) {
+           if(response.data.status==="SUCCESS")
+           {
+            navigate("/changepassword", {
+              state: {
+                user: response.data.user
+              } 
+            });
+           }
+           else
+           {
+            setMessage(response.data.message);
+           }
+        })
         .catch(function (error) {
           console.log(error);
         });
@@ -165,7 +180,7 @@ export default function EnterCode() {
                   }
                 />
               </Stack>
-
+              <Typography variant="subtitle1">{message}</Typography>    
               <Button
                 variant="contained"
                 type="button"

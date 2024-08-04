@@ -136,7 +136,6 @@ export default function ManageUser() {
     setUserTypes([]);
     AxiosInstance.get("/user/get_user_types")
       .then((result) => {
-        console.log(result.data);
         setUserTypes((userTypes) => [
           ...result.data.map((element) => ({
             user_type_id: element.user_type_id,

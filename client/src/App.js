@@ -19,8 +19,23 @@ function App() {
             <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
             <Route path="/register" Component={Register} />
             <Route path="/forgotpassword" Component={ForgotPassword} />
-            <Route path="/entercode" Component={EnterCode} />
-            <Route path="/changepassword" Component={ChangePassword} />
+
+            <Route
+              path="/entercode"
+              element={
+                <ProtectedRoutes>
+                  <EnterCode />
+                </ProtectedRoutes>
+              }
+            />
+            <Route
+              path="/changepassword"
+              element={
+                <ProtectedRoutes>
+                  <ChangePassword />
+                </ProtectedRoutes>
+              }
+            />
             <Route
               path="/dashboard"
               element={

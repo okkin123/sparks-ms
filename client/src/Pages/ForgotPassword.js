@@ -28,7 +28,7 @@ const ForgotPasswordSchema = Yup.object().shape({
           (res) => {
             if (res.data.status === "ERROR") {
               resolve(false);
-            }
+            } 
             resolve(true);
           }
         );
@@ -51,8 +51,10 @@ export default function ForgotPassword() {
       AxiosInstance.post("/forgot/send_code", values)
         .then(function (response) {
           if (response.data.status === "SUCCESS") {
-            cookies.set("FORGOT_TOKEN", response.data.token);
-            navigate("/entercode");
+            cookies.set("TOKEN", response.data.token);
+            navigate("/entercode", {state: {
+              message: response.data.message
+            }});
           } else {
             validateForm(values);
           }

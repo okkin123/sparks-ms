@@ -5,14 +5,14 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
 
-//const authMiddleware = require("./controllers/auth_middleware");
 const userRoutes = require("./routes/user_routes");
 const forgotRoutes = require("./routes/forgot_routes");
 
 const port = process.env.PORT;
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(
   cors({
     origin: "*",
@@ -24,11 +24,7 @@ app.use(
 
 app.use("/user", userRoutes);
 app.use("/forgot", forgotRoutes);
-// authentication endpoint
-// app.get("/auth-endpoint", authMiddleware, (request, response) => {
-//   //console.log(request.user);
-//   response.send(request.user);
-// });
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

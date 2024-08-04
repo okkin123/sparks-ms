@@ -42,7 +42,6 @@ export default function SideMenu() {
     setAnchorEl(null);
   };
 
-  const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
     // make the API call
@@ -52,12 +51,11 @@ export default function SideMenu() {
         // assign the message in our result to the message we initialized above
 
         setName(result.data[0].fullname);
-        setRefresh(!refresh);
       })
       .catch((error) => {
         console.log(error);
       });
-  }, [refresh]);
+  });
 
   const logout = () => {
     handleClose();
