@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect} from "react";
 import {
   Grid,
   Paper,
@@ -12,7 +12,11 @@ import {
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import AxiosInstance from "../AxiosInstance";
+import SendEmail from "../SendEmail";
 import { useNavigate, useLocation } from 'react-router-dom';
+import Cookies from "universal-cookie";
+
+const cookies = new Cookies();
 
 const CodeSchema = Yup.object().shape({
   first_pin: Yup.number()
@@ -49,13 +53,71 @@ const CodeSchema = Yup.object().shape({
     ),
 });
 
+const PinCodeExpired = (props)=>
+{
+  return(
+    <React.Fragment>
+    <Grid item>
+      <Typography variant="subtitle1">{props.message}</Typography>
+    </Grid>
+    <Grid item container alignItems="center">
+      <Grid item>
+        <Typography variant="subtitle1" color="error">Your PIN Code has expired!</Typography>
+      </Grid>
+      <Grid item>
+        <Button variant="text" color="secondary" size="small" onClick={props.OnSendAgain}>Send Again?</Button>
+      </Grid>
+  </Grid>
+  </React.Fragment>
+  )
+
+}
+
+const PinWillExpireIn = (props)=>
+{
+  return(
+
+    <React.Fragment>
+      <Grid item>
+        <Typography variant="subtitle1">{props.message}</Typography>  
+      </Grid>
+      <Grid item>
+        <Typography variant="subtitle1" color="error">{"Your PIN Code will expire in: "+props.expiry+"s."}</Typography>
+      </Grid>
+    </React.Fragment>
+  )
+
+}
+
+const SendAgain = (values, setCodeData)=>{
+  AxiosInstance.post("/forgot/send_code", values)
+  .then(function (response) {
+    if (response.data.status === "SUCCESS") {
+      cookies.set("TOKEN", response.data.token);
+      SendEmail(response.data);
+      setCodeData({
+        email_address: response.data.email_address,
+        message: response.data.message,
+        expiry: response.data.expiry
+      });
+    } 
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+}
+
 export default function EnterCode() {
   const firstPin = useRef(null);
   const secondPin = useRef(null);
   const thirdPin = useRef(null);
   const fourthPin = useRef(null);
   const location = useLocation();
-  const [message, setMessage] = useState(location.state.message);
+  const [codeData, setCodeData] = useState({
+    message: location.state.message,
+    email_address: location.state.email_address,
+    expiry: location.state.expiry
+  });
   const navigate = useNavigate();
   const handleChange = (event, nextRef) => {
     const { name, value } = event.target;
@@ -63,6 +125,21 @@ export default function EnterCode() {
     nextRef.current.focus();
   };
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCodeData(codeData => {
+        if (codeData.expiry > 0) {
+          return { ...codeData, expiry: codeData.expiry - 1 };
+        } else {
+          cookies.remove('TOKEN');
+          return { ...codeData, expiry: 0 };
+        }
+      });
+    }, 1000);
+  
+    return () => clearInterval(timer);
+  }, []);
+  
   const formik = useFormik({
     initialValues: {
       first_pin: "",
@@ -87,7 +164,7 @@ export default function EnterCode() {
            }
            else
            {
-            setMessage(response.data.message);
+            setCodeData({...codeData, message: response.data.message});
            }
         })
         .catch(function (error) {
@@ -180,7 +257,10 @@ export default function EnterCode() {
                   }
                 />
               </Stack>
-              <Typography variant="subtitle1">{message}</Typography>    
+
+              { codeData.expiry === 0 ? <PinCodeExpired message={codeData.message} OnSendAgain={()=>SendAgain(codeData, setCodeData)} /> : 
+              <PinWillExpireIn message={codeData.message} expiry={codeData.expiry} />}
+              
               <Button
                 variant="contained"
                 type="button"

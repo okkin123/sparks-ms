@@ -14,6 +14,7 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 
 import AxiosInstance from "../AxiosInstance";
+import SendEmail from "../SendEmail";
 import Cookies from "universal-cookie";
 
 const cookies = new Cookies();
@@ -36,6 +37,8 @@ const ForgotPasswordSchema = Yup.object().shape({
     }),
 });
 
+
+
 export default function ForgotPassword() {
   const navigate = useNavigate();
 
@@ -52,8 +55,11 @@ export default function ForgotPassword() {
         .then(function (response) {
           if (response.data.status === "SUCCESS") {
             cookies.set("TOKEN", response.data.token);
+            SendEmail(response.data);
             navigate("/entercode", {state: {
-              message: response.data.message
+              email_address: response.data.email_address,
+              message: response.data.message,
+              expiry: response.data.expiry
             }});
           } else {
             validateForm(values);

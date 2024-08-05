@@ -6,21 +6,20 @@ const saltRounds = 10;
 const { sendingMail } = require("../config/mailing");
 
 
-const verification_code = Math.floor(1000 + Math.random() * 9000);
+
+
 
 module.exports = {
   send_code: (req, res) => {
+     const verification_code = Math.floor(1000 + Math.random() * 9000);
+     const token_expiry = 30;
+
       dbConnection.query(
       "SELECT * from vw_users WHERE email_address=?",
       [req.body.email_address],
       function (err, data, fields) {
         if (data.length > 0) {
-            sendingMail({
-              from: "no-reply@example.com",
-              to: `${data[0].email_address}`,
-              subject: "Account Verification Link",
-              text: `Your verification code for password change is: ${verification_code}`,
-            });
+    
             const token = jwt.sign(
               {
                 user_id: data[0].user_id,
@@ -28,12 +27,15 @@ module.exports = {
               },
               verification_code.toString(),
               {
-                expiresIn: "1h",
+                expiresIn: token_expiry,
               }
             );
 
             return res.header("Authorization", `Bearer ${token}`).send({
               status: "SUCCESS",
+              email_address: data[0].email_address,
+              code: verification_code,
+              expiry: token_expiry,
               token: token,
               message: "Please check your email and enter the pin code above!"
             });
@@ -46,6 +48,14 @@ module.exports = {
         }
       }
     );
+  },
+  send_email: (req, res) => {
+    sendingMail({
+      from: "no-reply@example.com",
+      to: `${req.body.email_address}`,
+      subject: "Account Verification Link",
+      text: `Your verification code for password change is: ${req.body.code}`,
+    });
   },
   user_data: (req, res) => {
 
