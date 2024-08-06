@@ -16,7 +16,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
-import { BarChart, ManageAccounts } from "@mui/icons-material";
+import { BarChart, ManageAccounts, AccountBalance } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
@@ -24,6 +24,7 @@ import AxiosInstance from "../AxiosInstance";
 
 import Dashboard from "./Dashboard";
 import ManageUser from "./ManageUser";
+import ManageBank from "./ManageBank";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
@@ -142,6 +143,20 @@ export default function SideMenu() {
             </ListItem>
           </List>
           <Divider />
+          <List>
+            <ListItem
+              disablePadding
+              selected={false}
+              onClick={() => setComponent(<ManageBank />)}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <AccountBalance />
+                </ListItemIcon>
+                <ListItemText primary="Manage Banks" />
+              </ListItemButton>
+            </ListItem>
+          </List>
           <List>
             <ListItem
               disablePadding

@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
 
+const bankRoutes = require("./routes/bank_routes");
 const userRoutes = require("./routes/user_routes");
 const forgotRoutes = require("./routes/forgot_routes");
 
@@ -22,6 +23,7 @@ app.use(
   })
 );
 
+app.use("/bank", bankRoutes);
 app.use("/user", userRoutes);
 app.use("/forgot", forgotRoutes);
 

@@ -32,7 +32,6 @@ import { useFormik } from "formik";
 import AxiosInstance from "../AxiosInstance";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import SideMenu from "./Wrapper";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 const columns: GridColDef[] = [
