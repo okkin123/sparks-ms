@@ -11,8 +11,10 @@ module.exports = {
         )
     },
     add: (req, res) =>{
-        dbConnection.query("INSERT INTO tbl_banks(name, address, account_number, iban, swift_code, routing_code) VALUES(?,?,?,?,?,?)",
-            [req.body.name,
+        dbConnection.query("INSERT INTO tbl_banks(benificiary, name, address, account_number, iban, swift_code, routing_code) VALUES(?,?,?,?,?,?,?)",
+            [
+            req.body.benificiary,
+            req.body.name,
             req.body.address,
             req.body.account_number,
             req.body.iban,
@@ -34,6 +36,28 @@ module.exports = {
                         status: "SUCCESS",
                         message: "New Bank details has been added!"
                     })
+                }
+            }
+        )
+    },
+    delete: (req, res) =>
+    {
+        dbConnection.query("DELETE FROM tbl_banks WHERE bank_id=?", [req.body.bank_id],
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    });
+                }
+                else
+                {
+                    res.send({
+                        status: "SUCCESS",
+                        message: "The selected bank has been deleted!"
+                    });
                 }
             }
         )

@@ -5,5 +5,6 @@ const controller = require("../controllers/bank_controller");
 
 router.route("/list").get(controller.list);
 router.route("/add").post(controller.add);
+router.route("/delete").post(controller.delete);
 
 module.exports = router;
