@@ -21,7 +21,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { format } from 'date-fns';
 import AxiosInstance from "../AxiosInstance";
 import * as Yup from 'yup';
-import { useFormik } from 'formik';
+import { useFormik, useFormikContext, FieldArray, FormikProvider } from 'formik';
 
 
 const style = {
@@ -35,21 +35,9 @@ boxShadow: 15,
 p: 2,
 };
 
-const BankSchema = Yup.object().shape({
-    benificiary: Yup.string().required("This field is required!"),
-    name: Yup.string().required("This field is required!"),
-    address: Yup.string().required("This field is required!"),
-    account_number: Yup.number()
-    .typeError("Please enter numbers only!")
-    .positive("Must be positive numbers")
-    .required("This field is required!"),
-    iban: Yup.string().required("This field is required!"),
-    swift_code: Yup.string().required("This field is required!"),
-    routing_code: Yup.string().required("This field is required!"),
-});
-
 const BankDetails = (props)=>
 {
+  const { values, handleChange, errors, touched } = useFormikContext();
   return(
     <Modal
       open={props.open}
@@ -61,121 +49,28 @@ const BankDetails = (props)=>
                   {props.title}
               </Typography>
               </Grid>
-              
-              <Grid item>
-              <TextField
-                  label="Benificiary"
-                  variant="outlined"
-                  name="benificiary"
-                  value={props.benificiary_value}
-                  onChange={props.benificiary_onChange}
-                  error={
-                    props.benificiary_error
-                  }
-                  helperText={
-                    props.benificiary_helperText
-                  }
-                  fullWidth
-                  />
-              </Grid>
-              {/* <Grid item>
-              <TextField
-                  label="Name"
-                  variant="outlined"
-                  name="name"
-                  value={formik.values.name}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.name && Boolean(formik.errors.name)
-                  }
-                  helperText={
-                    formik.touched.name && formik.errors.name
-                  }
-                  fullWidth
-                  />
-              </Grid>
-              <Grid item>
-                  <TextField
-                      label="Address"
-                      variant="outlined"
-                      name="address"
-                      multiline
-                      rows={2}
-                      value={formik.values.address}
-                      onChange={formik.handleChange}
-                      error={
-                      formik.touched.address && Boolean(formik.errors.address)
-                      }
-                      helperText={
-                      formik.touched.address && formik.errors.address
-                      }
-                      fullWidth
-                      />
-              </Grid>
-              <Grid item>
-              <TextField
-                  label="Account Number"
-                  variant="outlined"
-                  name="account_number"
-                  value={formik.values.account_number}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.account_number && Boolean(formik.errors.account_number)
-                  }
-                  helperText={
-                    formik.touched.account_number && formik.errors.account_number
-                  }
-                  fullWidth
-                  />
-              </Grid>
-              <Grid item>
-              <TextField
-                  label="IBAN Number"
-                  variant="outlined"
-                  name="iban"
-                  value={formik.values.iban}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.iban && Boolean(formik.errors.iban)
-                  }
-                  helperText={
-                    formik.touched.iban && formik.errors.iban
-                  }
-                  fullWidth
-                  />
-              </Grid>
-              <Grid item>
-              <TextField
-                  label="Swift Code"
-                  variant="outlined"
-                  name="swift_code"
-                  value={formik.values.swift_code}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.swift_code && Boolean(formik.errors.swift_code)
-                  }
-                  helperText={
-                    formik.touched.swift_code && formik.errors.swift_code
-                  }
-                  fullWidth
-                  />
-              </Grid>
-              <Grid item>
-              <TextField
-                  label="Routing Code"
-                  variant="outlined"
-                  name="routing_code"
-                  value={formik.values.routing_code}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.routing_code && Boolean(formik.errors.routing_code)
-                  }
-                  helperText={
-                    formik.touched.routing_code && formik.errors.routing_code
-                  }
-                  fullWidth
-                  />
-              </Grid> */}
+
+              <FieldArray
+                name="fields"
+                render={() => (
+                  <Grid item>
+                    {values.fields.map((field, index) => (
+                      <TextField
+                        key={index}
+                        label={field.label}
+                        variant="outlined"
+                        name={`fields[${index}].value`}
+                        value={field.value}
+                        onChange={handleChange}
+                        error={touched.fields && touched.fields[index] && Boolean(errors.fields && errors.fields[index] && errors.fields[index].value)}
+                        helperText={touched.fields && touched.fields[index] && errors.fields && errors.fields[index] && errors.fields[index].value}
+                        fullWidth
+                        sx={{marginBottom: '8px'}}
+                        />
+                    ))}
+                  </Grid>
+                )}
+              />
               <Grid item container justifyContent="flex-end">
                   <Grid item>
                       <Button variant="text" color="primary" onClick={props.onCancel}>Cancel</Button>
@@ -229,19 +124,30 @@ export default function ManageBank(){
 
     const formik = useFormik({
         initialValues: {
-          benificiary: "",
-          name: "",
-          address: "",
-          account_number: "",
-          iban: "",
-          swift_code: "",
-          routing_code: "",
+          fields: [
+            { label: 'Benificiary', name: 'benificiary', value: '' },
+            { label: 'Name', name: 'name', value: '' },
+            { label: 'Address', name: 'address', value: '' },
+            { label: 'Account Number', name: 'account_number', value: '' },
+            { label: 'IBAN', name: 'iban', value: '' },
+            { label: 'Swift Code', name: 'swift_code', value: '' },
+            { label: 'Routing Code', name: 'routing_code', value: '' },
+          ]
         },
-        validationSchema: BankSchema,
+        validationSchema: Yup.object({
+          fields: Yup.array().of(
+            Yup.object({
+              value: Yup.string().required('Required'),
+              account_number: Yup.number().typeError('Must be a number').required('Required')
+            })
+          ),
+          
+        }),
         validateOnChange: false,
         onSubmit: (values, { validateForm }) => {
             AxiosInstance.post("/bank/add", values)
             .then(function(response){
+                 
                 if(response.data.status === "SUCCESS")
                 {
                     setOpen(false);
@@ -256,7 +162,7 @@ export default function ManageBank(){
                 }
                 else
                 {
-                    validateForm(values)
+                  validateForm(values)
                     setResponse({
                       icon: (<ErrorIcon color='inherit'/>),
                       open: true,
@@ -312,21 +218,16 @@ export default function ManageBank(){
                       <Typography>Manage Banks</Typography>
                     </Grid>
                     <Grid item>
-                      <Button variant="contained" color="secondary" onClick={()=>setOpen(true)}>Add Bank</Button>
-                      <BankDetails 
-                      open={open}
-                      title="ADD BANK" 
-                      benificiary_value={formik.values.benificiary}
-                      benificiary_onChange={formik.handleChange}
-                      benificiary_error={
-                        formik.touched.benificiary && Boolean(formik.errors.benificiary)
-                      }
-                      benificiary_helperText={
-                        formik.touched.benificiary && formik.errors.benificiary
-                      }
-                      onCancel={()=>setOpen(false)}
-                      action={<Button variant="contained" color="secondary" onClick={formik.handleSubmit}>Save</Button>}
-                      />
+                      <Button variant="contained" color="secondary" onClick={()=>{
+                         formik.setFieldValue('benificiary', '');
+                         formik.setFieldValue('address', '');
+                         setOpen(true)
+                      }}>Add Bank</Button>
+                      <FormikProvider value={formik}>
+                          <BankDetails title="ADD BANK" open={open} onCancel={()=>setOpen(false)}
+                          action={<Button variant="contained" color="secondary" onClick={formik.handleSubmit}>Save</Button>} />
+                  
+                      </FormikProvider>
                     </Grid>
                 </Grid>
                 <Grid item>
@@ -374,29 +275,44 @@ export default function ManageBank(){
                                             : null
                                         ))
                                       formik.setFieldValue('benificiary', bank.benificiary);
+                                      formik.setFieldValue('address', bank.address);
                                     }
                                     }>
                                     <EditIcon />
-                                    <BankDetails 
-                                        open={bank.editMode}
-                                        title="EDIT BANK" 
-                                        benificiary_value={formik.values.benificiary}
-                                        benificiary_onChange={formik.handleChange}
-                                        benificiary_error={
-                                          formik.touched.benificiary && Boolean(formik.errors.benificiary)
-                                        }
-                                        benificiary_helperText={
-                                          formik.touched.benificiary && formik.errors.benificiary
-                                        }
-                                        onCancel={
-                                        ()=>  setBanks((banks) =>
-                                          banks.map((bank, i) =>
-                                            i === key ? { ...bank, editMode: false } : bank
-                                          )
-                                        )}
-                                        action={<Button variant="contained" color="success" onClick={formik.handleSubmit}>Update</Button>}
-                                        />
                                   </IconButton>
+
+                                  {/* <BankDetails 
+                                    key={key}
+                                    open={bank.editMode}
+                                    title="EDIT BANK" 
+                                    benificiary_value={formik.values.benificiary}
+                                    benificiary_onChange={formik.handleChange}
+                                    benificiary_error={
+                                      formik.touched.benificiary && Boolean(formik.errors.benificiary)
+                                    }
+                                    benificiary_helperText={
+                                      formik.touched.benificiary && formik.errors.benificiary
+                                    }
+                                    address_value={formik.values.address}
+                                    address_onChange={formik.handleChange}
+                                    address_error={
+                                      formik.touched.address && Boolean(formik.errors.address)
+                                    }
+                                    address_helperText={
+                                      formik.touched.address && formik.errors.address
+                                    }
+                                    onCancel={
+                                      ()=>{
+                                      
+                                        setBanks((banks) =>
+                                          banks.map((bank, index) =>
+                                            index === key
+                                              ? { ...bank, editMode: false }
+                                              : null
+                                            ))
+                                      }}
+                                    action={<Button variant="contained" color="success" onClick={formik.handleSubmit}>Update</Button>}
+                                    /> */}
                                   
                                   <IconButton color="error" onClick={()=>handleDelete(bank.bank_id)}>
                                     <DeleteIcon />

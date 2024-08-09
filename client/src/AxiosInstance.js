@@ -5,8 +5,8 @@ const cookies = new Cookies();
 
 
 const AxiosInstance = axios.create({
-  //baseURL: "https://yzm2jg-3001.csb.app/",
-  baseURL: "http://localhost:3001/",
+  baseURL: "https://laughing-space-bassoon-59xp5jwgq66f7qj-4000.app.github.dev/",
+  //baseURL: "http://localhost:3001/",
   headers: {
     "Content-Type": "application/json",
   },
