@@ -24,7 +24,7 @@ import AxiosInstance from "../AxiosInstance";
 
 import Dashboard from "./Dashboard";
 import ManageUser from "./ManageUser";
-import ManageBank from "./ManageBank";
+import BankAccounts from "./BankAccounts";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
@@ -147,13 +147,13 @@ export default function SideMenu() {
             <ListItem
               disablePadding
               selected={false}
-              onClick={() => setComponent(<ManageBank />)}
+              onClick={() => setComponent(<BankAccounts />)}
             >
               <ListItemButton>
                 <ListItemIcon>
                   <AccountBalance />
                 </ListItemIcon>
-                <ListItemText primary="Manage Banks" />
+                <ListItemText primary="Bank Accounts" />
               </ListItemButton>
             </ListItem>
           </List>

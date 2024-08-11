@@ -13,13 +13,13 @@ module.exports = {
     add: (req, res) =>{
         dbConnection.query("INSERT INTO tbl_banks(benificiary, name, address, account_number, iban, swift_code, routing_code) VALUES(?,?,?,?,?,?,?)",
             [
-            req.body.benificiary,
-            req.body.name,
-            req.body.address,
-            req.body.account_number,
-            req.body.iban,
-            req.body.swift_code,
-            req.body.routing_code
+                req.body.fields[0].value,
+                req.body.fields[1].value,
+                req.body.fields[2].value,
+                req.body.fields[3].value,
+                req.body.fields[4].value,
+                req.body.fields[5].value,
+                req.body.fields[6].value
             ], 
             function(err, data, fields)
             {
@@ -61,5 +61,36 @@ module.exports = {
                 }
             }
         )
-    }
+    },
+    edit: (req, res) =>{
+        dbConnection.query("UPDATE tbl_banks SET benificiary=?, name=?, address=?, account_number=?, iban=?, swift_code=?, routing_code=? WHERE bank_id=?",
+            [
+                req.body.fields[0].value,
+                req.body.fields[1].value,
+                req.body.fields[2].value,
+                req.body.fields[3].value,
+                req.body.fields[4].value,
+                req.body.fields[5].value,
+                req.body.fields[6].value,
+                req.body.fields[7].value,
+            ], 
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    });
+                }
+                else
+                {
+                    res.send({
+                        status: "SUCCESS",
+                        message: "The selected bank details has been updated!"
+                    })
+                }
+            }
+        )
+    },
 }

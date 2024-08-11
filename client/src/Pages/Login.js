@@ -136,6 +136,7 @@ export default function Login() {
                 value={formik.values.email_address}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
+                onKeyDown={(e)=>e.key === 'Enter' ? formik.handleSubmit() : null}
                 error={
                   formik.touched.email_address &&
                   Boolean(formik.errors.email_address)
@@ -161,6 +162,7 @@ export default function Login() {
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  onKeyDown={(e)=>e.key === 'Enter' ? formik.handleSubmit() : null}
                   fullWidth={true}
                   endAdornment={
                     <InputAdornment position="end">

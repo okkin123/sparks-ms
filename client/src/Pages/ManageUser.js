@@ -178,7 +178,7 @@ export default function ManageUser() {
       <Toolbar />
       <Grid container direction="column" spacing={2}>
         <Grid item container justifyContent="space-between">
-          <Typography variant="subtitle1">Manage Users</Typography>
+          <Typography variant="h6">MANAGE USERS</Typography>
           <Button
             variant="contained"
             color="secondary"
@@ -278,6 +278,7 @@ export default function ManageUser() {
                   <FormControl
                     variant="outlined"
                     fullWidth
+                    size="small"
                     error={
                       formik.touched.registration_code &&
                       Boolean(formik.errors.registration_code)
@@ -318,6 +319,7 @@ export default function ManageUser() {
                 <Grid item>
                   <FormControl
                     fullWidth
+                    size="small"
                     error={formik.touched.role && Boolean(formik.errors.role)}
                   >
                     <InputLabel id="demo-simple-select-label">Role</InputLabel>
