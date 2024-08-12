@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import AxiosInstance from "../AxiosInstance";
 import * as Yup from 'yup';
 import { useFormik, useFormikContext, FieldArray, FormikProvider } from 'formik';
+import Dialog from '../Components/Dialog';
 
 
 const style = {
@@ -116,6 +117,7 @@ export default function BankAccounts(){
     })
 
 
+    
 
     const [refresh, setRefresh] = useState(false);
     
@@ -126,7 +128,8 @@ export default function BankAccounts(){
             setBanks((banks) => [
                 ...result.data.map((element) => ({
                   bank_id: element.bank_id,
-                  open: false,
+                  edit_open: false,
+                  delete_open: false,
                   benificiary: element.benificiary,
                   name: element.name,
                   address: element.address,
@@ -168,7 +171,7 @@ export default function BankAccounts(){
             Yup.object({
               value: Yup.string().test(
                 'required-if-not-bank_id',
-                'Required',
+                'This field is required!',
                 function (value) {
                   const { name } = this.parent;
                   return name === 'bank_id' || !!value;
@@ -208,12 +211,14 @@ export default function BankAccounts(){
                 }
                 else
                 {
-                  validateForm(values)
+                  
                     setError({
                       open: true,
                       message: response.data.message,
                     });
                 }
+
+                validateForm(values)
 
               
             })
@@ -225,9 +230,9 @@ export default function BankAccounts(){
 
 
 
-    const handleDelete = (bank_id)=>
+    const handleDeleteYes = (bank_id, name)=>
     {
-      AxiosInstance.post("/bank/delete", {bank_id: bank_id})
+      AxiosInstance.post("/bank/delete", {bank_id: bank_id, name: name})
       .then(function(response){
         if(response.data.status === "SUCCESS")
           {
@@ -256,7 +261,7 @@ export default function BankAccounts(){
     }
 
     const handleEdit = (id) => {
-
+   
       setDialog((dialog) => ({
         ...dialog,
           route: '/bank/edit'
@@ -275,13 +280,25 @@ export default function BankAccounts(){
       });
 
       setBanks(banks.map(bank =>
-        bank.bank_id === id ? { ...bank, open: true } : bank
+        bank.bank_id === id ? { ...bank, edit_open: true } : bank
       ));
     };
 
+    const handleDeleteConfirmation = (id)=>{
+      setBanks(banks.map(bank =>
+        bank.bank_id === id ? { ...bank, delete_open: true } : bank
+      ));
+    }
+
+    const handleDeleteNo = (id)=>{
+      setBanks(banks.map(bank =>
+        bank.bank_id === id ? { ...bank, delete_open: false } : bank
+      ));
+    }
+
     const handleEditCancel = (id) => {
       setBanks(banks.map(bank =>
-        bank.bank_id === id ? { ...bank, open: false } : bank
+        bank.bank_id === id ? { ...bank, edit_open: false } : bank
       ));
     };
 
@@ -296,6 +313,7 @@ export default function BankAccounts(){
                     </Grid>
                     <Grid item>
                       <Button variant="contained" color="secondary" onClick={()=>{
+                         formik.resetForm();
                          formik.setFieldValue(`fields[${0}].value`, '');
                          formik.setFieldValue(`fields[${1}].value`, '');
                          formik.setFieldValue(`fields[${2}].value`, '');
@@ -389,11 +407,14 @@ export default function BankAccounts(){
                           <CardHeader
                               action={
                                 <React.Fragment>
-                                  <IconButton color="success" onClick={ ()=>handleEdit(bank.bank_id)}>
+                                  <IconButton color="success" onClick={ ()=>{
+                                    formik.resetForm();
+                                    handleEdit(bank.bank_id)
+                                  }}>
                                     <EditIcon />
                                   </IconButton>
                                   <FormikProvider value={formik}>
-                                      <BankDetails title="EDIT BANK ACCOUNT" open={bank.open}
+                                      <BankDetails title="EDIT BANK ACCOUNT" open={bank.edit_open}
                                       onCancel={()=>handleEditCancel(bank.bank_id)}
                                       errorAlert={
                                         <Collapse in={error.open}>
@@ -425,9 +446,31 @@ export default function BankAccounts(){
                               
                                   </FormikProvider>
                                   
-                                  <IconButton color="error" onClick={()=>handleDelete(bank.bank_id)}>
+                                  <IconButton color="error" onClick={()=>handleDeleteConfirmation(bank.bank_id)}>
                                     <DeleteIcon />
                                   </IconButton>
+                                  <Dialog open={bank.delete_open} content={
+                                    <React.Fragment>
+                                      <Grid container spacing={2} direction="column ">
+                                        <Grid item>
+                                           <Typography variant="h6">DELETE BANK ACCOUNT</Typography>
+                                        </Grid>
+                                        <Grid item>
+                                          <Typography variant="subtitle1" justifyContent="center">Do you want to delete <strong>{bank.name}</strong> account?</Typography>
+                                        </Grid>
+                                        <Grid item container direction="row" justifyContent="flex-end">
+                                          <Grid item>
+                                            <Button variant="text" color="primary" onClick={()=>handleDeleteNo(bank.bank_id)}>No</Button>
+                                          </Grid>
+                                          <Grid item>
+                                          <Button variant="contained" color="secondary" onClick={()=>handleDeleteYes(bank.bank_id, bank.name)}>Yes</Button>
+                                          </Grid>
+                                        </Grid>
+                                      </Grid>
+                                      
+                                      
+                                    </React.Fragment>
+                                  } />
                                 </React.Fragment>
                               }
                               title={bank.name}
