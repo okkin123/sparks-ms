@@ -101,9 +101,6 @@ export default function BankAccounts(){
       route: '',
       add: {
         open: false,
-      },
-      edit: {
-        open: false,
       }
     });
 
@@ -129,6 +126,7 @@ export default function BankAccounts(){
             setBanks((banks) => [
                 ...result.data.map((element) => ({
                   bank_id: element.bank_id,
+                  open: false,
                   benificiary: element.benificiary,
                   name: element.name,
                   address: element.address,
@@ -188,13 +186,10 @@ export default function BankAccounts(){
                 {
                     setDialog((dialog) => ({
                       ...dialog,
+                        route: '',
                         add: {
                           ...dialog.add,
                           open: false,
-                        },
-                        edit: {
-                          ...dialog.edit, 
-                          open:false
                         }
                       }));
                   
@@ -259,6 +254,37 @@ export default function BankAccounts(){
         console.log(error);
       })
     }
+
+    const handleEdit = (id) => {
+
+      setDialog((dialog) => ({
+        ...dialog,
+          route: '/bank/edit'
+        }));
+
+      banks.forEach((bank, index) => {
+
+           formik.setFieldValue(`fields[${0}].value`, bank.benificiary);
+           formik.setFieldValue(`fields[${1}].value`, bank.name);
+           formik.setFieldValue(`fields[${2}].value`, bank.address);
+           formik.setFieldValue(`fields[${3}].value`, bank.account_number);
+           formik.setFieldValue(`fields[${4}].value`, bank.iban);
+           formik.setFieldValue(`fields[${5}].value`, bank.swift_code);
+           formik.setFieldValue(`fields[${6}].value`, bank.routing_code);
+           formik.setFieldValue(`fields[${7}].value`, bank.bank_id);
+      });
+
+      setBanks(banks.map(bank =>
+        bank.bank_id === id ? { ...bank, open: true } : bank
+      ));
+    };
+
+    const handleEditCancel = (id) => {
+      setBanks(banks.map(bank =>
+        bank.bank_id === id ? { ...bank, open: false } : bank
+      ));
+    };
+
 
     return(
         <React.Fragment>
@@ -363,89 +389,41 @@ export default function BankAccounts(){
                           <CardHeader
                               action={
                                 <React.Fragment>
-                                  <IconButton color="success" onClick={
-                                    ()=>{
-
-                                      formik.setFieldValue(`fields[${0}].value`, bank.benificiary);
-                                      formik.setFieldValue(`fields[${1}].value`, bank.name);
-                                      formik.setFieldValue(`fields[${2}].value`, bank.address);
-                                      formik.setFieldValue(`fields[${3}].value`, bank.account_number);
-                                      formik.setFieldValue(`fields[${4}].value`, bank.iban);
-                                      formik.setFieldValue(`fields[${5}].value`, bank.swift_code);
-                                      formik.setFieldValue(`fields[${6}].value`, bank.routing_code);
-                                      formik.setFieldValue(`fields[${7}].value`, bank.bank_id);
-                                      setDialog((dialog) => ({
-                                        ...dialog,
-                                          route: "/bank/edit",
-                                          edit: {
-                                            ...dialog.edit,
-                                            open: true,
-                                          }
-                                        }));
-                                      // setBanks((banks) =>
-                                      //   banks.map((bank, index) =>
-                                      //     index === key
-                                      //       ? { ...bank, editMode: true }
-                                      //       : null
-                                      //   ))
-                                    }
-                                    }>
+                                  <IconButton color="success" onClick={ ()=>handleEdit(bank.bank_id)}>
                                     <EditIcon />
                                   </IconButton>
                                   <FormikProvider value={formik}>
-                                      <BankDetails title="EDIT BANK ACCOUNT" open={dialog.edit.open}
-                                      onCancel={
-                                        ()=>{
-                                          setDialog((dialog) => ({
-                                            ...dialog,
-                                              route: "",
-                                              edit: {
-                                                ...dialog.edit,
-                                                open: false,
-                                              }
-                                            }));
-                                          // setBanks((banks) =>
-                                          //   banks.map((bank, index) =>
-                                          //     index === key
-                                          //       ? { ...bank, editMode: false }
-                                          //       : null
-                                          //     ))
-                                        }}
+                                      <BankDetails title="EDIT BANK ACCOUNT" open={bank.open}
+                                      onCancel={()=>handleEditCancel(bank.bank_id)}
+                                      errorAlert={
+                                        <Collapse in={error.open}>
+                                          <Alert
+                                            action={
+                                              <IconButton
+                                                aria-label="close"
+                                                color="inherit"
+                                                size="small"
+                                                onClick={() => {
+                                                  setError({
+                                                    ...error,
+                                                    open: false
+                                                  });
+                                                }}
+                                              >
+                                                <CloseIcon fontSize="inherit" />
+                                              </IconButton>
+                                            }
+                                            sx={{ mb: 2 }}
+                                            icon={<ErrorIcon color='inherit'/>}
+                                            severity="error"
+                                          >
+                                            {error.message}
+                                          </Alert>
+                                        </Collapse>
+                                      }
                                       action={<Button variant="contained" color="success" onClick={formik.handleSubmit}>Update</Button>} />
                               
                                   </FormikProvider>
-                                  {/* <BankDetails 
-                                    key={key}
-                                    open={bank.editMode}
-                                    title="EDIT BANK" 
-                                    benificiary_value={formik.values.benificiary}
-                                    benificiary_onChange={formik.handleChange}
-                                    benificiary_error={
-                                      formik.touched.benificiary && Boolean(formik.errors.benificiary)
-                                    }
-                                    benificiary_helperText={
-                                      formik.touched.benificiary && formik.errors.benificiary
-                                    }
-                                    address_value={formik.values.address}
-                                    address_onChange={formik.handleChange}
-                                    address_error={
-                                      formik.touched.address && Boolean(formik.errors.address)
-                                    }
-                                    address_helperText={
-                                      formik.touched.address && formik.errors.address
-                                    }
-                                    onCancel={
-                                      ()=>{
-                                      
-                                        setBanks((banks) =>
-                                          banks.map((bank, index) =>
-                                            index === key
-                                              ? { ...bank, editMode: false }
-                                              : null
-                                            ))
-                                      }}
-                                    action={<Button variant="contained" color="success" onClick={formik.handleSubmit}>Update</Button>}
-                                    /> */}
                                   
                                   <IconButton color="error" onClick={()=>handleDelete(bank.bank_id)}>
                                     <DeleteIcon />

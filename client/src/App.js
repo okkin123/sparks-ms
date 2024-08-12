@@ -3,6 +3,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./Theme";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
+
 import Wrapper from "./Pages/Wrapper";
 import ForgotPassword from "./Pages/ForgotPassword";
 import EnterCode from "./Pages/EnterCode";
@@ -37,7 +38,7 @@ function App() {
               }
             />
             <Route
-              path="/dashboard"
+              path="/welcome"
               element={
                 <ProtectedRoutes>
                   <Wrapper />
