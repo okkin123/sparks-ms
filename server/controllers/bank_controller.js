@@ -25,16 +25,27 @@ module.exports = {
             {
                 if(err)
                 {
-                    res.send({
-                        status: "ERROR",
-                        message: err.sqlMessage
-                    });
+                    if(err.errno === 1366)
+                    {
+
+                        res.send({
+                            status: "ERROR",
+                            message: "Account Number field should be number value!"
+                        });
+                    }
+                    else
+                    {
+                        res.send({
+                            status: "ERROR",
+                            message: err.sqlMessage
+                        });
+                    }
                 }
                 else
                 {
                     res.send({
                         status: "SUCCESS",
-                        message: "New Bank details has been added!"
+                        message: req.body.fields[1].value+" with benificiary "+req.body.fields[0].value+" has been added!"
                     })
                 }
             }
@@ -56,7 +67,7 @@ module.exports = {
                 {
                     res.send({
                         status: "SUCCESS",
-                        message: "The selected bank has been deleted!"
+                        message: req.body.name+" has been deleted!"
                     });
                 }
             }
@@ -78,10 +89,21 @@ module.exports = {
             {
                 if(err)
                 {
-                    res.send({
-                        status: "ERROR",
-                        message: err.sqlMessage
-                    });
+                    if(err.errno === 1366)
+                        {
+    
+                            res.send({
+                                status: "ERROR",
+                                message: "Account Number field should be number value!"
+                            });
+                        }
+                        else
+                        {
+                            res.send({
+                                status: "ERROR",
+                                message: err.sqlMessage
+                            });
+                        }
                 }
                 else
                 {
