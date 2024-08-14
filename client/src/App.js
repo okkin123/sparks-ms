@@ -16,11 +16,10 @@ function App() {
     <ThemeProvider theme={theme}>
       <div className="App">
         <BrowserRouter>
-          <Routes>
-            <Route path="/" Component={Login} /> {/* 👈 Renders at /app/ */}
+         <Routes>
+            <Route path="/" Component={Login} />
             <Route path="/register" Component={Register} />
             <Route path="/forgotpassword" Component={ForgotPassword} />
-
             <Route
               path="/entercode"
               element={

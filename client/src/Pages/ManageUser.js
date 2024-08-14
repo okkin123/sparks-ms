@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { styled, useTheme } from "@mui/material/styles";
 import {
   Box,
-  CssBaseline,
   Toolbar,
   Typography,
   Grid,
@@ -15,15 +13,13 @@ import {
   InputAdornment,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
   IconButton,
   ListItemAvatar,
   Avatar,
   MenuItem,
   Select,
-  FormHelperText,
-  Skeleton,
+  FormHelperText
 } from "@mui/material";
 
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -63,7 +59,6 @@ const RegistrationCodeSchema = Yup.object().shape({
 
 export default function ManageUser() {
   const [open, setOpen] = useState(false);
-  const [dense, setDense] = React.useState(false);
   const [registrationCodes, setRegistrationCodes] = useState([]);
   const [userTypes, setUserTypes] = useState([]);
   const [refresh, setRefresh] = useState(false);
@@ -73,7 +68,6 @@ export default function ManageUser() {
   });
   const [response, setResponse] = useState("");
   const [users, setUsers] = useState([]);
-  const navigate = useNavigate();
   const theme = useTheme();
 
   const handleMouseDownCopy = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -214,7 +208,6 @@ export default function ManageUser() {
                     <Demo>
                       <List
                         style={{ maxHeight: "300px", overflow: "auto" }}
-                        dense={dense}
                       >
                         {registrationCodes.map((registrationCode, key) => {
                           return (

@@ -16,13 +16,14 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
-import { BarChart, ManageAccounts, AccountBalance } from "@mui/icons-material";
+import { BarChart, ManageAccounts, AccountBalance, Description} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
 import AxiosInstance from "../AxiosInstance";
 
 import Dashboard from "./Dashboard";
+import Quotations from "./Quotations";
 import ManageUser from "./ManageUser";
 import BankAccounts from "./BankAccounts";
 
@@ -32,9 +33,28 @@ const drawerWidth = 240;
 
 export default function SideMenu() {
   const navigate = useNavigate();
-  const [component, setComponent] = useState(<Dashboard />);
+  
+  const [component, setComponent] = useState({
+    dashboard: {
+      element: <Dashboard />,
+      selected: true
+    },
+    quotations: {
+      element: null,
+      selected: false
+    },
+    bank_accounts: {
+      element: null,
+      selected: false
+    },
+    manage_users: {
+      element: null,
+      selected: false
+    },
+  });
   const [name, setName] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
+
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -56,6 +76,8 @@ export default function SideMenu() {
       .catch((error) => {
         console.log(error);
       });
+
+     
   });
 
   const logout = () => {
@@ -64,6 +86,25 @@ export default function SideMenu() {
     cookies.remove("TOKEN", { path: "/" });
     // redirect user to the landing page
     navigate("/");
+  };
+
+  // const handleSelect = (el, com)=>{
+  //   const pages = Object.keys(component);
+  //   setComponent(
+  //     pages.map((page)=>page === el ? {...component, [el]: com, selected: true} : {...component, [page]: null, selected: false})
+  //   )
+  
+  // }
+
+  const handleSelect = (el, com) => {
+    const pages = Object.keys(component);
+    setComponent(
+      pages.reduce((acc, page) => ({
+        ...acc,
+        [page]: page === el ? com : null,
+        selected: page === el ? true : false
+      }), {})
+    );
   };
 
   return (
@@ -131,8 +172,8 @@ export default function SideMenu() {
           <List>
             <ListItem
               disablePadding
-              selected={true}
-              onClick={() => setComponent(<Dashboard />)}
+              selected={component.dashboard.selected}
+              onClick={() => handleSelect('dashboard', <Dashboard/>)}
             >
               <ListItemButton>
                 <ListItemIcon>
@@ -142,11 +183,28 @@ export default function SideMenu() {
               </ListItemButton>
             </ListItem>
           </List>
-          <Divider />
           <List>
             <ListItem
               disablePadding
-              selected={false}
+              selected={component.quotations.selected}
+              onClick={() => {
+                handleSelect('quotations', <Quotations/>)
+              }}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <Description />
+                </ListItemIcon>
+                <ListItemText primary="Quotations" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <Divider />
+
+          <List>
+            <ListItem
+              disablePadding
+              selected={component.bank_accounts.selected}
               onClick={() => setComponent(<BankAccounts />)}
             >
               <ListItemButton>
@@ -160,7 +218,7 @@ export default function SideMenu() {
           <List>
             <ListItem
               disablePadding
-              selected={false}
+              selected={component.manage_users.selected}
               onClick={() => setComponent(<ManageUser />)}
             >
               <ListItemButton>
@@ -174,7 +232,7 @@ export default function SideMenu() {
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        {component}
+        {/* {component} */}
       </Box>
     </Box>
   );
