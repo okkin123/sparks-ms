@@ -21,8 +21,44 @@ import { Toolbar,
 import DeleteIcon from '@mui/icons-material/Delete';
 
 
+const generateValidationSchema = (rows) => {
+  const shape = {};
+  rows.forEach(row => {
+    shape[`description${row.id}`] = Yup.string().required('This field is required');
+    shape[`quantity${row.id}`] = Yup.string().required('This field is required');
+    shape[`total_cost${row.id}`] = Yup.string().required('This field is required');
+  });
+  return Yup.object().shape({
+    rows: Yup.array().of(Yup.object().shape(shape))
+  });
+};
+
 const QuotationDetails = (props)=>{
   const { values, handleChange, errors, touched } = useFormikContext();
+
+  const handleRemoveRowFields = (id) => {
+    //  setRows(rows => {
+    //   const index = rows.findIndex(row => row.id === id);
+    //   if (index !== -1) {
+    //     const newItems = [...rows];
+    //     newItems.splice(index, 1);
+        
+    //     return newItems;
+    //   }
+    //   return rows;
+    // });
+
+    const index = values.rows.findIndex(row => row.id === id);
+    if (index !== -1) {
+      const updatedRows = [...values.rows];
+      updatedRows.splice(index, 1);
+
+      console.log(updatedRows)
+      //values.setValues({ ...values, rows: updatedRows });
+    }
+    
+  };
+
   return(
     <FieldArray
     name="rows"
@@ -37,42 +73,43 @@ const QuotationDetails = (props)=>{
           <TableCell align="center">
             <TextField
             variant="outlined"
-            name={`rows[${y}]`}
-            value={row.description}
+            name={`description${row.id}`}
+            value={row[`description${row.id}`]}
             onChange={handleChange}
             size="small"
-            // error={touched.fields && touched.fields[index] && Boolean(errors.fields && errors.fields[index] && errors.fields[index].value)}
-            // helperText={touched.fields && touched.fields[index] && errors.fields && errors.fields[index] && errors.fields[index].value}
+            multiline
+            rows={2}
+            error={touched[`description${row.id}`] && Boolean(errors[`description${row.id}`])}
+            helperText={touched[`description${row.id}`] && errors[`description${row.id}`]}
             fullWidth
             //sx={{marginBottom: '8px'}}
             />
           </TableCell>
           <TableCell align="center">
           <TextField
-          variant="outlined"
-          name={`rows[${y}]`}
-          value={row.quantity}
-          onChange={handleChange}
-          size="small"
-          InputProps={{
-            sx: {
-              '& input': {
-                textAlign: 'center'
+            variant="outlined"
+            name={`quantity${row.id}`}
+            value={values[`quantity${row.id}`]}
+            onChange={handleChange}
+            size="small"
+            InputProps={{
+              sx: {
+                '& input': {
+                  textAlign: 'center'
+                }
               }
-            }
-          }}
-          // error={touched.fields && touched.fields[index] && Boolean(errors.fields && errors.fields[index] && errors.fields[index].value)}
-          // helperText={touched.fields && touched.fields[index] && errors.fields && errors.fields[index] && errors.fields[index].value}
-          
+            }}
+            error={touched[`quantity${row.id}`] && Boolean(errors[`quantity${row.id}`])}
+            helperText={touched[`quantity${row.id}`] && errors[`quantity${row.id}`]}
           //sx={{marginBottom: '8px'}}
           />
           </TableCell>
-          <TableCell align="center">{parseInt(row.quantity) / parseFloat(row.total_cost)}</TableCell>
+          <TableCell align="center">{0}</TableCell>
           <TableCell align="center">
           <TextField
           variant="outlined"
-          name={`rows[${y}]`}
-          value={row.total_cost}
+          name={`unit_cost${row.id}`}
+          value={values[`unit_cost${row.id}`]}
           onChange={handleChange}
           size="small"
           InputProps={{
@@ -82,13 +119,16 @@ const QuotationDetails = (props)=>{
               }
             }
           }}
-          // error={touched.fields && touched.fields[index] && Boolean(errors.fields && errors.fields[index] && errors.fields[index].value)}
-          // helperText={touched.fields && touched.fields[index] && errors.fields && errors.fields[index] && errors.fields[index].value}
-          
+          error={touched[`unit_cost${row.id}`] && Boolean(errors[`unit_cost${row.id}`])}
+          helperText={touched[`unit_cost${row.id}`] && errors[`unit_cost${row.id}`]}
           //sx={{marginBottom: '8px'}}
           />
           </TableCell>
-          {props.removeField}
+          <TableCell align="center">
+            <IconButton color="error" onClick={()=>console.log(row)}>
+              <DeleteIcon />
+            </IconButton>
+          </TableCell>
          
          </TableRow>
         ))}
@@ -106,9 +146,9 @@ export default function New(){
 
     const [rows, setRows] = useState([{
       id: 1,
-      description: "",
-      quatity: "",
-      total_cost: ""
+      [`description${1}`]: "",
+      [`quantity${1}`]: "",
+      [`unit_cost${1}`]: ""
     }]);
 
 
@@ -117,40 +157,32 @@ export default function New(){
       return rows[rows.length - 1].id;
     };  
 
-
-    const handleRemoveRowFields = (id) => {
-      setRows(rows => {
-        const index = rows.findIndex(row => row.id === id);
-        if (index !== -1) {
-          const newItems = [...rows];
-          newItems.splice(index, 1);
-          return newItems;
-        }
-        return rows;
-      });
-    };
-
-    const formik = useFormik({
-      initialValues: {
-        rows: rows
-      },
-      validateOnChange: false,
-      onSubmit: (values, {validateForm})=>{
-        console.log(values);
-      }
-    })
-
     const handleAddRowFields = ()=>{
       const newRow =  {
         id: getLastRowFieldId() + 1,
-        description: "",
-        quatity: "",
-        total_cost: ""
+        [`description${getLastRowFieldId() + 1}`]: "",
+        [`quantity${getLastRowFieldId() + 1}`]: "",
+        [`unit_cost${getLastRowFieldId() + 1}`]: ""
       };
       const newRows = [...rows, newRow];
       setRows(newRows);
       formik.setValues({ rows: newRows });
     }
+
+    const formik = useFormik({
+      initialValues: {
+        rows: rows 
+      },
+      //validationSchema: generateValidationSchema(rows),
+      validateOnChange: false,
+      onSubmit: (values, {validateForm})=>{
+        console.log(values.rows)
+      }
+    })
+
+
+
+    
 
 
     return(
@@ -197,13 +229,7 @@ export default function New(){
                                 </TableHead>
                                 <TableBody>
                                 <FormikProvider value={formik}>
-                                    <QuotationDetails removeField={
-                                        <TableCell align="center">
-                                          {/* <IconButton color="error" onClick={()=>handleRemoveRowFields(formi)}>
-                                            <DeleteIcon />
-                                          </IconButton> */}
-                                        </TableCell>
-                                    } />
+                                    <QuotationDetails />
                                 </FormikProvider>
                                 {/* {rows.map((row, i) => (
                                     <TableRow
