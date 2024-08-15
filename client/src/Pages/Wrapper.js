@@ -15,15 +15,17 @@ import {
   Button,
   Menu,
   MenuItem,
+  Collapse
 } from "@mui/material";
-import { BarChart, ManageAccounts, AccountBalance, Description} from "@mui/icons-material";
+import { BarChart, ManageAccounts, AccountBalance, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
 import AxiosInstance from "../AxiosInstance";
 
 import Dashboard from "./Dashboard";
-import Quotations from "./Quotations";
+import QList from "./Quotations/List";
+import QNew from "./Quotations/New";
 import ManageUser from "./ManageUser";
 import BankAccounts from "./BankAccounts";
 
@@ -35,20 +37,20 @@ export default function SideMenu() {
   const navigate = useNavigate();
   
   const [component, setComponent] = useState({
+    element: <Dashboard />,
     dashboard: {
-      element: <Dashboard />,
       selected: true
     },
-    quotations: {
-      element: null,
+    qlist: {
+      selected: false
+    },
+    qnew: {
       selected: false
     },
     bank_accounts: {
-      element: null,
       selected: false
     },
     manage_users: {
-      element: null,
       selected: false
     },
   });
@@ -62,6 +64,8 @@ export default function SideMenu() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const [dropdownMenu, setDropdownMenu] = useState(false);
 
 
   useEffect(() => {
@@ -88,23 +92,18 @@ export default function SideMenu() {
     navigate("/");
   };
 
-  // const handleSelect = (el, com)=>{
-  //   const pages = Object.keys(component);
-  //   setComponent(
-  //     pages.map((page)=>page === el ? {...component, [el]: com, selected: true} : {...component, [page]: null, selected: false})
-  //   )
-  
-  // }
 
   const handleSelect = (el, com) => {
     const pages = Object.keys(component);
-    setComponent(
-      pages.reduce((acc, page) => ({
-        ...acc,
-        [page]: page === el ? com : null,
-        selected: page === el ? true : false
-      }), {})
-    );
+
+    setComponent(pages.reduce((acc, page) => ({
+      ...acc,
+      element: com,
+      [page]: {
+        ...acc[page],
+        selected: page === el ? true: false
+      }
+    }), {}))
   };
 
   return (
@@ -186,18 +185,43 @@ export default function SideMenu() {
           <List>
             <ListItem
               disablePadding
-              selected={component.quotations.selected}
-              onClick={() => {
-                handleSelect('quotations', <Quotations/>)
-              }}
+              
+              onClick={()=>setDropdownMenu(!dropdownMenu)}
             >
               <ListItemButton>
                 <ListItemIcon>
                   <Description />
                 </ListItemIcon>
                 <ListItemText primary="Quotations" />
+                {dropdownMenu ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
             </ListItem>
+              <Collapse in={dropdownMenu} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton 
+                 selected={component.qnew.selected}
+                 onClick={() => {
+                   handleSelect('qnew', <QNew/>)
+                 }}
+                 sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <Add />
+                  </ListItemIcon>
+                  <ListItemText primary="New" />
+                </ListItemButton>
+                <ListItemButton
+                  selected={component.qlist.selected}
+                  onClick={() => {
+                    handleSelect('qlist', <QList/>)
+                  }}
+                 sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <ViewList />
+                  </ListItemIcon>
+                  <ListItemText primary="View List" />
+                </ListItemButton>
+              </List>
+            </Collapse>
           </List>
           <Divider />
 
@@ -205,7 +229,9 @@ export default function SideMenu() {
             <ListItem
               disablePadding
               selected={component.bank_accounts.selected}
-              onClick={() => setComponent(<BankAccounts />)}
+              onClick={() => {
+                handleSelect('bank_accounts', <BankAccounts/>)
+              }}
             >
               <ListItemButton>
                 <ListItemIcon>
@@ -219,7 +245,9 @@ export default function SideMenu() {
             <ListItem
               disablePadding
               selected={component.manage_users.selected}
-              onClick={() => setComponent(<ManageUser />)}
+              onClick={() => {
+                handleSelect('manage_users', <ManageUser/>)
+              }}
             >
               <ListItemButton>
                 <ListItemIcon>
@@ -232,7 +260,7 @@ export default function SideMenu() {
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        {/* {component} */}
+          { component.element }
       </Box>
     </Box>
   );

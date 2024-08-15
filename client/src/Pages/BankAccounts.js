@@ -330,7 +330,7 @@ export default function BankAccounts(){
                               open: true,
                             }
                           }));
-                      }}>Add Bank Account</Button>
+                      }}>Add</Button>
                       <FormikProvider value={formik}>
                           <BankDetails title="ADD BANK ACCOUNT" open={dialog.add.open} onCancel={()=>setDialog((dialog) => ({
                           ...dialog,

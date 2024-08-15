@@ -96,7 +96,7 @@ module.exports = {
                     },
                     process.env.SECRET_KEY,
                     {
-                      expiresIn: "1h",
+                      expiresIn: "1d",
                     }
                   );
                   return res.header("Authorization", `Bearer ${token}`).send({
