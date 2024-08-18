@@ -1,0 +1,121 @@
+const dbConnection = require('../config/database');
+
+
+
+module.exports = {
+    generateQuotationNumber: (req, res)=>
+    {
+        dbConnection.query("SELECT MAX(quotation_number) as quotation_number FROM tbl_quotations",
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    if(data.length > 0)
+                    {
+                        if(data[0].quotation_number == null)
+                        {
+                            res.send({
+                                status: "SUCCESS",
+                                quotation_number: 1
+                            })
+                        }
+                        else
+                        {
+                            res.send({
+                                status: "SUCCESS",
+                                quotation_number: data[0].quotation_number + 1
+                            })
+                        }
+                        
+                    }
+                }
+            }
+        )
+    },
+    insert: (req, res)=>
+    {
+        dbConnection.query("SELECT user_id FROM vw_users WHERE user_type='Operations Manager' OR user_type='Managing Director'",
+            function(err3, data3, fields3)
+            {
+                if(err3)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err3.sqlMessage
+                    })
+                }
+                else
+                {
+                    const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
+                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "pending for approval"],
+                        function(err, data, fields)
+                        {
+                            if(err)
+                            {
+                                res.send({
+                                    status: "ERROR",
+                                    message: err.sqlMessage
+                                })
+                            }
+                            else
+                            {
+                                const quotation_details = req.body.details;
+                                const values = quotation_details.flatMap(quotation_detail => [
+                                req.body.quotation_number,
+                                quotation_detail.description,
+                                quotation_detail.quantity,
+                                quotation_detail.unit_cost,
+                                quotation_detail.total_cost
+                                ]);
+            
+                                const placeholders = quotation_details.map(() => '(?,?,?,?,?)').join(',');
+                                dbConnection.query(
+                                    `INSERT INTO tbl_quotation_details (quotation_number, description, qty, unit_cost, total_cost) VALUES ${placeholders}`,
+                                    values,
+                                    function(err2, data2, fields2) {
+                                      if (err2) {
+                                        console.log(err2);
+                                      } else {
+                                        res.send({
+                                          status: "SUCCESS",
+                                          message: "Quotation #: " + req.body.quotation_number + " has been submitted for approval!"
+                                        });
+                                      }
+                                    }
+                                  );
+                               
+                            }
+                        }
+                    )
+                }
+            }
+        )
+    },
+    list: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_quotations WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?", 
+            [req.user.user_id], function(err, data, fields){
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    res.send({
+                        status: "SUCCESS",
+                        quotations: data
+                    })
+                }
+        })
+    }
+}
