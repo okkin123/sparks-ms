@@ -21,20 +21,26 @@ import { Toolbar,
          Alert,
          Collapse,
          IconButton} from '@mui/material';
+
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ErrorIcon from '@mui/icons-material/Error';
 import CloseIcon from '@mui/icons-material/Close';
 
 import Dialog from '../../Components/Dialog';
+import AxiosInstance from '../../AxiosInstance';
 
 
 const QuotationDetailSchema = Yup.object().shape({
   description: Yup.string()
     .required('This field is required!'),
   quantity: Yup.string()
-    .matches(/^\d+$/, 'Only whole numbers are allowed')
-    .required('This field is required!'),
+    .matches(/^\d+$/, 'Only whole numbers are allowed'),
   total_cost: Yup.string()
     .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
     .required('This field is required!')
@@ -42,6 +48,7 @@ const QuotationDetailSchema = Yup.object().shape({
 
 
   const QuotationSchema = Yup.object().shape({
+    date: Yup.date().required('Date is required'),
     client_name: Yup.string()
     .required('This field is required!'),
     attention_to: Yup.string()
@@ -59,6 +66,7 @@ export default function New(){
         open: false
       },
     })
+    const [quotationNumber, setQuotationNumber] = useState("");
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
       total_cost_without_vat: "",
@@ -172,6 +180,7 @@ export default function New(){
 
     const formik_quotation = useFormik({
       initialValues: {
+        date: null,
         client_name: "",
         attention_to: "",
         project_name: "",
@@ -180,7 +189,6 @@ export default function New(){
       validateOnChange: false,
       validationSchema: QuotationSchema,
       onSubmit: (values, {validateForm})=>{
-
         if(quotationDetails.length === 0)
         {
           setError(true)
@@ -188,6 +196,24 @@ export default function New(){
         else
         {
           setError(false)
+          AxiosInstance.post("/quotation/insert", {
+            quotation_number: quotationNumber,
+            values: values,
+            details: quotationDetails
+          })
+          .then(function(response){
+            if(response.data.status === "SUCCESS")
+            {
+              console.log(response.data.message)
+            }
+            else
+            {
+              console.log(response.data.message)
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
         }
       }
     })
@@ -207,28 +233,63 @@ export default function New(){
       
     },[quotationDetails])
 
-
+   useEffect(()=>{
+    AxiosInstance.get("/quotation/generateQuotationNumber")
+    .then(function(result){
+        if(result.data.status === "SUCCESS")
+        {
+          setQuotationNumber(result.data.quotation_number);
+        }
+        else
+        {
+          console.log(result.data)
+        }
+    }) 
+    .catch(function(error){
+      console.log(error)
+    })
+   }, [])
 
     return(
         <React.Fragment>
             <Toolbar />
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
-
                 <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
-                <Typography variant="h6">NEW QUOTATION</Typography>
-                <Typography variant="subtitle1">Quotation #:</Typography>
+                  <Typography variant="h6">NEW QUOTATION</Typography>
                 </Stack>
-              
               <Grid item>
                  <Divider />
               </Grid>
                <Grid item>
+                <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+                  <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker 
+                    value={dayjs(formik_quotation.values.date)}
+                    onChange={(value)=>formik_quotation.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                    slotProps={{
+                        textField: {
+                          label: 'Date',
+                          variant: 'outlined',
+                          name: 'date',
+                          size: 'small', 
+                          fullWidth: true,
+                          error: Boolean(formik_quotation.errors.date),
+                          helperText:formik_quotation.touched.date && formik_quotation.errors.date
+                        },
+                      }} />
+                  </LocalizationProvider>
+                 </Stack>
+               </Grid>
+               <Grid item>
+                
                  <Stack direction="row" spacing={2}>
                     <TextField variant='outlined' label="Client Name"
                       name="client_name"
                       value={formik_quotation.values.client_name}
                       onChange={formik_quotation.handleChange}
+                      size="small"
                       error={
                         formik_quotation.touched.client_name && Boolean(formik_quotation.errors.client_name)
                         }
@@ -240,6 +301,7 @@ export default function New(){
                       name="attention_to"
                       value={formik_quotation.values.attention_to}
                       onChange={formik_quotation.handleChange}
+                      size="small"
                       error={
                         formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
                         }
@@ -253,6 +315,7 @@ export default function New(){
                     name="project_name"
                     value={formik_quotation.values.project_name}
                     onChange={formik_quotation.handleChange}
+                    size="small"
                     error={
                       formik_quotation.touched.project_name && Boolean(formik_quotation.errors.project_name)
                       }
@@ -266,6 +329,7 @@ export default function New(){
                     name="project_description"
                     value={formik_quotation.values.project_description}
                     onChange={formik_quotation.handleChange}
+                    size="small"
                     error={
                       formik_quotation.touched.project_description && Boolean(formik_quotation.errors.project_description)
                       }
@@ -292,7 +356,7 @@ export default function New(){
                         }
                       }));
                     }} 
-                    sx={{ width: 'fit-content', whiteSpace: 'nowrap' }}
+                    sx={{ width: 'fit-content',  whiteSpace: 'nowrap'}}
                   >
                     Add Quotation Details
                   </Button>
@@ -524,7 +588,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <Button variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit}>Submit Quotation for Approval</Button>
+                     <Button variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit}>Submit for Approval</Button>
                  </Grid>
             </Grid>
             </Paper>
