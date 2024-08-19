@@ -8,7 +8,7 @@ import Wrapper from "./Pages/Wrapper";
 import ForgotPassword from "./Pages/ForgotPassword";
 import EnterCode from "./Pages/EnterCode";
 import ChangePassword from "./Pages/ChangePassword";
-
+import Details from "./Pages/Quotations/Details";
 import ProtectedRoutes from "./ProtectedRoutes";
 
 function App() {
@@ -44,6 +44,7 @@ function App() {
                 </ProtectedRoutes>
               }
             />
+            <Route path="/quotation/details" Component={Details} />
           </Routes>
         </BrowserRouter>
       </div>

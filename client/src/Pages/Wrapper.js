@@ -17,7 +17,7 @@ import {
   MenuItem,
   Collapse
 } from "@mui/material";
-import { BarChart, ManageAccounts, AccountBalance, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
+import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
@@ -27,7 +27,7 @@ import Dashboard from "./Dashboard";
 import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
 import ManageUser from "./ManageUser";
-import BankAccounts from "./BankAccounts";
+import Preferences from "./Prefrences";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
@@ -47,10 +47,10 @@ export default function SideMenu() {
     qnew: {
       selected: false
     },
-    bank_accounts: {
+    manage_users: {
       selected: false
     },
-    manage_users: {
+    preferences: {
       selected: false
     },
   });
@@ -224,23 +224,6 @@ export default function SideMenu() {
             </Collapse>
           </List>
           <Divider />
-
-          <List>
-            <ListItem
-              disablePadding
-              selected={component.bank_accounts.selected}
-              onClick={() => {
-                handleSelect('bank_accounts', <BankAccounts/>)
-              }}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  <AccountBalance />
-                </ListItemIcon>
-                <ListItemText primary="Bank Accounts" />
-              </ListItemButton>
-            </ListItem>
-          </List>
           <List>
             <ListItem
               disablePadding
@@ -254,6 +237,22 @@ export default function SideMenu() {
                   <ManageAccounts />
                 </ListItemIcon>
                 <ListItemText primary="Manage Users" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <List>
+            <ListItem
+              disablePadding
+              selected={component.preferences.selected}
+              onClick={() => {
+                handleSelect('preferences', <Preferences/>)
+              }}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <SettingsSuggest />
+                </ListItemIcon>
+                <ListItemText primary="Preferences" />
               </ListItemButton>
             </ListItem>
           </List>

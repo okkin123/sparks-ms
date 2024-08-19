@@ -117,5 +117,41 @@ module.exports = {
                     })
                 }
         })
+    },
+    details: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_quotations WHERE quotation_number=?", 
+            [req.body.quotation_number], function(err, data, fields){
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    dbConnection.query("SELECT * FROM tbl_quotation_details WHERE quotation_number=?",
+                        [req.body.quotation_number], function(err2, data2, fields)
+                        {
+                            if(err2)
+                            {
+                                res.send({
+                                    status: "ERROR",
+                                    message: err2.sqlMessage
+                                })
+                            }
+                            else
+                            {
+                                res.send({
+                                    status: "SUCCESS",
+                                    quotation: data,
+                                    details: data2
+                                })
+                            }
+                        }
+                    )
+                    
+                }
+        })
     }
 }
