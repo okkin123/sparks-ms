@@ -27,7 +27,7 @@ import Dashboard from "./Dashboard";
 import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
 import ManageUser from "./ManageUser";
-import Preferences from "./Prefrences";
+import Preferences from "./Preferences";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
