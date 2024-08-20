@@ -1,4 +1,5 @@
 const dbConnection = require('../config/database');
+const { company_address } = require('./preferences_controller');
 
 
 
@@ -144,6 +145,7 @@ module.exports = {
                             {
                                 res.send({
                                     status: "SUCCESS",
+                                    trn:  process.env.TRN,
                                     quotation: data,
                                     details: data2
                                 })

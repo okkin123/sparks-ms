@@ -9,7 +9,49 @@ function reloadEnv() {
     }
 }
 
-module.exports = {
+module.exports = {    
+    company_address: (req, res)=>{
+            reloadEnv()
+            res.send({company_address: process.env.COMPANY_ADDRESS})
+    },
+    setCompanyAddress: (req, res)=>{
+    
+        try{
+            // Define the variable you want to update and its new value
+            const variableName = 'COMPANY_ADDRESS';
+            const newValue = req.body.company_address;
+
+            // Define the .env file path
+            const envFilePath = path.join(__dirname, '..', '.env');
+
+            // Read the .env file
+            let envContent = fs.readFileSync(envFilePath, 'utf-8');
+
+            // Create a regular expression to find the variable
+            const regex = new RegExp(`^${variableName}=.*$`, 'm');
+
+            // Update the variable if it exists, otherwise add it
+            if (regex.test(envContent)) {
+                envContent = envContent.replace(regex, `${variableName}=${newValue}`);
+            } else {
+                envContent += `\n${variableName}=${newValue}`;
+            }
+
+            // Write the updated content back to the .env file
+            fs.writeFileSync(envFilePath, envContent);
+
+            res.send({
+                status: "SUCCESS",
+                message: "Company Address value has been updated!"
+            })
+        }catch (error){
+            res.send({
+                status: "ERROR",
+                message: error.message
+            })
+        }
+
+    },
     TRN: (req, res)=>{
         reloadEnv()
         res.send({trn: process.env.TRN})
@@ -47,7 +89,49 @@ module.exports = {
         }catch (error){
             res.send({
                 status: "ERROR",
-                message: error
+                message: error.message
+            })
+        }
+
+    },
+    VAT: (req, res)=>{
+        reloadEnv()
+        res.send({vat: process.env.VAT})
+    },
+    setVAT: (req, res)=>{
+
+        try{
+            // Define the variable you want to update and its new value
+            const variableName = 'VAT';
+            const newValue = req.body.vat;
+
+            // Define the .env file path
+            const envFilePath = path.join(__dirname, '..', '.env');
+
+            // Read the .env file
+            let envContent = fs.readFileSync(envFilePath, 'utf-8');
+
+            // Create a regular expression to find the variable
+            const regex = new RegExp(`^${variableName}=.*$`, 'm');
+
+            // Update the variable if it exists, otherwise add it
+            if (regex.test(envContent)) {
+                envContent = envContent.replace(regex, `${variableName}=${newValue}`);
+            } else {
+                envContent += `\n${variableName}=${newValue}`;
+            }
+
+            // Write the updated content back to the .env file
+            fs.writeFileSync(envFilePath, envContent);
+
+            res.send({
+                status: "SUCCESS",
+                message: "VAT % value has been updated!"
+            })
+        }catch (error){
+            res.send({
+                status: "ERROR",
+                message: error.message
             })
         }
 
@@ -64,5 +148,57 @@ module.exports = {
             swift_code: process.env.SWIFT_CODE,
             routing_code: process.env.ROUTING_CODE
         });
+    },
+    setBankAccount: (req, res) => {
+        try{
+            // Define the variable you want to update and its new value
+            const variableNames = {
+                benificiary: "BENIFICIARY",
+                name: "BANK_NAME",
+                address: "BANK_ADDRESS",
+                account_number: "ACCOUNT_NUMBER",
+                iban: "IBAN",
+                swift_code: "SWIFT_CODE",
+                routing_code: "ROUTING_CODE",
+
+            };
+
+            const newValues = req.body;
+
+            // Define the .env file path
+            const envFilePath = path.join(__dirname, '..', '.env');
+
+            // Read the .env file
+            let envContent = fs.readFileSync(envFilePath, 'utf-8');
+
+            // Iterate through each variable and update its value
+            for (const [key, envVar] of Object.entries(variableNames)) {
+                const envVal = newValues[key];
+                if (envVal) {
+                    // Create a regular expression to find the variable
+                    const regex = new RegExp(`^${envVar}=.*$`, 'm');
+
+                    // Update the variable if it exists, otherwise add it
+                    if (regex.test(envContent)) {
+                        envContent = envContent.replace(regex, `${envVar}=${envVal}`);
+                    } else {
+                        envContent += `\n${envVar}=${envVal}`;
+                    }
+                }
+            }
+
+            // Write the updated content back to the .env file
+            fs.writeFileSync(envFilePath, envContent);
+
+            res.send({
+                status: "SUCCESS",
+                message: "Bank Account values has been updated!"
+            })
+        }catch (error){
+            res.send({
+                status: "ERROR",
+                message: error.message
+            })
+        }
     }
 }

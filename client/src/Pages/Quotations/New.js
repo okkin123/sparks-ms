@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-
+import { styled } from '@mui/material/styles';
 import * as Yup from "yup";
 import { useFormik } from 'formik';
 
@@ -12,7 +12,6 @@ import { Toolbar,
          Stack,
          Table,
          TableBody,
-         TableCell,
          TableContainer,
          TableHead,
          TableFooter,
@@ -21,7 +20,7 @@ import { Toolbar,
          Alert,
          Collapse,
          IconButton} from '@mui/material';
-
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -35,6 +34,29 @@ import CloseIcon from '@mui/icons-material/Close';
 import Dialog from '../../Components/Dialog';
 import AxiosInstance from '../../AxiosInstance';
 
+
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+  [`&.${tableCellClasses.footer}`]: {
+    fontSize: 14,
+    color: theme.palette.common.black,
+    fontWeight: 'bold'
+  }
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  // hide last border
+  'td,th': {
+    border: '1px solid '+theme.palette.primary.main,
+  },
+}));
 
 const QuotationDetailSchema = Yup.object().shape({
   description: Yup.string()
@@ -73,6 +95,7 @@ export default function New(){
       vat_amount: "",
       total_cost_with_vat: ""
     })
+    const [vat, setVat] = useState('');
     const [error, setError] = useState(false);
 
 
@@ -226,11 +249,11 @@ export default function New(){
 
       setQuotationBreakdown({
         total_cost_without_vat: total_cost_without_vat,
-        vat_amount: total_cost_without_vat * 0.05,
+        vat_amount: total_cost_without_vat * (vat / 100),
         total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * 0.05)
       })
 
-      
+          // eslint-disable-next-line react-hooks/exhaustive-deps
     },[quotationDetails])
 
    useEffect(()=>{
@@ -248,6 +271,16 @@ export default function New(){
     .catch(function(error){
       console.log(error)
     })
+
+      AxiosInstance.get("/preferences/vat")
+      .then(function(result){
+        setVat(result.data.vat);
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+
+
    }, [])
 
     return(
@@ -464,31 +497,30 @@ export default function New(){
                     <TableContainer component={Paper}>
                             <Table size="small">
                                 <TableHead>
-                                <TableRow>
-                                    <TableCell align="left">SN</TableCell>
-                                    <TableCell sx={{ minWidth: 400 }}>DESCRIPTION</TableCell>
-                                    <TableCell align="center">QUANTITY</TableCell>
-                                    <TableCell align="right">UNIT COST(AED)</TableCell>
-                                    <TableCell align="right">TOTAL COST(AED)</TableCell>
-                                    <TableCell align="center">ACTION</TableCell>
-                                </TableRow>
+                                <StyledTableRow>
+                                    <StyledTableCell align="left">SN</StyledTableCell>
+                                    <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
+                                    <StyledTableCell align="center">QUANTITY</StyledTableCell>
+                                    <StyledTableCell align="right">UNIT COST(AED)</StyledTableCell>
+                                    <StyledTableCell align="right">TOTAL COST(AED)</StyledTableCell>
+                                    <StyledTableCell align="center">ACTION</StyledTableCell>
+                                </StyledTableRow>
                                 </TableHead>
                                 <TableBody>
                                 {quotationDetails.map((quotationDetail, i) => (
-                                    <TableRow
+                                    <StyledTableRow
                                     key={i}
-                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                     >
-                                    <TableCell align="left">{i+1}</TableCell>
-                                    <TableCell component="th" scope="row">
+                                    <StyledTableCell align="left">{i+1}</StyledTableCell>
+                                    <StyledTableCell component="th" scope="row">
                                         {quotationDetail.description}
-                                    </TableCell>
+                                    </StyledTableCell>
                                     
-                                    <TableCell align="center">
-                                      {quotationDetail.quantity}</TableCell>
-                                    <TableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</TableCell>
-                                    <TableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</TableCell>
-                                    <TableCell align="center">
+                                    <StyledTableCell align="center">
+                                      {quotationDetail.quantity}</StyledTableCell>
+                                    <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    <StyledTableCell align="center">
                                     <IconButton color="success" onClick={()=>handleEditQuotaionDetails(i)}>
                                       <EditIcon />
                                     </IconButton>
@@ -563,23 +595,23 @@ export default function New(){
                                     <IconButton onClick={()=>handleRemoveQuotationDetails(i)} color="error">
                                       <DeleteIcon />
                                     </IconButton>
-                                    </TableCell>
-                                    </TableRow>
+                                    </StyledTableCell>
+                                    </StyledTableRow>
                                 ))}
                                 </TableBody>
                                 <TableFooter>
-                                  <TableRow>
-                                    <TableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</TableCell>
-                                    <TableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2)}</TableCell>
-                                  </TableRow>
-                                  <TableRow>
-                                    <TableCell colSpan={5} align="right">VAT 5%:</TableCell>
-                                    <TableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2)}</TableCell>
-                                  </TableRow>
-                                  <TableRow>
-                                    <TableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</TableCell>
-                                    <TableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2)}</TableCell>
-                                  </TableRow>
+                                  <StyledTableRow>
+                                    <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                  </StyledTableRow>
+                                  <StyledTableRow>
+                                    <StyledTableCell colSpan={5} align="right">VAT {vat}%:</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                  </StyledTableRow>
+                                  <StyledTableRow>
+                                    <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                  </StyledTableRow>
                                 </TableFooter>
                             </Table>
                         </TableContainer>
@@ -596,3 +628,38 @@ export default function New(){
         </React.Fragment>
     )
 }
+
+// CREATE TABLE year_counter (
+//   id INT AUTO_INCREMENT PRIMARY KEY,
+//   year INT NOT NULL,
+//   counter INT NOT NULL
+// );
+
+// INSERT INTO year_counter (year, counter) VALUES (2024, 1);
+
+// DELIMITER //
+
+// CREATE PROCEDURE increment_counter()
+// BEGIN
+//     DECLARE current_year INT;
+//     DECLARE current_counter INT;
+
+//     -- Get the current year and counter
+//     SELECT year, counter INTO current_year, current_counter
+//     FROM year_counter
+//     ORDER BY id DESC
+//     LIMIT 1;
+
+//     -- Check if the year has changed
+//     IF current_year = YEAR(CURDATE()) THEN
+//         -- Increment the counter
+//         UPDATE year_counter
+//         SET counter = counter + 1
+//         WHERE year = current_year;
+//     ELSE
+//         -- Insert a new record for the new year
+//         INSERT INTO year_counter (year, counter) VALUES (YEAR(CURDATE()), 1);
+//     END IF;
+// END //
+
+// DELIMITER ;

@@ -8,7 +8,7 @@ import AxiosInstance from '../../AxiosInstance';
 const columns = [
   { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
     const parentHeight = window.innerHeight;
-    const parentWidth = window.innerWidth / 2;
+    const parentWidth = window.innerWidth;
   
       // Calculate the center position
       const top = (window.innerHeight - parentHeight) / 2;
@@ -19,7 +19,7 @@ const columns = [
           href="#"
           onClick={() =>
             window.open(
-              `https://opulent-garbanzo-jgqw9vx5xg9cpgpg-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+              `https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
               "_blank",
               `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
             )

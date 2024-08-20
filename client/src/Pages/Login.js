@@ -229,7 +229,7 @@ export default function Login() {
                 spacing={2}
               >
                 <Typography variant="subtitle1">
-                  Dont have an account?
+                  Don't have an account?
                 </Typography>
                 <Button
                   variant="contained"
