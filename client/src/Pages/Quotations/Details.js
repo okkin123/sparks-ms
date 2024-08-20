@@ -1,21 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import { styled } from '@mui/material/styles';
 import {Typography, 
+        Box,
         Grid, 
         Stack,
         Paper,
         Table,
         TableBody,
-        TableCell,
         TableContainer,
         TableHead,
         TableFooter,
         TableRow,
         TextField,
         Button} from '@mui/material';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import AxiosInstance from '../../AxiosInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
 
+
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.head}`]: {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.common.white,
+    },
+    [`&.${tableCellClasses.body}`]: {
+      fontSize: 14,
+    },
+    [`&.${tableCellClasses.footer}`]: {
+      fontSize: 14,
+      color: theme.palette.common.black,
+      fontWeight: 'bold'
+    }
+  }));
+  
+  const StyledTableRow = styled(TableRow)(({ theme }) => ({
+    // hide last border
+    'td,th': {
+      border: '1px solid '+theme.palette.primary.main,
+    },
+  }));
 
 
 export default function Details(){
@@ -70,7 +95,7 @@ export default function Details(){
                   setQuotationDetails((quotation_details) => [
                     ...result.data.details.map((element) => ({
                     description: element.description,
-                    quantity: element.quantity,
+                    qty: element.qty,
                     unit_cost: parseFloat(element.unit_cost).toFixed(2),
                     total_cost: parseFloat(element.total_cost).toFixed(2)
                     })),
@@ -84,7 +109,9 @@ export default function Details(){
         .catch((error) => {
           console.log(error);
         });
-    })
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[])
 
     useEffect(()=>{
 
@@ -102,8 +129,14 @@ export default function Details(){
       },[quotationDetails])
 
     return(
-        <React.Fragment>
-            <Paper sx={{padding: 5, marginLeft: 50, marginRight: 50}}>
+            <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            >
+            <Grid container justifyContent="center">
+            <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
+            <Paper sx={{padding: 5}}>
             <Grid container direction="column" spacing={4}>
                 <Grid item>
                     <Stack direction="column" spacing={2}>
@@ -134,39 +167,39 @@ export default function Details(){
                     <Table size="small">
                         <TableHead>
                         <TableRow>
-                            <TableCell align="left">SN</TableCell>
-                            <TableCell sx={{ minWidth: 400 }}>DESCRIPTION</TableCell>
-                            <TableCell align="center">QUANTITY</TableCell>
-                            <TableCell align="right">UNIT COST(AED)</TableCell>
-                            <TableCell align="right">TOTAL COST(AED)</TableCell>
+                            <StyledTableCell align="left">SN</StyledTableCell>
+                            <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
+                            <StyledTableCell align="center">QUANTITY</StyledTableCell>
+                            <StyledTableCell align="right">UNIT COST(AED)</StyledTableCell>
+                            <StyledTableCell align="right">TOTAL COST(AED)</StyledTableCell>
                         </TableRow>
                         </TableHead>
                         <TableBody>
                             {
                                 quotationDetails.map((quotationDetail, i)=>(
-                                    <TableRow>
-                                        <TableCell align="left">{i+1}</TableCell>
-                                        <TableCell sx={{ minWidth: 400 }}>{quotationDetail.description}</TableCell>
-                                        <TableCell align="center">{quotation.quantity}</TableCell>
-                                        <TableCell align="right">{quotationDetail.unit_cost}</TableCell>
-                                        <TableCell align="right">{quotationDetail.total_cost}</TableCell>
-                                    </TableRow>
+                                    <StyledTableRow>
+                                        <StyledTableCell align="left">{i+1}</StyledTableCell>
+                                        <StyledTableCell sx={{ minWidth: 400 }}>{quotationDetail.description}</StyledTableCell>
+                                        <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
+                                        <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                        <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
                                 ))
                             }
                         </TableBody>
                         <TableFooter>
-                            <TableRow>
-                            <TableCell colSpan={4} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</TableCell>
-                            <TableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2)}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                            <TableCell colSpan={4} align="right">VAT 5%:</TableCell>
-                            <TableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2)}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                            <TableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</TableCell>
-                            <TableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2)}</TableCell>
-                            </TableRow>
+                            <StyledTableRow>
+                            <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell  >
+                            </StyledTableRow>
+                            <StyledTableRow>
+                            <StyledTableCell colSpan={4} align="right">VAT 5%:</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                            </StyledTableRow>
+                            <StyledTableRow>
+                            <StyledTableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                            </StyledTableRow>
                         </TableFooter>
                         
                     </Table>
@@ -183,6 +216,8 @@ export default function Details(){
                 </Grid>
             </Grid>
             </Paper>
-        </React.Fragment>
+            </Grid>
+            </Grid>
+            </Box>
     )
 }

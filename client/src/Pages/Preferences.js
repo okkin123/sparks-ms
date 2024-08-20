@@ -37,6 +37,12 @@ const TRNSchema = Yup.object().shape({
     .matches(/^\d+$/, 'Only whole numbers are allowed')
   });
 
+const VATSchema = Yup.object().shape({
+  vat: Yup.string()
+    .required('VAT % value is required!')
+    .matches(/^\d+$/, 'Only whole numbers are allowed')
+  });
+
 const BankAccountSchema = Yup.object().shape({
   benificiary: Yup.string()
     .required('This field is required!'),
@@ -60,6 +66,7 @@ export default function Preferences(){
   const [edit, setEdit] = useState({
     company_address: false,
     trn: false,
+    vat: false,
     bank_account: false
   })
 
@@ -71,6 +78,12 @@ export default function Preferences(){
       severity: ''
     },
     trn: {
+      open: false,
+      icon: null,
+      message: '',
+      severity: ''
+    },
+    vat: {
       open: false,
       icon: null,
       message: '',
@@ -171,6 +184,50 @@ export default function Preferences(){
     }
   })
 
+  const formik_vat = useFormik({
+    initialValues:{
+      vat: ""
+    },
+    validateOnChange: false,
+    validationSchema: VATSchema,
+    onSubmit:(values, {validateForm})=>{
+      AxiosInstance.post("/preferences/setVAT", values)
+      .then(function(response){
+        if(response.data.status === "SUCCESS")
+        {
+          setEdit({...edit, vat: false})
+          setAlert({
+            ...alert,
+            vat: {
+                ...alert.vat,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+           });
+        }
+        else
+        {
+          setAlert({
+            ...alert,
+            company_address: {
+                ...alert.company_address,
+                open: true,
+                icon: (<ErrorIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'error'
+            }
+           });
+        }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }
+  })
+
+
   const formik_bank_account = useFormik({
     initialValues:{
       benificiary: "",
@@ -247,6 +304,19 @@ export default function Preferences(){
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[edit.trn]);
+
+  useEffect(()=>{
+    AxiosInstance.get("/preferences/vat")
+    .then(function(result){
+      formik_vat.setFieldValue("vat",result.data.vat);
+      
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[edit.vat]);
+
 
   useEffect(()=>{
     AxiosInstance.get("/preferences/bank_account")
@@ -427,6 +497,80 @@ export default function Preferences(){
                     <Button variant="contained" color="secondary" onClick={formik_trn.handleSubmit} disabled={edit.trn ? false : true}>Save TRN</Button>
                 </Grid>
               </Grid>
+
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+                    <Typography variant="body1">VAT %:</Typography>
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                <FormControl
+                  variant="outlined"
+                  error={
+                    formik_vat.touched.vat && Boolean(formik_vat.errors.vat)
+                  }
+                  size="small"
+                  fullWidth={true}
+                >
+                  <OutlinedInput
+                    name="vat"
+                    value={formik_vat.values.vat}
+                    onChange={formik_vat.handleChange}
+                    disabled={edit.vat ? false : true}
+                    endAdornment={
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          edge="end"
+                          onClick={()=>setEdit({...edit, vat: !edit.vat})}
+                        >
+                         { edit.vat ? (<CloseIcon />) : (<EditIcon />)}   
+                        </IconButton>
+                      </InputAdornment>
+                    }
+                  />
+                  <FormHelperText>
+                    {formik_vat.touched.vat && formik_vat.errors.vat}
+                  </FormHelperText>
+                </FormControl>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                  <Collapse in={alert.vat.open}>
+                    <Alert
+                      action={
+                        <IconButton
+                          aria-label="close"
+                          color="inherit"
+                          size="small"
+                          onClick={() => {
+                            setAlert({...alert, vat: {...alert.vat, open: false, message: ''}});
+                          }}
+                        >
+                          <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                      }
+                      sx={{ mb: 2 }}
+                      icon={alert.vat.icon}
+                      severity={alert.vat.severity}
+                    >
+                      {alert.vat.message}
+                    </Alert>
+                  </Collapse>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                    <Button variant="contained" color="secondary" onClick={formik_vat.handleSubmit} disabled={edit.vat ? false : true}>Save VAT</Button>
+                </Grid>
+              </Grid>
+
               <Grid item>
                 <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="subitle1">BANK ACCOUNT</Typography>
