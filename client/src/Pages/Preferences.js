@@ -191,7 +191,7 @@ export default function Preferences(){
                     name="trn"
                     value={formik_trn.values.trn}
                     onChange={formik_trn.handleChange}
-                    readOnly={edit.trn ? false : true}
+                    disabled={edit.trn ? false : true}
                     endAdornment={
                       <InputAdornment position="end">
                         <IconButton
@@ -270,7 +270,7 @@ export default function Preferences(){
                     name="benificiary"
                     value={formik_bank_account.values.benificiary}
                     onChange={formik_bank_account.handleChange}
-                    readOnly={edit.bank_account ? false : true}
+                    disabled={edit.bank_account ? false : true}
                     error={
                       formik_bank_account.touched.benificiary && Boolean(formik_bank_account.errors.benificiary)
                     }
@@ -283,7 +283,15 @@ export default function Preferences(){
                     <Typography variant="body1">Name of Bank:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                      name="name"
+                      value={formik_bank_account.values.name}
+                      onChange={formik_bank_account.handleChange}
+                      disabled={edit.bank_account ? false : true}
+                      error={
+                        formik_bank_account.touched.name && Boolean(formik_bank_account.errors.name)
+                      }
+                      helperText={formik_bank_account.touched.name && formik_bank_account.errors.name} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -291,7 +299,17 @@ export default function Preferences(){
                     <Typography variant="body1">Address of Bank:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                     name="address"
+                     value={formik_bank_account.values.address}
+                     onChange={formik_bank_account.handleChange}
+                     disabled={edit.bank_account ? false : true}
+                     error={
+                       formik_bank_account.touched.address && Boolean(formik_bank_account.errors.address)
+                     }
+                     helperText={formik_bank_account.touched.address && formik_bank_account.errors.address}
+                     multiline
+                     rows={2} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -299,7 +317,15 @@ export default function Preferences(){
                     <Typography variant="body1">Account Number:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                     name="account_number"
+                     value={formik_bank_account.values.account_number}
+                     onChange={formik_bank_account.handleChange}
+                     disabled={edit.bank_account ? false : true}
+                     error={
+                       formik_bank_account.touched.account_number && Boolean(formik_bank_account.errors.account_number)
+                     }
+                     helperText={formik_bank_account.touched.account_number && formik_bank_account.errors.account_number} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -307,7 +333,15 @@ export default function Preferences(){
                     <Typography variant="body1">IBAN:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                     name="iban"
+                     value={formik_bank_account.values.iban}
+                     onChange={formik_bank_account.handleChange}
+                     disabled={edit.bank_account ? false : true}
+                     error={
+                       formik_bank_account.touched.iban && Boolean(formik_bank_account.errors.iban)
+                     }
+                     helperText={formik_bank_account.touched.iban && formik_bank_account.errors.iban} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -315,7 +349,15 @@ export default function Preferences(){
                     <Typography variant="body1">Swift Code:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                     name="swift_code"
+                     value={formik_bank_account.values.swift_code}
+                     onChange={formik_bank_account.handleChange}
+                     disabled={edit.bank_account ? false : true}
+                     error={
+                       formik_bank_account.touched.swift_code && Boolean(formik_bank_account.errors.swift_code)
+                     }
+                     helperText={formik_bank_account.touched.swift_code && formik_bank_account.errors.swift_code} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -323,7 +365,15 @@ export default function Preferences(){
                     <Typography variant="body1">Routing Code:</Typography>
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <TextField variant="outlined" size="small" fullWidth />
+                    <TextField variant="outlined" size="small" fullWidth 
+                     name="routing_code"
+                     value={formik_bank_account.values.routing_code}
+                     onChange={formik_bank_account.handleChange}
+                     disabled={edit.bank_account ? false : true}
+                     error={
+                       formik_bank_account.touched.routing_code && Boolean(formik_bank_account.errors.routing_code)
+                     }
+                     helperText={formik_bank_account.touched.routing_code && formik_bank_account.errors.routing_code} />
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">

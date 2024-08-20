@@ -16,6 +16,8 @@ import AxiosInstance from '../../AxiosInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
 
+
+
 export default function Details(){
 
     // Get the current URL
@@ -99,7 +101,7 @@ export default function Details(){
 
     return(
         <React.Fragment>
-            <Paper sx={{padding: 5}}>
+            <Paper sx={{padding: 5, marginLeft: 50, marginRight: 50}}>
             <Grid container direction="column" spacing={4}>
                 <Grid item>
                     <Stack direction="column" spacing={2}>

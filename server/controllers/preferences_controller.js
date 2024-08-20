@@ -64,5 +64,51 @@ module.exports = {
             swift_code: process.env.SWIFT_CODE,
             routing_code: process.env.ROUTING_CODE
         });
+    },
+    setBankAccount: (req, res) => {
+        try{
+            // Define the variable you want to update and its new value
+            const variableName = {
+                benificiary: "BENIFICIARY",
+                name: "BANK_NAME",
+                address: "BANK_ADDRESS",
+                account_number: "ACCOUNT_NUMBER",
+                iban: "IBAN",
+                swift_code: "SWIFT_CODE",
+                routing_code: "ROUTING_CODE",
+
+            };
+
+            const newValue = req.body;
+
+            // Define the .env file path
+            const envFilePath = path.join(__dirname, '..', '.env');
+
+            // Read the .env file
+            let envContent = fs.readFileSync(envFilePath, 'utf-8');
+
+            // Create a regular expression to find the variable
+            const regex = new RegExp(`^${variableName}=.*$`, 'm');
+
+            // Update the variable if it exists, otherwise add it
+            if (regex.test(envContent)) {
+                envContent = envContent.replace(regex, `${variableName}=${newValue}`);
+            } else {
+                envContent += `\n${variableName}=${newValue}`;
+            }
+
+            // Write the updated content back to the .env file
+            fs.writeFileSync(envFilePath, envContent);
+
+            res.send({
+                status: "SUCCESS",
+                message: "TRN value has been updated!"
+            })
+        }catch (error){
+            res.send({
+                status: "ERROR",
+                message: error
+            })
+        }
     }
 }
