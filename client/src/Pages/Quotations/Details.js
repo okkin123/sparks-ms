@@ -30,6 +30,7 @@ export default function Details(){
     const paramValue = params.get('quotation_number');
 
     const [quotation, setQuotation] = useState({
+        trn: "",
         quotation_number: "",
         status: "",
         created_by: "",
@@ -38,7 +39,7 @@ export default function Details(){
         client_name: "",
         attention_to: "",
         project_name: "",
-        project_description: ""
+        project_description: "",
     });
 
     const [quotationDetails, setQuotationDetails] = useState([]);
@@ -54,6 +55,7 @@ export default function Details(){
           if (result.data.status === "SUCCESS") {
 
             setQuotation({
+                    trn: result.data.trn,
                     quotation_number: result.data.quotation[0].quotation_number,
                     status: result.data.quotation[0].STATUS,
                     created_by: result.data.quotation[0].created_by_email,
@@ -106,7 +108,7 @@ export default function Details(){
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                     <img src={bsLogo} width={220} alt="logo" />
-                    <Typography variant="subtitle1"><strong>TRN NUMBER:</strong></Typography>
+                    <Typography variant="subtitle1"><strong>TRN NUMBER:</strong> {quotation.trn}</Typography>
                 </Stack>
                 </Grid>
                 <Grid item>

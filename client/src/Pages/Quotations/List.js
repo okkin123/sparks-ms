@@ -19,7 +19,7 @@ const columns = [
           href="#"
           onClick={() =>
             window.open(
-              `https://miniature-lamp-x4vqx7j59g5hvqqj-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+              `https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
               "_blank",
               `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
             )

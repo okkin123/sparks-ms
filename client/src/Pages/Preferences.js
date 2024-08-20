@@ -18,9 +18,18 @@ import {Toolbar,
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
+import ErrorIcon from "@mui/icons-material/Error";
+
 import AxiosInstance from "../AxiosInstance";
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
+
+
+const CompanyAddressSchema = Yup.object().shape({
+  company_address: Yup.string()
+    .required('Company Address is required!')
+  });
+
 
 const TRNSchema = Yup.object().shape({
   trn: Yup.string()
@@ -49,16 +58,75 @@ const BankAccountSchema = Yup.object().shape({
 export default function Preferences(){
 
   const [edit, setEdit] = useState({
+    company_address: false,
     trn: false,
     bank_account: false
   })
 
   const [alert, setAlert] = useState({
+    company_address: {
+      open: false,
+      icon: null,
+      message: '',
+      severity: ''
+    },
     trn: {
       open: false,
-      message: ''
+      icon: null,
+      message: '',
+      severity: ''
+    },
+    bank_account: {
+      open: false,
+      icon: null,
+      message: '',
+      severity: ''
     }
   })
+
+  const formik_company_address = useFormik({
+    initialValues:{
+      company_address: ""
+    },
+    validateOnChange: false,
+    validationSchema: CompanyAddressSchema,
+    onSubmit:(values, {validateForm})=>{
+      AxiosInstance.post("/preferences/setCompanyAddress", values)
+      .then(function(response){
+        if(response.data.status === "SUCCESS")
+        {
+          setEdit({...edit, company_address: false})
+          setAlert({
+            ...alert,
+            company_address: {
+                ...alert.company_address,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+           });
+        }
+        else
+        {
+          setAlert({
+            ...alert,
+            company_address: {
+                ...alert.company_address,
+                open: true,
+                icon: (<ErrorIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'error'
+            }
+           });
+        }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }
+  })
+
 
   const formik_trn = useFormik({
     initialValues:{
@@ -77,13 +145,24 @@ export default function Preferences(){
             trn: {
                 ...alert.trn,
                 open: true,
-                message: response.data.message
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
             }
-        });
+           });
         }
         else
         {
-          console.log(response.data.message)
+          setAlert({
+            ...alert,
+            trn: {
+                ...alert.trn,
+                open: true,
+                icon: (<ErrorIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'error'
+            }
+           });
         }
       })
       .catch(function(error){
@@ -105,30 +184,57 @@ export default function Preferences(){
     validateOnChange: false,
     validationSchema: BankAccountSchema,
     onSubmit:(values, {validateForm})=>{
-      // AxiosInstance.post("/preferences/setBankAccount", values)
-      // .then(function(response){
-      //   if(response.data.status === "SUCCESS")
-      //   {
-      //     setEdit({...edit, trn: false})
-      //     setAlert({
-      //       ...alert,
-      //       trn: {
-      //           ...alert.trn,
-      //           open: true,
-      //           message: response.data.message
-      //       }
-      //   });
-      //   }
-      //   else
-      //   {
-      //     console.log(response.data.message)
-      //   }
-      // })
-      // .catch(function(error){
-      //   console.log(error)
-      // })
+      AxiosInstance.post("/preferences/setBankAccount", values)
+      .then(function(response){
+
+        if(response.data.status === "SUCCESS")
+        {
+          setEdit({...edit, bank_account: false})
+          setAlert({
+            ...alert,
+            bank_account: {
+                ...alert.bank_account,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+         });
+        }
+        else
+        {
+          setAlert({
+            ...alert,
+            bank_account: {
+                ...alert.bank_account,
+                open: true,
+                icon: (<ErrorIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'error'
+            }
+         });
+        }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
     }
   })  
+
+
+  useEffect(()=>{
+    AxiosInstance.get("/preferences/company_address")
+    .then(function(result){
+      formik_company_address.setFieldValue("company_address",result.data.company_address);
+      
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[edit.company_address]);
+
+
 
   useEffect(()=>{
     AxiosInstance.get("/preferences/trn")
@@ -174,6 +280,81 @@ export default function Preferences(){
               <Grid item>
                 <Divider />
               </Grid>
+
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+                    <Typography variant="body1">Company Address:</Typography>
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                <FormControl
+                  variant="outlined"
+                  error={
+                    formik_company_address.touched.company_address && Boolean(formik_company_address.errors.company_address)
+                  }
+                  size="small"
+                  fullWidth={true}
+                >
+                  <OutlinedInput
+                    name="company_address"
+                    value={formik_company_address.values.company_address}
+                    onChange={formik_company_address.handleChange}
+                    disabled={edit.company_address ? false : true}
+                    endAdornment={
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          edge="end"
+                          onClick={()=>setEdit({...edit, company_address: !edit.company_address})}
+                        >
+                         { edit.company_address ? (<CloseIcon />) : (<EditIcon />)}   
+                        </IconButton>
+                      </InputAdornment>
+                    }
+                  />
+                  <FormHelperText>
+                    {formik_company_address.touched.company_address && formik_company_address.errors.company_address}
+                  </FormHelperText>
+                </FormControl>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                  <Collapse in={alert.company_address.open}>
+                    <Alert
+                      action={
+                        <IconButton
+                          aria-label="close"
+                          color="inherit"
+                          size="small"
+                          onClick={() => {
+                            setAlert({...alert, company_address: {...alert.company_address, open: false, message: ''}});
+                          }}
+                        >
+                          <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                      }
+                      sx={{ mb: 2 }}
+                      icon={alert.company_address.icon}
+                      severity={alert.company_address.severity}
+                    >
+                      {alert.company_address.message}
+                    </Alert>
+                  </Collapse>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                    <Button variant="contained" color="secondary" onClick={formik_company_address.handleSubmit} disabled={edit.company_address ? false : true}>Save Company Address</Button>
+                </Grid>
+              </Grid>
+
+
               <Grid item container direction="row" spacing={2} alignItems="center">
                 <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
                     <Typography variant="body1">TRN:</Typography>
@@ -230,8 +411,8 @@ export default function Preferences(){
                         </IconButton>
                       }
                       sx={{ mb: 2 }}
-                      icon={<CheckIcon fontSize="inherit" />}
-                      severity="success"
+                      icon={alert.trn.icon}
+                      severity={alert.trn.severity}
                     >
                       {alert.trn.message}
                     </Alert>
@@ -374,6 +555,34 @@ export default function Preferences(){
                        formik_bank_account.touched.routing_code && Boolean(formik_bank_account.errors.routing_code)
                      }
                      helperText={formik_bank_account.touched.routing_code && formik_bank_account.errors.routing_code} />
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                  <Collapse in={alert.bank_account.open}>
+                    <Alert
+                      action={
+                        <IconButton
+                          aria-label="close"
+                          color="inherit"
+                          size="small"
+                          onClick={() => {
+                            setAlert({...alert, bank_account: {...alert.bank_account, open: false, message: ''}});
+                          }}
+                        >
+                          <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                      }
+                      sx={{ mb: 2 }}
+                      icon={alert.bank_account.icon}
+                      severity={alert.bank_account.severity}
+                    >
+                      {alert.bank_account.message}
+                    </Alert>
+                  </Collapse>
                 </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
