@@ -17,6 +17,7 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import AxiosInstance from '../../AxiosInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
+import { useFormik } from 'formik';
 
 
 
@@ -103,7 +104,7 @@ export default function Details(){
                     project_description: result.data.quotation[0].project_description
                   });
 
-                 
+               
                   
                   setQuotationDetails((quotation_details) => [
                     ...result.data.details.map((element) => ({
@@ -113,8 +114,9 @@ export default function Details(){
                     total_cost: parseFloat(element.total_cost).toFixed(2)
                     })),
                   ]);
-
-
+                  
+                  formik_approve.setFieldValue("quotation_number", result.data.quotation[0].quotation_number)
+                  formik_approve.setFieldValue("user_id", result.data.quotation[0].created_by)
           } else {
             console.log(result.data.message);
           }
@@ -164,7 +166,7 @@ export default function Details(){
         });
 
 
-        AxiosInstance.post("/quotation/approval_history", {quotation_number : paramValue})
+        AxiosInstance.post("/quotation/get_approval_history", {quotation_number : paramValue})
         .then(function(result){
           setApprovalHistory((approvalHistory) => [
             ...result.data.approval_history.map((element) => ({
@@ -185,6 +187,33 @@ export default function Details(){
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
+
+    const formik_approve = useFormik({
+      initialValues: {
+        quotation_number: "",
+        user_id: "",
+        comments: "",
+        status: ""
+      },
+      validateOnChange: false,
+      onSubmit: (values, {validateForm})=>{
+        AxiosInstance.post("/quotation/insert_approval", values)
+        .then(function(response){
+           if(response.data.status === "SUCCESS")
+            {
+              alert(response.data.message)
+              window.close()
+            }
+            else
+            {
+              alert(response.data.message)
+            }
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+      }
+    })
 
     useEffect(()=>{
 
@@ -360,16 +389,25 @@ export default function Details(){
                 </Grid>
                 {
                   JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (email === user.email_address) {
+                    if (email === user.email_address && email !== quotation.created_by) {
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
-                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth />
+                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
+                            name="comments" value={formik_approve.values.comments} onChange={formik_approve.handleChange} />
                           </Grid>
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                              <Button variant="text" color="primary">Return</Button>
-                              <Button variant="contained" color="secondary">Approve</Button>
+                              <Button variant="text" color="primary"
+                              onClick={()=>{
+                                formik_approve.setFieldValue("status", "RETURNED")
+                                formik_approve.handleSubmit()
+                              }}
+                              >Return</Button>
+                              <Button variant="contained" color="secondary" onClick={()=>{
+                                formik_approve.setFieldValue("status", "APPROVED")
+                                formik_approve.handleSubmit()
+                              }}>Approve</Button>
                             </Stack>
                           </Grid>
                         </React.Fragment>
