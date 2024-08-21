@@ -27,19 +27,24 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     },
     [`&.${tableCellClasses.body}`]: {
       fontSize: 14,
+      color: theme.palette.primary.dark,
     },
     [`&.${tableCellClasses.footer}`]: {
       fontSize: 14,
-      color: theme.palette.common.black,
+      color: theme.palette.primary.main,
       fontWeight: 'bold'
     }
+
   }));
   
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
     // hide last border
     'td,th': {
-      border: '1px solid '+theme.palette.primary.main,
+      border: '1px solid '+theme.palette.primary.light,
     },
+    [`& #bankAccount`]: {
+      border: 0
+    }
   }));
 
 
@@ -67,6 +72,8 @@ export default function Details(){
         project_description: "",
     });
 
+    const [bankAccount, setBankAccount] = useState([]);
+    const [address, setAddress] = useState('');
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
         total_cost_without_vat: "",
@@ -84,7 +91,7 @@ export default function Details(){
                     quotation_number: result.data.quotation[0].quotation_number,
                     status: result.data.quotation[0].STATUS,
                     created_by: result.data.quotation[0].created_by_email,
-                    created_on: dayjs(new Date(result.data.quotation[0].created_on)).format('YYYY-MM-DD'),
+                    created_on: dayjs(new Date(result.data.quotation[0].created_on)).format('DD-MMM-YYYY'),
                     assigned_to: result.data.quotation[0].assigned_to_email,
                     client_name: result.data.quotation[0].client_name,
                     attention_to: result.data.quotation[0].attention_to,
@@ -110,6 +117,32 @@ export default function Details(){
           console.log(error);
         });
 
+
+        AxiosInstance.get("/preferences/bank_account")
+        .then(function(result){
+          setBankAccount({
+            benificiary: result.data.benificiary,
+            name: result.data.name,
+            address: result.data.address,
+            account_number: result.data.account_number,
+            iban: result.data.iban,
+            swift_code: result.data.swift_code,
+            routing_code: result.data.routing_code,
+            
+          });
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+
+        AxiosInstance.get("/preferences/company_address")
+        .then(function(result){
+          setAddress(result.data.company_address);
+          
+        })
+        .catch(function(error){
+          console.log(error)
+        })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
@@ -136,45 +169,53 @@ export default function Details(){
             >
             <Grid container justifyContent="center">
             <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
-            <Paper sx={{padding: 5}}>
+            <Paper sx={{paddingTop: 4, 
+                        paddingRight: 4, 
+                        paddingBottom: 1, 
+                        paddingLeft: 4}}>
             <Grid container direction="column" spacing={4}>
                 <Grid item>
                     <Stack direction="column" spacing={2}>
-                    <img src={bsLogo} width={220} alt="logo" />
-                    <Typography variant="subtitle1"><strong>TRN NUMBER:</strong> {quotation.trn}</Typography>
+                      <Stack direction="row" justifyContent="space-between">
+                        <img src={bsLogo} width={220} alt="logo" />
+                        <Typography variant="subtitle1" color="secondary"><strong>STATUS: {quotation.status}</strong></Typography>
+                      </Stack>
+                    <Typography variant="subtitle1">TRN NUMBER: {quotation.trn}</Typography>
                 </Stack>
                 </Grid>
                 <Grid item>
                     <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1"><strong>QUOTATION #:</strong> {quotation.quotation_number}</Typography>
-                        <Typography variant="subtitle1"><strong>DATE:</strong> {quotation.created_on}</Typography>
+                        <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
+                        <Typography variant="subtitle1">DATE: {quotation.created_on}</Typography>
                     </Stack>
                 </Grid>
                 <Grid item>
                     <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1"><strong>CLIENT NAME:</strong> {quotation.client_name}</Typography>
-                        <Typography variant="subtitle1"><strong>ATTENTION TO:</strong> {quotation.attention_to}</Typography>
-                    </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1"><strong>PROJECT:</strong> {quotation.project_name}</Typography>
-                        <Typography variant="subtitle1"><strong>DESRIPTION:</strong> {quotation.project_description}</Typography>
+                        <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography>
+                        <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography>
                     </Stack>
                 </Grid>
                 <Grid item>
                 <TableContainer>
                     <Table size="small">
                         <TableHead>
-                        <TableRow>
+              
+                        <StyledTableRow>
                             <StyledTableCell align="left">SN</StyledTableCell>
                             <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">QUANTITY</StyledTableCell>
                             <StyledTableCell align="right">UNIT COST(AED)</StyledTableCell>
                             <StyledTableCell align="right">TOTAL COST(AED)</StyledTableCell>
-                        </TableRow>
+                        </StyledTableRow>
                         </TableHead>
                         <TableBody>
+                            <StyledTableRow>
+                                <StyledTableCell align="left"></StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 400 }}>{quotation.project_description}</StyledTableCell>
+                                <StyledTableCell align="center"></StyledTableCell>
+                                <StyledTableCell align="right"></StyledTableCell>
+                                <StyledTableCell align="right"></StyledTableCell>
+                            </StyledTableRow>
                             {
                                 quotationDetails.map((quotationDetail, i)=>(
                                     <StyledTableRow>
@@ -206,12 +247,62 @@ export default function Details(){
                 </TableContainer>
                 </Grid>
                 <Grid item>
+                <TableContainer>
+                  <Table size="small">
+                    <TableBody>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount" sx={{fontSize: 16}} colSpan={2}><strong>Please transfer the amount to the below UAE bank account details:</strong></TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
+                        
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.name}</TableCell>
+                        <TableCell id="bankAccount" sx={{width: 230, fontSize: 16}}><strong>Client Approval:</strong></TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.address}</TableCell>
+                        <TableCell id="bankAccount">Name:</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.account_number}</TableCell>
+                       
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
+                        <TableCell id="bankAccount">Signature:</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.swift_code}</TableCell>
+                       
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>ROUTING CODE:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.routing_code}</TableCell>
+                      </StyledTableRow>
+                    </TableBody>    
+                  </Table>
+                </TableContainer>
+                </Grid>
+                <Grid item>
                     <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth /> 
                 </Grid>
                 <Grid item>
                     <Stack direction="row" spacing={2} justifyContent="center">
                     <Button variant="text" color="primary">Return</Button>
                     <Button variant="contained" color="secondary">Approve</Button>
+                    </Stack>  
+                </Grid>
+                <Grid item>
+                    <Stack direction="row" spacing={2} justifyContent="center">
+                     <Typography variant="subtitle1">{address}</Typography>
                     </Stack>  
                 </Grid>
             </Grid>
