@@ -1,7 +1,9 @@
 import React, {useState, useEffect} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link, Collapse, IconButton, Alert} from '@mui/material';
+import {Toolbar, Typography, Grid, Chip, Link, Collapse, IconButton, Alert, Stack} from '@mui/material';
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
 
@@ -20,7 +22,8 @@ const columns = [
           href="#"
           onClick={() =>
             window.open(
-              `https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+              //`https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+              `http://localhost:3000/quotation/details?quotation_number=${params.value}`,
               "_blank",
               `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
             )
@@ -32,7 +35,22 @@ const columns = [
         </Link>
       );
     }},
-    { field: "status", headerName: "STATUS" },
+    { field: "actions", headerName: "ACTIONS", renderCell: (params)=>{
+      return(
+        <Stack direction="row">
+           {params === "RETURNED" ? (
+              <IconButton color="success">
+                  <EditIcon />
+              </IconButton>
+          ) : params === "pending for approval" ? (
+              <IconButton color="error">
+                  <DeleteIcon />
+              </IconButton>
+          ) : null}
+        </Stack>
+      )
+    }},
+    { field: "status", headerName: "STATUS"},
     { field: "created_by", headerName: "CREATED BY", renderCell: (params)=>(
       <Chip label={params.value} />
     )},
@@ -72,6 +90,7 @@ export default function List(props){
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
             id: element.quotation_number,
+            actions: element.STATUS,
             status: element.STATUS,
             created_by: element.created_by_email,
             client_name: element.client_name,
