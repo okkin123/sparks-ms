@@ -18,7 +18,7 @@ import {
   Collapse
 } from "@mui/material";
 import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import logo from "../Assets/BS LOGO White.png";
 import AxiosInstance from "../AxiosInstance";
@@ -35,63 +35,7 @@ const drawerWidth = 240;
 
 export default function SideMenu() {
   const navigate = useNavigate();
-  
-  const [component, setComponent] = useState({
-    element: <Dashboard />,
-    dashboard: {
-      selected: true
-    },
-    qlist: {
-      selected: false
-    },
-    qnew: {
-      selected: false
-    },
-    manage_users: {
-      selected: false
-    },
-    preferences: {
-      selected: false
-    },
-  });
-  const [name, setName] = useState("");
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const [dropdownMenu, setDropdownMenu] = useState(false);
-
-
-  useEffect(() => {
-    // make the API call
-
-    AxiosInstance.get("/user/info")
-      .then((result) => {
-        // assign the message in our result to the message we initialized above
-
-        setName(result.data[0].fullname);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-
-     
-  });
-
-  const logout = () => {
-    handleClose();
-    // destroy the cookie
-    cookies.remove("TOKEN", { path: "/" });
-    // redirect user to the landing page
-    navigate("/");
-  };
-
+  const location = useLocation();
 
   const handleSelect = (el, com) => {
     const pages = Object.keys(component);
@@ -105,6 +49,73 @@ export default function SideMenu() {
       }
     }), {}))
   };
+
+
+  const [component, setComponent] = useState({
+    element: !location.state ? <Dashboard /> : <QList alertMessage={location.state.message} />,
+    dashboard: {
+      selected: !location.state ? true : false
+    },
+    qlist: {
+      selected: !location.state ? false : true
+    },
+    qnew: {
+      selected: false
+    },
+    manage_users: {
+      selected: false
+    },
+    preferences: {
+      selected: false
+    },
+  });
+  const [user, setUser] = useState({
+    name: "",
+    type: ""
+  })
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const [dropdownMenu, setDropdownMenu] = useState(!location.state ? false : true);
+
+
+  useEffect(() => {
+    // make the API call
+
+    AxiosInstance.get("/user/info")
+      .then((result) => {
+        // assign the message in our result to the message we initialized above
+
+        setUser({
+          ...user,
+          name: result.data[0].fullname,
+          user_type: result.data[0].user_type
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+     
+     
+  });
+
+  const logout = () => {
+    handleClose();
+    // destroy the cookie
+    cookies.remove("TOKEN", { path: "/" });
+    // redirect user to the landing page
+    navigate("/login");
+  };
+
+
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -131,7 +142,7 @@ export default function SideMenu() {
               aria-expanded={open ? "true" : undefined}
               onClick={handleClick}
             >
-              {name}
+              {user.name}
             </Button>
             <Menu
               id="basic-menu"
@@ -198,7 +209,7 @@ export default function SideMenu() {
             </ListItem>
               <Collapse in={dropdownMenu} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                <ListItemButton 
+                { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <ListItemButton 
                  selected={component.qnew.selected}
                  onClick={() => {
                    handleSelect('qnew', <QNew/>)
@@ -208,7 +219,7 @@ export default function SideMenu() {
                     <Add />
                   </ListItemIcon>
                   <ListItemText primary="New" />
-                </ListItemButton>
+                </ListItemButton>}
                 <ListItemButton
                   selected={component.qlist.selected}
                   onClick={() => {
@@ -224,8 +235,8 @@ export default function SideMenu() {
             </Collapse>
           </List>
           <Divider />
-          <List>
-            <ListItem
+          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
+          <ListItem
               disablePadding
               selected={component.manage_users.selected}
               onClick={() => {
@@ -239,8 +250,8 @@ export default function SideMenu() {
                 <ListItemText primary="Manage Users" />
               </ListItemButton>
             </ListItem>
-          </List>
-          <List>
+          </List>  : null }
+          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <List>
             <ListItem
               disablePadding
               selected={component.preferences.selected}
@@ -255,7 +266,7 @@ export default function SideMenu() {
                 <ListItemText primary="Preferences" />
               </ListItemButton>
             </ListItem>
-          </List>
+          </List> }
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>

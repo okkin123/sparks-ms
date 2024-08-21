@@ -65,7 +65,7 @@ export default function Details(){
         status: "",
         created_by: "",
         created_on: "",
-        assigned_to: "",
+        assigned_to: '{"email_address": []}',
         client_name: "",
         attention_to: "",
         project_name: "",
@@ -80,7 +80,11 @@ export default function Details(){
         vat_amount: "",
         total_cost_with_vat: ""
     });
-
+    const [user, setUser] = useState({
+      email_address: ""
+    })
+    const [approvalHistory, setApprovalHistory] = useState([])
+    
     useEffect(()=>{
         AxiosInstance.post("/quotation/details", {quotation_number : paramValue})
         .then((result) => {
@@ -91,7 +95,7 @@ export default function Details(){
                     quotation_number: result.data.quotation[0].quotation_number,
                     status: result.data.quotation[0].STATUS,
                     created_by: result.data.quotation[0].created_by_email,
-                    created_on: dayjs(new Date(result.data.quotation[0].created_on)).format('DD-MMM-YYYY'),
+                    quotation_date: dayjs(new Date(result.data.quotation[0].quotation_date)).format('DD-MMM-YYYY'),
                     assigned_to: result.data.quotation[0].assigned_to_email,
                     client_name: result.data.quotation[0].client_name,
                     attention_to: result.data.quotation[0].attention_to,
@@ -99,6 +103,8 @@ export default function Details(){
                     project_description: result.data.quotation[0].project_description
                   });
 
+                 
+                  
                   setQuotationDetails((quotation_details) => [
                     ...result.data.details.map((element) => ({
                     description: element.description,
@@ -143,6 +149,40 @@ export default function Details(){
         .catch(function(error){
           console.log(error)
         })
+
+        AxiosInstance.get("/user/info")
+        .then((result) => {
+          // assign the message in our result to the message we initialized above
+  
+          setUser({
+            ...user,
+            email_address: result.data[0].email_address
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+
+
+        AxiosInstance.post("/quotation/approval_history", {quotation_number : paramValue})
+        .then(function(result){
+          setApprovalHistory((approvalHistory) => [
+            ...result.data.approval_history.map((element) => ({
+            fullname: element.fullname,
+            email_address: element.email_address,
+            user_type: element.user_type,
+            date_time: element.date_time,
+            comments: element.comments,
+            status: element.status
+            })),
+          ]);
+
+          
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
@@ -186,7 +226,7 @@ export default function Details(){
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                         <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
-                        <Typography variant="subtitle1">DATE: {quotation.created_on}</Typography>
+                        <Typography variant="subtitle1">DATE: {quotation.quotation_date}</Typography>
                     </Stack>
                 </Grid>
                 <Grid item>
@@ -292,14 +332,53 @@ export default function Details(){
                 </TableContainer>
                 </Grid>
                 <Grid item>
-                    <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth /> 
+                  
+                <TableContainer>
+                  <Table size="small">
+                    <TableBody>
+                      <TableRow>
+                        <TableCell colSpan={4}><strong>WORK HISTORY</strong></TableCell>
+                      </TableRow>
+                      {
+                        approvalHistory.map((approval)=>(
+                          <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle1">{approval.fullname}</Typography>
+                            <Typography variant="body1">{approval.email_address}</Typography>
+                            <Typography variant="body1">{approval.user_type}</Typography>
+                          </TableCell>
+                          <TableCell>{dayjs(approval.date_time).format('YYYY-MM-DD | HH:mm:ss')}</TableCell>
+                          <TableCell>{approval.comments}</TableCell>
+                          <TableCell>{approval.status}</TableCell>
+                        </TableRow>
+                        ))
+                      }
+
+                    </TableBody>
+                  </Table>
+                </TableContainer>
                 </Grid>
-                <Grid item>
-                    <Stack direction="row" spacing={2} justifyContent="center">
-                    <Button variant="text" color="primary">Return</Button>
-                    <Button variant="contained" color="secondary">Approve</Button>
-                    </Stack>  
-                </Grid>
+                {
+                  JSON.parse(quotation.assigned_to).email_address.map((email) => {
+                    if (email === user.email_address) {
+                      return (
+                        <React.Fragment key={email}>
+                          <Grid item>
+                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth />
+                          </Grid>
+                          <Grid item>
+                            <Stack direction="row" spacing={2} justifyContent="center">
+                              <Button variant="text" color="primary">Return</Button>
+                              <Button variant="contained" color="secondary">Approve</Button>
+                            </Stack>
+                          </Grid>
+                        </React.Fragment>
+                      );
+                    }
+                    return null;
+                  })
+                }
+
                 <Grid item>
                     <Stack direction="row" spacing={2} justifyContent="center">
                      <Typography variant="subtitle1">{address}</Typography>

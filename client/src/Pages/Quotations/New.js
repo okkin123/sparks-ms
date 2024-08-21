@@ -2,7 +2,7 @@ import React, { useState, useEffect} from 'react';
 import { styled } from '@mui/material/styles';
 import * as Yup from "yup";
 import { useFormik } from 'formik';
-
+import { useNavigate } from 'react-router-dom'; 
 import { Toolbar, 
          Typography, 
          Grid, 
@@ -88,6 +88,7 @@ export default function New(){
         open: false
       },
     })
+    const navigate = useNavigate();
     const [quotationNumber, setQuotationNumber] = useState("");
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
@@ -207,7 +208,7 @@ export default function New(){
         client_name: "",
         attention_to: "",
         project_name: "",
-        project_description: "",
+        project_description: ""
       },
       validateOnChange: false,
       validationSchema: QuotationSchema,
@@ -227,7 +228,15 @@ export default function New(){
           .then(function(response){
             if(response.data.status === "SUCCESS")
             {
-              console.log(response.data.message)
+
+              navigate("/", {
+                state: {
+                  message: response.data.message,
+                },
+              });
+              window.location.reload();
+              
+              
             }
             else
             {

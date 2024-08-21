@@ -8,5 +8,6 @@ router.route("/generateQuotationNumber").get(controller.generateQuotationNumber)
 router.route("/insert").post(middleware.authentication,controller.insert);
 router.route("/list").get(middleware.authentication, controller.list);
 router.route("/details").post(controller.details);
+router.route("/approval_history").post(controller.approval_history);
 
 module.exports = router;

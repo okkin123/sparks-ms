@@ -78,6 +78,7 @@ module.exports = {
                                 ]);
             
                                 const placeholders = quotation_details.map(() => '(?,?,?,?,?)').join(',');
+
                                 dbConnection.query(
                                     `INSERT INTO tbl_quotation_details (quotation_number, description, qty, unit_cost, total_cost) VALUES ${placeholders}`,
                                     values,
@@ -85,6 +86,8 @@ module.exports = {
                                       if (err2) {
                                         console.log(err2);
                                       } else {
+                                        dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
+                                            [req.body.quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){})
                                         res.send({
                                           status: "SUCCESS",
                                           message: "Quotation #: " + req.body.quotation_number + " has been submitted for approval!"
@@ -92,7 +95,6 @@ module.exports = {
                                       }
                                     }
                                   );
-                               
                             }
                         }
                     )
@@ -155,5 +157,25 @@ module.exports = {
                     
                 }
         })
+    },
+    approval_history: (req, res) =>{
+        dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=?", 
+            [req.body.quotation_number], function(err, data, fields){
+                if(err)
+                    {
+                        res.send({
+                            status: "ERROR",
+                            message: err.sqlMessage
+                        })
+                    }
+                    else
+                    {
+                        res.send({
+                            status: "SUCCESS",
+                            approval_history: data
+                        })
+                    }
+            }
+        )
     }
 }

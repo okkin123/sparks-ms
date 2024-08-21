@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link} from '@mui/material';
+import {Toolbar, Typography, Grid, Chip, Link, Collapse, IconButton, Alert} from '@mui/material';
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import { DataGrid } from "@mui/x-data-grid";
-import dayjs from 'dayjs';
 import AxiosInstance from '../../AxiosInstance';
 
 
@@ -35,7 +36,6 @@ const columns = [
     { field: "created_by", headerName: "CREATED BY", renderCell: (params)=>(
       <Chip label={params.value} />
     )},
-    { field: "created_on", headerName: "CREATED ON" },
     { field: "client_name", headerName: "CLIENT NAME" },
     { field: "attention_to", headerName: "ATTENTION TO" },
     { field: "project_name", headerName: "PROJECT NAME" },
@@ -58,12 +58,13 @@ const calculateColumnWidth = (rows, field) => {
     ...rows.map(row => String(row[field]).length),
     field.length
   );
-  return maxLength * 6; // Adjust multiplier as needed
+  return maxLength * 10; // Adjust multiplier as needed
 };
 
-export default function List(){
+export default function List(props){
   const [quotations, setQuotations] = useState([]);
   const [adjustedColumns, setAdjustedColumns] = useState(columns);
+  const [open, setOpen] = useState(props.alertMessage === null ? false : true)
 
   useEffect(() => {
     AxiosInstance.get("/quotation/list")
@@ -73,7 +74,6 @@ export default function List(){
             id: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
-            created_on: dayjs(new Date(element.created_on)).format('YYYY-MM-DD'),
             client_name: element.client_name,
             attention_to: element.attention_to,
             project_name: element.project_name,
@@ -103,8 +103,32 @@ export default function List(){
         <React.Fragment>
             <Toolbar />
             <Grid container direction="column" spacing={2}>
+              
               <Grid item>
                 <Typography variant="h6">QUOTATION LIST</Typography>
+              </Grid>
+              <Grid item>
+                { !props.alertMessage ? null : <Collapse in={open}>
+                  <Alert
+                    action={
+                      <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={() => {
+                          setOpen(false);
+                        }}
+                      >
+                        <CloseIcon fontSize="inherit" />
+                      </IconButton>
+                    }
+                    sx={{ mb: 2 }}
+                    icon={<CheckIcon fontSize="inherit" />}
+                    severity="success"
+                  >
+                    {props.alertMessage}
+                  </Alert>
+                </Collapse> }
               </Grid>
               <Grid item sx={{ width: "100%"}}>
                 <DataGrid

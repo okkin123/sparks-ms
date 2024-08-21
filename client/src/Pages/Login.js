@@ -100,7 +100,7 @@ export default function Login() {
         .then(function (response) {
           if (response.data.status !== "ERROR") {
             cookies.set("TOKEN", response.data.token);
-            navigate("/welcome");
+            navigate("/");
           } else {
             validateForm(values);
           }

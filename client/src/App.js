@@ -17,7 +17,7 @@ function App() {
       <div className="App">
         <BrowserRouter>
          <Routes>
-            <Route path="/" Component={Login} />
+            <Route path="/login" Component={Login} />
             <Route path="/register" Component={Register} />
             <Route path="/forgotpassword" Component={ForgotPassword} />
             <Route
@@ -37,7 +37,7 @@ function App() {
               }
             />
             <Route
-              path="/welcome"
+              path="/"
               element={
                 <ProtectedRoutes>
                   <Wrapper />
