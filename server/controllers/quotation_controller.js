@@ -158,7 +158,7 @@ module.exports = {
                 }
         })
     },
-    approval_history: (req, res) =>{
+    get_approval_history: (req, res) =>{
         dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=?", 
             [req.body.quotation_number], function(err, data, fields){
                 if(err)
@@ -175,6 +175,32 @@ module.exports = {
                             approval_history: data
                         })
                     }
+            }
+        )
+    },
+    insert_approval: (req, res)=>{
+        dbConnection.query("UPDATE tbl_quotations SET status=?, assigned_to=? WHERE quotation_number=?",
+            [req.body.status, JSON.stringify({ 'user_id': req.body.user_id }), req.body.quotation_number],
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
+                    [req.body.quotation_number, req.user.user_id, req.body.comments, req.body.status], function(err2, data2, fields2){
+                       
+                    })
+                    res.send({
+                        status: "SUCCESS",
+                        message: "Quotation #: " + req.body.quotation_number + " has been "+req.body.status.toLowerCase()+" !"
+                    });
+                }
             }
         )
     }
