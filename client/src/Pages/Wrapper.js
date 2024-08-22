@@ -52,7 +52,7 @@ export default function SideMenu() {
 
 
   const [component, setComponent] = useState({
-    element: !location.state ? <Dashboard /> : <QList alertMessage={location.state.message} />,
+    element: !location.state ? <Dashboard /> : <QList />,
     dashboard: {
       selected: !location.state ? true : false
     },
@@ -71,7 +71,8 @@ export default function SideMenu() {
   });
   const [user, setUser] = useState({
     name: "",
-    type: ""
+    type: "",
+    email_address: ""
   })
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -94,9 +95,9 @@ export default function SideMenu() {
         // assign the message in our result to the message we initialized above
 
         setUser({
-          ...user,
           name: result.data[0].fullname,
-          user_type: result.data[0].user_type
+          user_type: result.data[0].user_type,
+          email_address: result.data[0].email_address
         });
       })
       .catch((error) => {
@@ -223,7 +224,7 @@ export default function SideMenu() {
                 <ListItemButton
                   selected={component.qlist.selected}
                   onClick={() => {
-                    handleSelect('qlist', <QList/>)
+                    handleSelect('qlist', <QList current_user_email={user.email_address} />)
                   }}
                  sx={{ pl: 4 }}>
                   <ListItemIcon>

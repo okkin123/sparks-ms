@@ -228,15 +228,8 @@ export default function New(){
           .then(function(response){
             if(response.data.status === "SUCCESS")
             {
-
-              navigate("/", {
-                state: {
-                  message: response.data.message,
-                },
-              });
+              alert(response.data.message);
               window.location.reload();
-              
-              
             }
             else
             {
