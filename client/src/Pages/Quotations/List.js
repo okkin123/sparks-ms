@@ -1,7 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link, Collapse, IconButton, Alert, Stack} from '@mui/material';
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+import {Toolbar, Typography, Grid, Chip, Link, IconButton, Stack} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { DataGrid } from "@mui/x-data-grid";
@@ -9,47 +7,59 @@ import AxiosInstance from '../../AxiosInstance';
 
 
 const columns = [
-  { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
-    const parentHeight = window.innerHeight;
-    const parentWidth = window.innerWidth;
-  
-      // Calculate the center position
-      const top = (window.innerHeight - parentHeight) / 2;
-      const left = (window.innerWidth - parentWidth) / 2;
-      
-      return (
-        <Link
-          href="#"
-          onClick={() =>
-            window.open(
-              //`https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
-              `http://localhost:3000/quotation/details?quotation_number=${params.value}`,
-              "_blank",
-              `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
-            )
-          }
-          variant="outlined"
-          color="secondary"
-        >
-          {params.value}
-        </Link>
-      );
-    }},
     { field: "actions", headerName: "ACTIONS", renderCell: (params)=>{
-      return(
-        <Stack direction="row">
-           {params === "RETURNED" ? (
-              <IconButton color="success">
-                  <EditIcon />
-              </IconButton>
-          ) : params === "pending for approval" ? (
-              <IconButton color="error">
-                  <DeleteIcon />
-              </IconButton>
-          ) : null}
-        </Stack>
-      )
+
+          if(params.value.current_user_email === params.value.created_by){
+            return (
+              <div>
+                {
+                params.value.status === "RETURNED" ? (
+                <Stack direction="row">
+                  <IconButton color="success">
+                      <EditIcon />
+                  </IconButton>
+                    <IconButton color="error" onClick={()=>handleDeleteQuotation(params.value.quotation_number, params.value.set_refresh, params.value.refresh)}>
+                    <DeleteIcon />
+                  </IconButton>
+                  </Stack>
+              ) : params.value.status === "pending for approval" ? (
+                  <IconButton color="error" onClick={()=>handleDeleteQuotation(params.value.quotation_number)}>
+                      <DeleteIcon />
+                  </IconButton>
+              ) : null}
+            </div>
+            )
+          }  
+          
+          return null;
+
     }},
+    { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
+      const parentHeight = window.innerHeight;
+      const parentWidth = window.innerWidth;
+    
+        // Calculate the center position
+        const top = (window.innerHeight - parentHeight) / 2;
+        const left = (window.innerWidth - parentWidth) / 2;
+        
+        return (
+          <Link
+            href="#"
+            onClick={() =>
+              window.open(
+                `https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+                //`http://localhost:3000/quotation/details?quotation_number=${params.value}`,
+                "_blank",
+                `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
+              )
+            }
+            variant="outlined"
+            color="secondary"
+          >
+            {params.value}
+          </Link>
+        );
+      }},
     { field: "status", headerName: "STATUS"},
     { field: "created_by", headerName: "CREATED BY", renderCell: (params)=>(
       <Chip label={params.value} />
@@ -79,18 +89,35 @@ const calculateColumnWidth = (rows, field) => {
   return maxLength * 10; // Adjust multiplier as needed
 };
 
+const handleDeleteQuotation = (quotation_number, setRefresh, refresh)=>{
+  AxiosInstance.post("/quotation/delete", {quotation_number: quotation_number})
+  .then(function(response){
+    alert(response.data.message)
+    setRefresh(!refresh)
+  })
+  .catch(function(error){
+    console.log(error)
+  })
+}
+
+
 export default function List(props){
   const [quotations, setQuotations] = useState([]);
   const [adjustedColumns, setAdjustedColumns] = useState(columns);
-  const [open, setOpen] = useState(props.alertMessage === null ? false : true)
+  const [refresh, setRefresh] = useState(false)
 
   useEffect(() => {
+ 
     AxiosInstance.get("/quotation/list")
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
+            actions: {quotation_number: element.quotation_number, 
+              status: element.STATUS, 
+              created_by: element.created_by_email, 
+              current_user_email: props.current_user_email,
+              set_refresh : setRefresh, refresh: refresh},
             id: element.quotation_number,
-            actions: element.STATUS,
             status: element.STATUS,
             created_by: element.created_by_email,
             client_name: element.client_name,
@@ -113,7 +140,10 @@ export default function List(props){
       .catch((error) => {
         console.log(error);
       });
-  }, []);
+
+       // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refresh]);
+
 
     
 
@@ -125,29 +155,6 @@ export default function List(props){
               
               <Grid item>
                 <Typography variant="h6">QUOTATION LIST</Typography>
-              </Grid>
-              <Grid item>
-                { !props.alertMessage ? null : <Collapse in={open}>
-                  <Alert
-                    action={
-                      <IconButton
-                        aria-label="close"
-                        color="inherit"
-                        size="small"
-                        onClick={() => {
-                          setOpen(false);
-                        }}
-                      >
-                        <CloseIcon fontSize="inherit" />
-                      </IconButton>
-                    }
-                    sx={{ mb: 2 }}
-                    icon={<CheckIcon fontSize="inherit" />}
-                    severity="success"
-                  >
-                    {props.alertMessage}
-                  </Alert>
-                </Collapse> }
               </Grid>
               <Grid item sx={{ width: "100%"}}>
                 <DataGrid

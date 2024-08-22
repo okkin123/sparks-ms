@@ -158,6 +158,31 @@ module.exports = {
                 }
         })
     },
+    delete: (req, res)=>{
+        dbConnection.query("DELETE FROM tbl_quotations WHERE quotation_number=?", 
+            [req.body.quotation_number], function(err, data, fields){
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    dbConnection.query("DELETE FROM tbl_quotation_details WHERE quotation_number=?", 
+                        [req.body.quotation_number], function(err2, data2, fields2){})
+                    dbConnection.query("DELETE FROM tbl_quotation_approval_history WHERE quotation_number=?", 
+                        [req.body.quotation_number], function(err3, data3, fields3){})
+
+                    res.send({
+                        status: "SUCCESS",
+                        message: "Quotation #: " + req.body.quotation_number + " has been deleted!"
+                    });
+                }
+            }
+        )
+    },
     get_approval_history: (req, res) =>{
         dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=?", 
             [req.body.quotation_number], function(err, data, fields){
