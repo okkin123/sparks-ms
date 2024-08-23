@@ -1,39 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link, IconButton, Stack} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import {Toolbar, Typography, Grid, Chip, Link} from '@mui/material';
 import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
 
 
 const columns = [
-    { field: "actions", headerName: "ACTIONS", renderCell: (params)=>{
-
-          if(params.value.current_user_email === params.value.created_by){
-            return (
-              <div>
-                {
-                params.value.status === "RETURNED" ? (
-                <Stack direction="row">
-                  <IconButton color="success">
-                      <EditIcon />
-                  </IconButton>
-                    <IconButton color="error" onClick={()=>handleDeleteQuotation(params.value.quotation_number, params.value.set_refresh, params.value.refresh)}>
-                    <DeleteIcon />
-                  </IconButton>
-                  </Stack>
-              ) : params.value.status === "pending for approval" ? (
-                  <IconButton color="error" onClick={()=>handleDeleteQuotation(params.value.quotation_number)}>
-                      <DeleteIcon />
-                  </IconButton>
-              ) : null}
-            </div>
-            )
-          }  
-          
-          return null;
-
-    }},
     { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
       const parentHeight = window.innerHeight;
       const parentWidth = window.innerWidth;
@@ -42,17 +13,24 @@ const columns = [
         const top = (window.innerHeight - parentHeight) / 2;
         const left = (window.innerWidth - parentWidth) / 2;
         
+       
         return (
           <Link
             href="#"
-            onClick={() =>
+            onClick={() => {
               window.open(
-                `https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
-                //`http://localhost:3000/quotation/details?quotation_number=${params.value}`,
+                //`https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+                `http://localhost:3000/quotation/details?quotation_number=${params.value}&ref=${params.row.refresh.refresh}`,
                 "_blank",
                 `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
               )
-            }
+              window.addEventListener('message', (event) => {
+                if (event.origin === window.location.origin) {
+                  params.row.refresh.setRefresh(!params.row.refresh.refresh);
+                }
+              });
+
+            } }
             variant="outlined"
             color="secondary"
           >
@@ -87,17 +65,6 @@ const calculateColumnWidth = (rows, field) => {
     field.length
   );
   return maxLength * 10; // Adjust multiplier as needed
-};
-
-const handleDeleteQuotation = (quotation_number, setRefresh, refresh)=>{
-  AxiosInstance.post("/quotation/delete", {quotation_number: quotation_number})
-  .then(function(response){
-    alert(response.data.message)
-    setRefresh(!refresh)
-  })
-  .catch(function(error){
-    console.log(error)
-  })
 }
 
 
@@ -106,17 +73,14 @@ export default function List(props){
   const [adjustedColumns, setAdjustedColumns] = useState(columns);
   const [refresh, setRefresh] = useState(false)
 
+
+
   useEffect(() => {
  
     AxiosInstance.get("/quotation/list")
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
-            actions: {quotation_number: element.quotation_number, 
-              status: element.STATUS, 
-              created_by: element.created_by_email, 
-              current_user_email: props.current_user_email,
-              set_refresh : setRefresh, refresh: refresh},
             id: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
@@ -124,7 +88,8 @@ export default function List(props){
             attention_to: element.attention_to,
             project_name: element.project_name,
             project_description: element.project_description,
-            assigned_to: element.assigned_to_email
+            assigned_to: element.assigned_to_email,
+            refresh: {setRefresh: setRefresh, refresh: refresh}
           }));
           setQuotations(fetchedQuotations);
 
