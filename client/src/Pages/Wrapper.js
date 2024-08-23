@@ -52,12 +52,12 @@ export default function SideMenu() {
 
 
   const [component, setComponent] = useState({
-    element: !location.state ? <Dashboard /> : <QList />,
+    element: <Dashboard />,
     dashboard: {
-      selected: !location.state ? true : false
+      selected: true 
     },
     qlist: {
-      selected: !location.state ? false : true
+      selected: false
     },
     qnew: {
       selected: false
@@ -224,7 +224,7 @@ export default function SideMenu() {
                 <ListItemButton
                   selected={component.qlist.selected}
                   onClick={() => {
-                    handleSelect('qlist', <QList current_user_email={user.email_address} />)
+                    handleSelect('qlist', <QList />)
                   }}
                  sx={{ pl: 4 }}>
                   <ListItemIcon>

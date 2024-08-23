@@ -20,7 +20,6 @@ import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 
 
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
@@ -59,7 +58,6 @@ export default function Details(){
 
     // Get the value of the 'param' parameter
     const paramValue = params.get('quotation_number');
-
     const [quotation, setQuotation] = useState({
         trn: "",
         quotation_number: "",
@@ -115,8 +113,8 @@ export default function Details(){
                     })),
                   ]);
                   
-                  formik_approve.setFieldValue("quotation_number", result.data.quotation[0].quotation_number)
-                  formik_approve.setFieldValue("user_id", result.data.quotation[0].created_by)
+                  formik_update_quotation_status.setFieldValue("quotation_number", result.data.quotation[0].quotation_number)
+                  formik_update_quotation_status.setFieldValue("user_id", result.data.quotation[0].created_by)
           } else {
             console.log(result.data.message);
           }
@@ -188,7 +186,7 @@ export default function Details(){
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
-    const formik_approve = useFormik({
+    const formik_update_quotation_status = useFormik({
       initialValues: {
         quotation_number: "",
         user_id: "",
@@ -197,12 +195,18 @@ export default function Details(){
       },
       validateOnChange: false,
       onSubmit: (values, {validateForm})=>{
-        AxiosInstance.post("/quotation/insert_approval", values)
+        AxiosInstance.post("/quotation/update_quotation_status", values)
         .then(function(response){
            if(response.data.status === "SUCCESS")
             {
               alert(response.data.message)
-              window.close()
+
+              if (window.opener) {
+                window.opener.postMessage('sending data to parent!', window.location.origin);
+                window.close(); // Close the child window after sending data
+              }
+
+
             }
             else
             {
@@ -394,19 +398,25 @@ export default function Details(){
                         <React.Fragment key={email}>
                           <Grid item>
                             <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
-                            name="comments" value={formik_approve.values.comments} onChange={formik_approve.handleChange} />
+                            name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
                           </Grid>
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                              <Button variant="text" color="primary"
+                                <Button variant="text" color="primary"
+                                onClick={()=>{
+                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
+                                  formik_update_quotation_status.handleSubmit()
+                                }}
+                                >Void</Button>
+                              <Button variant="contained" color="primary"
                               onClick={()=>{
-                                formik_approve.setFieldValue("status", "RETURNED")
-                                formik_approve.handleSubmit()
+                                formik_update_quotation_status.setFieldValue("status", "RETURNED")
+                                formik_update_quotation_status.handleSubmit()
                               }}
                               >Return</Button>
                               <Button variant="contained" color="secondary" onClick={()=>{
-                                formik_approve.setFieldValue("status", "APPROVED")
-                                formik_approve.handleSubmit()
+                                formik_update_quotation_status.setFieldValue("status", "APPROVED")
+                                formik_update_quotation_status.handleSubmit()
                               }}>Approve</Button>
                             </Stack>
                           </Grid>
@@ -417,6 +427,33 @@ export default function Details(){
                   })
                 }
 
+                {
+                JSON.parse(quotation.assigned_to).email_address.map((email) => {
+                    if (email === user.email_address && email === quotation.created_by && quotation.status === "RETURNED") {
+                      return (
+                        <React.Fragment key={email}>
+                          <Grid item>
+                          <Stack direction="row" spacing={2} justifyContent="center">
+                            <Button variant="text" color="primary"
+                            onClick={()=>{
+                              formik_update_quotation_status.setFieldValue("status", "VOIDED")
+                              formik_update_quotation_status.handleSubmit()
+                            }}
+                            >Void</Button>
+                            <Button variant="contained" color="success" onClick={()=>{
+                          
+                            }}>Edit</Button>
+                          </Stack>
+                          </Grid>
+                        </React.Fragment>
+                      );
+                    }
+                      
+                    return null;
+                  })
+
+                }
+                
                 <Grid item>
                     <Stack direction="row" spacing={2} justifyContent="center">
                      <Typography variant="subtitle1">{address}</Typography>

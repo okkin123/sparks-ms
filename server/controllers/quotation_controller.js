@@ -56,7 +56,7 @@ module.exports = {
                 {
                     const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
                     dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "pending for approval"],
+                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "WAITING FOR APPOVAL"],
                         function(err, data, fields)
                         {
                             if(err)
@@ -158,33 +158,8 @@ module.exports = {
                 }
         })
     },
-    delete: (req, res)=>{
-        dbConnection.query("DELETE FROM tbl_quotations WHERE quotation_number=?", 
-            [req.body.quotation_number], function(err, data, fields){
-                if(err)
-                {
-                    res.send({
-                        status: "ERROR",
-                        message: err.sqlMessage
-                    })
-                }
-                else
-                {
-                    dbConnection.query("DELETE FROM tbl_quotation_details WHERE quotation_number=?", 
-                        [req.body.quotation_number], function(err2, data2, fields2){})
-                    dbConnection.query("DELETE FROM tbl_quotation_approval_history WHERE quotation_number=?", 
-                        [req.body.quotation_number], function(err3, data3, fields3){})
-
-                    res.send({
-                        status: "SUCCESS",
-                        message: "Quotation #: " + req.body.quotation_number + " has been deleted!"
-                    });
-                }
-            }
-        )
-    },
     get_approval_history: (req, res) =>{
-        dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=?", 
+        dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=? ORDER BY date_time ASC", 
             [req.body.quotation_number], function(err, data, fields){
                 if(err)
                     {
@@ -203,7 +178,7 @@ module.exports = {
             }
         )
     },
-    insert_approval: (req, res)=>{
+    update_quotation_status: (req, res)=>{
         dbConnection.query("UPDATE tbl_quotations SET status=?, assigned_to=? WHERE quotation_number=?",
             [req.body.status, JSON.stringify({ 'user_id': req.body.user_id }), req.body.quotation_number],
             function(err, data, fields)

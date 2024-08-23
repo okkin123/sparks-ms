@@ -7,9 +7,8 @@ const middleware = require("../controllers/middleware");
 router.route("/generateQuotationNumber").get(controller.generateQuotationNumber);
 router.route("/insert").post(middleware.authentication,controller.insert);
 router.route("/list").get(middleware.authentication, controller.list);
-router.route("/delete").post(controller.delete);
 router.route("/details").post(controller.details);
 router.route("/get_approval_history").post(controller.get_approval_history);
-router.route("/insert_approval").post(middleware.authentication, controller.insert_approval);
+router.route("/update_quotation_status").post(middleware.authentication, controller.update_quotation_status);
 
 module.exports = router;
