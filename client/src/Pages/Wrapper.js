@@ -15,7 +15,8 @@ import {
   Button,
   Menu,
   MenuItem,
-  Collapse
+  Collapse,
+  Grid
 } from "@mui/material";
 import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -52,12 +53,20 @@ export default function SideMenu() {
 
 
   const [component, setComponent] = useState({
-    element: <Dashboard />,
+    element: !location.state ? <Dashboard /> : <QList message={
+
+        <React.Fragment>
+          <Grid item>
+          <Typography variant="h6">{location.state.message}</Typography>
+          </Grid> 
+        </React.Fragment>
+      
+    } />,
     dashboard: {
-      selected: true 
+      selected: !location.state ? true : false 
     },
     qlist: {
-      selected: false
+      selected: !location.state ? false : true
     },
     qnew: {
       selected: false
