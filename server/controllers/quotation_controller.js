@@ -56,7 +56,7 @@ module.exports = {
                 {
                     const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
                     dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "WAITING FOR APPOVAL"],
+                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "WAITING FOR APPROVAL"],
                         function(err, data, fields)
                         {
                             if(err)
@@ -133,6 +133,11 @@ module.exports = {
                 }
                 else
                 {
+                    dbConnection.query("UPDATE tbl_quotations SET locked=true WHERE quotation_number=?",
+                        [req.body.quotation_number],function(err, data, res){
+                            if(err)
+                                console.log(err)
+                        })
                     dbConnection.query("SELECT * FROM tbl_quotation_details WHERE quotation_number=?",
                         [req.body.quotation_number], function(err2, data2, fields)
                         {
@@ -203,5 +208,15 @@ module.exports = {
                 }
             }
         )
+    },
+    unlock: (req, res)=>{
+        dbConnection.query("UPDATE tbl_quotations SET locked=false WHERE quotation_number=?",
+            [req.body.quotation_number],function(err, data, res){
+                if(err)
+                    console.log(err)
+                else
+                    res.send(data)
+            })
     }
+    
 }
