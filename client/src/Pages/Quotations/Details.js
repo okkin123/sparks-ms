@@ -85,6 +85,11 @@ export default function Details(){
     const [approvalHistory, setApprovalHistory] = useState([])
     
     useEffect(()=>{
+
+       window.addEventListener("beforeunload", function(event){
+        window.opener.postMessage('childClosed', window.location.origin);
+       })
+
         AxiosInstance.post("/quotation/details", {quotation_number : paramValue})
         .then((result) => {
           if (result.data.status === "SUCCESS") {
@@ -199,10 +204,8 @@ export default function Details(){
         .then(function(response){
            if(response.data.status === "SUCCESS")
             {
-              alert(response.data.message)
-
+           
               if (window.opener) {
-                window.opener.postMessage('sending data to parent!', window.location.origin);
                 window.close(); // Close the child window after sending data
               }
 

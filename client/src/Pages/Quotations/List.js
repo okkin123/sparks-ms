@@ -1,10 +1,30 @@
 import React, {useState, useEffect} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link} from '@mui/material';
+import {Toolbar, Typography, Grid, Chip, Link, Checkbox} from '@mui/material';
 import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
+import { theme } from '../../Theme';
+
+
+function createMessageHandler(quotation_number) {
+  return function handleMessage(event) {
+      if (event.data === "childClosed") {
+          console.log('childClosed');
+          // AxiosInstance.post("/quotation/unlock", { quotation_number: quotation_number })
+          //     .then(function(response) {
+          //         // Handle unlock response if needed
+          //         console.log('Quotation unlocked');
+          //     })
+          //     .catch(function(error) {
+          //         console.error("Axios error:", error.response ? error.response.data : error.message);
+          //     });
+          window.removeEventListener('message', handleMessage);
+      }
+  };
+}
 
 
 const columns = [
+    {field: "locked",headerName:"LOCKED",headerAlign: 'center', renderCell:(params)=><Checkbox checked={params.value} />},
     { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
       const parentHeight = window.innerHeight;
       const parentWidth = window.innerWidth;
@@ -13,22 +33,42 @@ const columns = [
         const top = (window.innerHeight - parentHeight) / 2;
         const left = (window.innerWidth - parentWidth) / 2;
         
-       
+        if(!params.row.locked)
+        { 
         return (
           <Link
             href="#"
             onClick={() => {
-              window.open(
-                //`https://reimagined-invention-4rw965xj75ghq599-3000.app.github.dev/quotation/details?quotation_number=${params.value}`,
+              // Open a new window with the quotation details
+           window.open(
                 `http://localhost:3000/quotation/details?quotation_number=${params.value}&ref=${params.row.refresh.refresh}`,
                 "_blank",
                 `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
-              )
-              window.addEventListener('message', (event) => {
-                if (event.origin === window.location.origin) {
-                  params.row.refresh.setRefresh(!params.row.refresh.refresh);
-                }
-              });
+            );
+
+            // Create the handler with the specific quotation number
+            const messageHandler = createMessageHandler(params.value);
+
+            // Add the event listener
+            window.addEventListener('message', messageHandler);
+              // Listen for messages from the new window
+              // window.addEventListener('message', function(event) {
+           
+              //     if (event.data === "childClosed") {   
+              //         Unlock the quotation when the child window is closed
+              //         AxiosInstance.post("/quotation/unlock", { quotation_number: params.value })
+              //         .then(function(response) {
+              //             // Handle unlock response if needed
+              //             //params.row.refresh.setRefresh(!params.row.refresh.refresh);   
+                          
+              //         })
+              //         .catch(function(error) {
+              //           console.error("Axios error:", error.response ? error.response.data : error.message);
+              //         });
+                      
+              //     }
+              // });
+
 
             } }
             variant="outlined"
@@ -36,9 +76,21 @@ const columns = [
           >
             {params.value}
           </Link>
-        );
+        )
+        }
+        else
+        {
+          return params.value
+        }
+
       }},
-    { field: "status", headerName: "STATUS"},
+    { field: "status", headerName: "STATUS", renderCell: (params)=>(
+      <Typography variant="p"
+      sx={{
+        color: params.value === "APPROVED" ? theme.palette.success.main : params.value === "RETURNED" ? theme.palette.warning.main : params.value === "WAITING FOR APPROVAL" ? theme.palette.primary.main : theme.palette.error.main
+      }}
+      >{params.value}</Typography>
+    )},
     { field: "created_by", headerName: "CREATED BY", renderCell: (params)=>(
       <Chip label={params.value} />
     )},
@@ -81,6 +133,7 @@ export default function List(props){
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
+            locked: !!element.locked,
             id: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
@@ -120,7 +173,8 @@ export default function List(props){
               
               <Grid item>
                 <Typography variant="h6">QUOTATION LIST</Typography>
-              </Grid>
+              </Grid> 
+              {props.message}
               <Grid item sx={{ width: "100%"}}>
                 <DataGrid
                   autoHeight  
@@ -133,7 +187,6 @@ export default function List(props){
                   }}
                   pageSizeOptions={[10, 20]}
                   disableRowSelectionOnClick
-                  checkboxSelection
                   density="compact"
                 />
               </Grid>
