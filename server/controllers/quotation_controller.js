@@ -55,15 +55,15 @@ module.exports = {
                 else
                 {
                     const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
-                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.user.user_id, assigned_to, "WAITING FOR APPROVAL"],
+                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, vat_percentage, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.vat_percentage, req.user.user_id, assigned_to, "WAITING FOR APPROVAL"],
                         function(err, data, fields)
                         {
                             if(err)
                             {
                                 res.send({
                                     status: "ERROR",
-                                    message: err.sqlMessage
+                                    message: err
                                 })
                             }
                             else
@@ -103,7 +103,7 @@ module.exports = {
         )
     },
     list: (req, res)=>{
-        dbConnection.query("SELECT * FROM vw_quotations WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?", 
+        dbConnection.query("SELECT * FROM vw_quotations WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=? ORDER BY quotation_number DESC", 
             [req.user.user_id], function(err, data, fields){
                 if(err)
                 {
@@ -210,10 +210,11 @@ module.exports = {
         )
     },
     unlock: (req, res)=>{
+     
         dbConnection.query("UPDATE tbl_quotations SET locked=false WHERE quotation_number=?",
-            [req.body.quotation_number],function(err, data, res){
+            [req.body.quotation_number],function(err, data, fields){
                 if(err)
-                    console.log(err)
+                    res.send(err)
                 else
                     res.send(data)
             })

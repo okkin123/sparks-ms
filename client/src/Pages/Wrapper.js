@@ -16,10 +16,14 @@ import {
   Menu,
   MenuItem,
   Collapse,
-  Grid
+  Grid,
+  Alert,
+  IconButton
 } from "@mui/material";
 import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 
 import logo from "../Assets/BS LOGO White.png";
 import AxiosInstance from "../AxiosInstance";
@@ -36,8 +40,7 @@ const drawerWidth = 240;
 
 export default function SideMenu() {
   const navigate = useNavigate();
-  const location = useLocation();
-
+  const location = useLocation()
   const handleSelect = (el, com) => {
     const pages = Object.keys(component);
 
@@ -53,20 +56,12 @@ export default function SideMenu() {
 
 
   const [component, setComponent] = useState({
-    element: !location.state ? <Dashboard /> : <QList message={
-
-        <React.Fragment>
-          <Grid item>
-          <Typography variant="h6">{location.state.message}</Typography>
-          </Grid> 
-        </React.Fragment>
-      
-    } />,
+    element: <Dashboard />,
     dashboard: {
-      selected: !location.state ? true : false 
+      selected: true
     },
     qlist: {
-      selected: !location.state ? false : true
+      selected: false
     },
     qnew: {
       selected: false
@@ -78,6 +73,7 @@ export default function SideMenu() {
       selected: false
     },
   });
+
   const [user, setUser] = useState({
     name: "",
     type: "",
@@ -116,6 +112,46 @@ export default function SideMenu() {
      
      
   }, []);
+
+useEffect(()=>{
+  if (location.state) {
+    setComponent({
+        ...component,
+        element: (
+            <QList message={
+                <React.Fragment>
+                    <Grid item>
+                        <Collapse in={Boolean(location.state.message)}>
+                            <Alert
+                                action={
+                                    <IconButton
+                                        aria-label="close"
+                                        color="inherit"
+                                        size="small"
+                                        onClick={() => {
+                                            navigate(location.pathname, { replace: true, state: {} });
+                                        }}
+                                    >
+                                        <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                }
+                                sx={{ mb: 2 }}
+                                icon={<CheckIcon fontSize="inherit" />}
+                                severity="success"
+                            >
+                                {location.state.message}
+                            </Alert>
+                        </Collapse>
+                    </Grid>
+                </React.Fragment>
+            } />),
+        qnew: { selected: false },
+        qlist: { selected: true }
+    });
+}
+
+// eslint-disable-next-line 
+},[location.state, navigate])
 
   const logout = () => {
     handleClose();

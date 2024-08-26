@@ -20,6 +20,7 @@ import { Toolbar,
          Alert,
          Collapse,
          IconButton} from '@mui/material';
+import LoadingButton from "@mui/lab/LoadingButton";
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -88,6 +89,7 @@ export default function New(){
         open: false
       },
     })
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const [quotationNumber, setQuotationNumber] = useState("");
     const [quotationDetails, setQuotationDetails] = useState([]);
@@ -96,7 +98,7 @@ export default function New(){
       vat_amount: "",
       total_cost_with_vat: ""
     })
-    const [vat, setVat] = useState('');
+    const [vat, setVat] = useState("");
     const [error, setError] = useState(false);
 
 
@@ -209,10 +211,12 @@ export default function New(){
         attention_to: "",
         project_name: "",
         project_description: ""
+
       },
       validateOnChange: false,
       validationSchema: QuotationSchema,
       onSubmit: (values, {validateForm})=>{
+        setLoading(true)
         if(quotationDetails.length === 0)
         {
           setError(true)
@@ -223,11 +227,14 @@ export default function New(){
           AxiosInstance.post("/quotation/insert", {
             quotation_number: quotationNumber,
             values: values,
-            details: quotationDetails
+            details: quotationDetails,
+            amount_without_vat: quotationBreakdown.total_cost_with_vat,
+            vat_percentage: vat
           })
           .then(function(response){
             if(response.data.status === "SUCCESS")
             {
+              setLoading(false)
               navigate('/', {
                 state: {
                   message: response.data.message
@@ -255,7 +262,7 @@ export default function New(){
       setQuotationBreakdown({
         total_cost_without_vat: total_cost_without_vat,
         vat_amount: total_cost_without_vat * (vat / 100),
-        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * 0.05)
+        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * (vat / 100))
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,7 +286,7 @@ export default function New(){
 
       AxiosInstance.get("/preferences/vat")
       .then(function(result){
-        setVat(result.data.vat);
+        setVat(result.data.vat)
       })
       .catch(function(error){
         console.log(error)
@@ -610,7 +617,7 @@ export default function New(){
                                     <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">VAT {vat}%:</StyledTableCell>
+                                    <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
                                     <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
@@ -625,7 +632,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <Button variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit}>Submit for Approval</Button>
+                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Submit for Approval</LoadingButton>
                  </Grid>
             </Grid>
             </Paper>
