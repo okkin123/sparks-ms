@@ -1,69 +1,77 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Toolbar, Typography, Grid, Chip, Link, Checkbox} from '@mui/material';
-import { Grid as GridJs, html } from 'gridjs';
+import { Grid as GridJs } from 'gridjs-react';
+import { html } from 'gridjs';
 // import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
 import { theme } from '../../Theme';
 
 
-// function createMessageHandler(quotation_number) {
-//   return function handleMessage(event) {
-//       if (event.data === "childClosed") {
-//           AxiosInstance.post("/quotation/unlock", { quotation_number: quotation_number })
-//               .then(function(response) {
-//               })
-//               .catch(function(error) {
-//                   console.error("Axios error:", error.response ? error.response.data : error.message);
-//               });
-//           window.removeEventListener('message', handleMessage);
-//       }
-//   };
-// }
+function createMessageHandler(quotation_number) {
+  return function handleMessage(event) {
+      if (event.data === "childClosed") {
+          AxiosInstance.post("/quotation/unlock", { quotation_number: quotation_number })
+              .then(function(response) {
+              })
+              .catch(function(error) {
+                  console.error("Axios error:", error.response ? error.response.data : error.message);
+              });
+          window.removeEventListener('message', handleMessage);
+      }
+  };
+}
 
+
+const parentHeight = window.innerHeight;
+const parentWidth = window.innerWidth;
+
+// Calculate the center position
+const top = (window.innerHeight - parentHeight) / 2;
+const left = (window.innerWidth - parentWidth) / 2;
 
 // const columns = [
 //     {field: "locked",headerName:"LOCKED",headerAlign: 'center', renderCell:(params)=><Checkbox checked={params.value} />},
-//     { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
-//       const parentHeight = window.innerHeight;
-//       const parentWidth = window.innerWidth;
+    // { field: "id", headerName: "QUOTATION #", renderCell: (params) => {
+    //   const parentHeight = window.innerHeight;
+    //   const parentWidth = window.innerWidth;
     
-//         // Calculate the center position
-//         const top = (window.innerHeight - parentHeight) / 2;
-//         const left = (window.innerWidth - parentWidth) / 2;
+    //     // Calculate the center position
+    //     const top = (window.innerHeight - parentHeight) / 2;
+    //     const left = (window.innerWidth - parentWidth) / 2;
         
-//         if(!params.row.locked)
-//         { 
-//         return (
-//           <Link
-//             href="#"
-//             onClick={() => {
-//               // Open a new window with the quotation details
-//            window.open(
-//                 `http://localhost:3000/quotation/details?quotation_number=${params.value}&ref=${params.row.refresh.refresh}`,
-//                 "_blank",
-//                 `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
-//             );
+    //     if(!params.row.locked)
+    //     { 
+    //     return (
+    //       <Link
+    //         href="#"
+    //         onClick={() => {
+    //           // Open a new window with the quotation details
+    //        window.open(
+    //             `http://localhost:3000/quotation/details?quotation_number=${params.value}&ref=${params.row.refresh.refresh}`,
+    //             "_blank",
+    //             `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
+    //         );
 
-//             // Create the handler with the specific quotation number
-//             const messageHandler = createMessageHandler(params.value);
+    //         // Create the handler with the specific quotation number
+    //         const messageHandler = createMessageHandler(params.value);
 
-//             // Add the event listener
-//             window.addEventListener('message', messageHandler);
+    //         // Add the event listener
+    //         window.addEventListener('message', messageHandler);
 
-//             } }
-//             variant="outlined"
-//             color="secondary"
-//           >
-//             {params.value}
-//           </Link>
-//         )
-//         }
-//         else
-//         {
-//           return params.value
-//         }
+    //         } }
+    //         variant="outlined"
+    //         color="secondary"
+    //       >
+    //         {params.value}
+    //       </Link>
+    //     )
+    //     }
+    //     else
+    //     {
+    //       return params.value
+    //     }
 
-//       }},
+    //   }},
 //     { field: "status", headerName: "STATUS", renderCell: (params)=>(
 //       <Typography variant="p"
 //       sx={{
@@ -110,12 +118,13 @@ import { theme } from '../../Theme';
 //   'ASSIGNED TO'
 // ];
 
+
+
 const columns = [{
   id: 'locked',
-  name: 'LOCKED',
- 
-}, {
-  id: 'quotation_number',
+  name: 'LOCKED'
+},
+{ id: 'quotation_number', 
   name: 'QUOTATION #'
 }, {
   id: 'status',
@@ -130,8 +139,7 @@ const columns = [{
 },
 {
   id: 'client_name',
-  name: 'CLIENT NAME',
-  formatter: (cell) => html(`<Typography>${cell}</Typography>`)
+  name: 'CLIENT NAME'
 },
 {
   id: 'attention_to',
@@ -185,7 +193,22 @@ export default function List(props){
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
             locked: !!element.locked,
-            quotation_number: element.quotation_number,
+            quotation_number: <Link href="#" onClick={()=>{
+              window.open(
+                `http://localhost:3000/quotation/details?quotation_number=${element.quotation_number}&ref=${refresh}`,
+                `_blank`,
+                `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
+              );
+
+              const messageHandler = createMessageHandler(element.quotation_number);
+                          
+              window.addEventListener('message', messageHandler);
+              }}
+              variant="outlined"
+              color="secondary"
+              >
+                {element.quotation_number}
+            </Link>,
             status: element.STATUS,
             created_by: element.created_by_email,
             client_name: element.client_name,
@@ -196,10 +219,9 @@ export default function List(props){
             vat_amount: element.vat_amount,
             amount_with_vat: element.amount_with_vat,
             assigned_to: element.assigned_to_email,
-            refresh: {setRefresh: setRefresh, refresh: refresh}
+            //refresh: {setRefresh: setRefresh, refresh: refresh}
           }));
-          // setQuotations(fetchedQuotations);
-
+          setQuotations(fetchedQuotations);
 
 
 
@@ -209,19 +231,7 @@ export default function List(props){
           // }));
           // setAdjustedColumns(updatedColumns);
 
-          const grid = new GridJs({
-            columns: columns,
-            style: { 
-              table: { 
-                'white-space': 'nowrap'
-              }
-            },
-            sort: true,
-            pagination: {
-              limit: 1
-            },
-            data: fetchedQuotations
-          }).render(wrapper.current);
+         
         } else {
           console.log(result.data.message);
         }
@@ -256,7 +266,20 @@ export default function List(props){
               </Grid> 
               {props.message}
               <Grid item>
-                <div ref={wrapper}></div>
+              <GridJs
+                  data={quotations}
+                  columns={columns}
+                  style={{ 
+                    table: { 
+                      'white-space': 'nowrap'
+                    }
+                  }}
+                  width={window.innerWidth - 290}
+           
+                  pagination={{
+                    limit: 10,
+                  }}
+                />
               </Grid>
               {/* <Grid item sx={{ width: "100%"}}>
                 <DataGrid
