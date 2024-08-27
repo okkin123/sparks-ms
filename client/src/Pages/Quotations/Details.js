@@ -74,11 +74,7 @@ export default function Details(){
     const [bankAccount, setBankAccount] = useState([]);
     const [address, setAddress] = useState('');
     const [quotationDetails, setQuotationDetails] = useState([]);
-    const [quotationBreakdown, setQuotationBreakdown] = useState({
-        total_cost_without_vat: "",
-        vat_amount: "",
-        total_cost_with_vat: ""
-    });
+ 
     const [user, setUser] = useState({
       email_address: ""
     })
@@ -104,7 +100,10 @@ export default function Details(){
                     client_name: result.data.quotation[0].client_name,
                     attention_to: result.data.quotation[0].attention_to,
                     project_name: result.data.quotation[0].project_name,
-                    project_description: result.data.quotation[0].project_description
+                    project_description: result.data.quotation[0].project_description,
+                    cost_without_vat: result.data.quotation[0].amount_without_vat,
+                    vat_amount: result.data.quotation[0].vat_amount,
+                    cost_with_vat: result.data.quotation[0].amount_with_vat
                   });
 
                
@@ -206,6 +205,7 @@ export default function Details(){
             {
            
               if (window.opener) {
+                alert(response.data.message);
                 window.close(); // Close the child window after sending data
               }
 
@@ -222,20 +222,7 @@ export default function Details(){
       }
     })
 
-    useEffect(()=>{
 
-        const total_cost_without_vat = quotationDetails.reduce((accumulator, currentItem) => {
-          return accumulator + parseFloat(currentItem.total_cost);
-        }, 0);
-  
-        setQuotationBreakdown({
-          total_cost_without_vat: total_cost_without_vat,
-          vat_amount: total_cost_without_vat * 0.05,
-          total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * 0.05)
-        })
-  
-        
-      },[quotationDetails])
 
     return(
             <Box
@@ -307,15 +294,15 @@ export default function Details(){
                         <TableFooter>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell  >
+                            <StyledTableCell align="center">{quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">VAT 5%:</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                            <StyledTableCell align="center">{quotation.vat_amount}</StyledTableCell>
                             </StyledTableRow>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                            <StyledTableCell align="center">{quotation.cost_with_vat}</StyledTableCell>
                             </StyledTableRow>
                         </TableFooter>
                         

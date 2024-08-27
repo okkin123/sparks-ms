@@ -129,7 +129,7 @@ useEffect(()=>{
                                         color="inherit"
                                         size="small"
                                         onClick={() => {
-                                            navigate(location.pathname, { replace: true, state: {} });
+                                            navigate(location.pathname, { replace: false, state: {} });
                                         }}
                                     >
                                         <CloseIcon fontSize="inherit" />

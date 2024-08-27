@@ -144,8 +144,8 @@ export default function New(){
             i === index ? { ...quotationDetail, 
               edit_open: false,
               description: formik_quotation_detail.values.description,
-              unit_cost: (parseFloat(formik_quotation_detail.values.total_cost) / parseInt(formik_quotation_detail.values.quantity)).toFixed(2),
-              quantity: formik_quotation_detail.values.quantity,
+              unit_cost: formik_quotation_detail.values.quantity === '' ? 0 : (parseFloat(formik_quotation_detail.values.total_cost) / parseInt(formik_quotation_detail.values.quantity)).toFixed(2),
+              quantity: formik_quotation_detail.values.quantity === '' ? 0 : formik_quotation_detail.values.quantity,
               total_cost: parseFloat(formik_quotation_detail.values.total_cost).toFixed(2)
             } : quotationDetail
           ));
@@ -194,8 +194,8 @@ export default function New(){
           {
             edit_open: false,
             description: values.description,
-            quantity: values.quantity,
-            unit_cost: (parseFloat(values.total_cost) / parseInt(values.quantity)).toFixed(2),
+            quantity: values.quantity === '' ? 0 : values.quantity,
+            unit_cost: values.quantity === '' ? 0 : (parseFloat(values.total_cost) / parseInt(values.quantity)).toFixed(2),
             total_cost: parseFloat(values.total_cost).toFixed(2)
           }
         ]);
