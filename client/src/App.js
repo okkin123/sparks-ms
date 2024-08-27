@@ -1,10 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./Theme";
-import "gridjs/dist/theme/mermaid.css";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
-
 import Wrapper from "./Pages/Wrapper";
 import ForgotPassword from "./Pages/ForgotPassword";
 import EnterCode from "./Pages/EnterCode";
@@ -41,7 +39,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoutes>
-                  <Wrapper />
+                    <Wrapper />
                 </ProtectedRoutes>
               }
             />

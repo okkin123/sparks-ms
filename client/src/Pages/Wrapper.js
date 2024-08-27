@@ -144,7 +144,8 @@ useEffect(()=>{
                         </Collapse>
                     </Grid>
                 </React.Fragment>
-            } />),
+            } />
+            ),
         qnew: { selected: false },
         qlist: { selected: true }
     });

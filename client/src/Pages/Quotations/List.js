@@ -1,7 +1,9 @@
-import React, {useState, useEffect, useRef} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link, Checkbox} from '@mui/material';
-import { Grid as GridJs } from 'gridjs-react';
-import { html } from 'gridjs';
+import React, {useState, useEffect, useMemo, useContext} from 'react';
+import {Toolbar, Typography, Grid, Chip, Link, Checkbox, Button} from '@mui/material';
+import {
+  MaterialReactTable,
+  useMaterialReactTable
+} from 'material-react-table';
 // import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
 import { theme } from '../../Theme';
@@ -20,14 +22,6 @@ function createMessageHandler(quotation_number) {
       }
   };
 }
-
-
-const parentHeight = window.innerHeight;
-const parentWidth = window.innerWidth;
-
-// Calculate the center position
-const top = (window.innerHeight - parentHeight) / 2;
-const left = (window.innerWidth - parentWidth) / 2;
 
 // const columns = [
 //     {field: "locked",headerName:"LOCKED",headerAlign: 'center', renderCell:(params)=><Checkbox checked={params.value} />},
@@ -100,75 +94,7 @@ const left = (window.innerWidth - parentWidth) / 2;
 //   ];
 
 
-// const columns = [
-//   { 
-//     name: 'LOCKED',
-//     formatter: (cell) => <Checkbox checked={cell} />
-//   },
-//   'QUOTATION #',
-//   'STATUS',
-//   'CREATED BY',
-//   'CLIENT NAME',
-//   'ATTENTION TO',
-//   'PROJECT NAME',
-//   'PROJECT DESCRIPTION',
-//   'AMOUNT WITHOUT VAT',
-//   'VAT AMOUNT',
-//   'AMOUNT WITH VAT',
-//   'ASSIGNED TO'
-// ];
 
-
-
-const columns = [{
-  id: 'locked',
-  name: 'LOCKED'
-},
-{ id: 'quotation_number', 
-  name: 'QUOTATION #'
-}, {
-  id: 'status',
-  name: 'STATUS',
-  formatter: (cell) => html(`<Typography variant="p"
-    style="color: ${cell === "APPROVED" ? theme.palette.success.main : cell === "RETURNED" ? theme.palette.warning.main : cell === "WAITING FOR APPROVAL" ? theme.palette.primary.main : theme.palette.error.main};"
-    >${cell}</Typography>`)
-},
-{
-  id: 'created_by',
-  name: 'CREATED BY'
-},
-{
-  id: 'client_name',
-  name: 'CLIENT NAME'
-},
-{
-  id: 'attention_to',
-  name: 'ATTENTION TO'
-},
-{
-  id: 'project_name',
-  name: 'PROJECT NAME'
-},
-{
-  id: 'project_description',
-  name: 'PROJECT DESCRIPTION'
-},
-{
-  id: 'amount_without_vat',
-  name: 'AMOUNT w/o VAT'
-},
-{
-  id: 'vat_amount',
-  name: 'VAT AMOUNT'
-},
-{
-  id: 'amount_with_vat',
-  name: 'AMOUNT w/ VAT'
-},
-{
-  id: 'assigned_to',
-  name: 'ASSIGNED TO'
-}];
 
 // const calculateColumnWidth = (rows, field) => {
 //   const maxLength = Math.max(
@@ -179,50 +105,84 @@ const columns = [{
 // }
 
 
+const columns = [
+    {
+      accessorKey: 'quotation_number', //normal accessorKey
+      header: 'QOUTATION NO',
+    },
+    {
+      accessorKey: 'status',
+      header: 'STATUS'
+    },
+    {
+      accessorKey: 'created_by',
+      header: 'CREATED BY'
+    },
+    {
+      accessorKey: 'client_name',
+      header: 'CLIENT NAME'
+    },
+    {
+      accessorKey: 'attention_to',
+      header: 'ATTENTION TO'
+    },
+    {
+      accessorKey: 'project_name',
+      header: 'PROJECT NAME'
+    },
+    {
+      accessorKey: 'project_description',
+      header: 'PROJECT DESCRIPTION'
+    },
+    {
+      accessorKey: 'cost_without_vat',
+      header: 'COST w/o VAT'
+    },
+    {
+      accessorKey: 'vat_amount',
+      header: 'VAT AMOUNT'
+    },
+    {
+      accessorKey: 'cost_with_vat',
+      header: 'COST w/ VAT'
+    },
+    {
+      accessorKey: 'created_by',
+      header: 'CREATED BY'
+    },
+  ];
+
 export default function List(props){
   const [quotations, setQuotations] = useState([]);
-  //const [adjustedColumns, setAdjustedColumns] = useState(columns);
+  const [adjustedColumns, setAdjustedColumns] = useState(columns);
   const [refresh, setRefresh] = useState(false)
-  const wrapper = useRef(null);
+  const [loading, setLoading] = useState(false)
 
 
   useEffect(() => {
- 
+
+    setLoading(true)
     AxiosInstance.get("/quotation/list")
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
-            locked: !!element.locked,
-            quotation_number: <Link href="#" onClick={()=>{
-              window.open(
-                `http://localhost:3000/quotation/details?quotation_number=${element.quotation_number}&ref=${refresh}`,
-                `_blank`,
-                `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
-              );
-
-              const messageHandler = createMessageHandler(element.quotation_number);
-                          
-              window.addEventListener('message', messageHandler);
-              }}
-              variant="outlined"
-              color="secondary"
-              >
-                {element.quotation_number}
-            </Link>,
+            //locked: !!element.locked,
+            quotation_number: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
             client_name: element.client_name,
             attention_to: element.attention_to,
             project_name: element.project_name,
             project_description: element.project_description,
-            amount_without_vat: element.amount_without_vat,
+            cost_without_vat: element.amount_without_vat,
             vat_amount: element.vat_amount,
-            amount_with_vat: element.amount_with_vat,
+            cost_with_vat: element.amount_with_vat,
             assigned_to: element.assigned_to_email,
             //refresh: {setRefresh: setRefresh, refresh: refresh}
-          }));
+          })); 
           setQuotations(fetchedQuotations);
 
+          setLoading(false)
 
 
           // const updatedColumns = columns.map(column => ({
@@ -241,19 +201,9 @@ export default function List(props){
       });
 
 
-    if (wrapper.current) {
-      wrapper.current.innerHTML = "";
-    }
-
-
-
-
-
        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
-
-    
 
 
     return(
@@ -266,20 +216,17 @@ export default function List(props){
               </Grid> 
               {props.message}
               <Grid item>
-              <GridJs
-                  data={quotations}
-                  columns={columns}
-                  style={{ 
-                    table: { 
-                      'white-space': 'nowrap'
-                    }
-                  }}
-                  width={window.innerWidth - 290}
-           
-                  pagination={{
-                    limit: 10,
-                  }}
-                />
+                 <MaterialReactTable
+                 enableDensityToggle={false}
+                 enableColumnFilters={false}
+                 enableSorting={false}
+                 enableColumnFilters={false}
+                 enableColumnActions={false}
+                 initialState={{
+                  density: 'compact',
+                  isLoading: loading
+                 }}
+                 columns={columns} data={quotations} />
               </Grid>
               {/* <Grid item sx={{ width: "100%"}}>
                 <DataGrid
