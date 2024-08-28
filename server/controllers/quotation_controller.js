@@ -84,7 +84,10 @@ module.exports = {
                                     values,
                                     function(err2, data2, fields2) {
                                       if (err2) {
-                                        console.log(err2);
+                                        res.send({
+                                            status: "ERROR",
+                                            message: err
+                                        })
                                       } else {
                                         dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
                                             [req.body.quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){})
@@ -162,6 +165,71 @@ module.exports = {
                     
                 }
         })
+    },
+    update: (req, res)=>
+    {
+        dbConnection.query("SELECT user_id FROM vw_users WHERE user_type='Operations Manager' OR user_type='Managing Director'",
+            function(err3, data3, fields3)
+            {
+                if(err3)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err3.sqlMessage
+                    })
+                }
+                else
+                {
+                    const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
+                    dbConnection.query("UPDATE tbl_quotations SET quotation_date=?, client_name=?, attention_to=?, project_name=?, project_description=?, amount_without_vat=?, vat_percentage=?, created_by=?, assigned_to=?, status=? WHERE quotation_number=?",
+                        [req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.vat_percentage, req.user.user_id, assigned_to, "WAITING FOR APPROVAL", req.body.quotation_number],
+                        function(err, data, fields)
+                        {
+                            if(err)
+                            {
+                                res.send({
+                                    status: "ERROR",
+                                    message: err
+                                })
+                            }
+                            else
+                            {
+                                const quotation_details = req.body.details;
+                                const values = quotation_details.flatMap(quotation_detail => [
+                                quotation_detail.description,
+                                quotation_detail.quantity,
+                                quotation_detail.unit_cost,
+                                quotation_detail.total_cost,
+                                quotation_detail.quotation_detail_id
+                                ]);
+            
+                                const placeholders = quotation_details.map(() => 'description=?, qty=?, unit_cost=?, total_cost=? WHERE quotation_detail_id=?').join(',');
+
+                                dbConnection.query(
+                                    `UPDATE tbl_quotation_details SET ${placeholders}`,
+                                    [...values, req.body.quotation_number],
+                                    function(err2, data2, fields2) {
+                                        if (err2) {
+                                            res.send({
+                                                status: "ERROR",
+                                                message: err2
+                                            })
+                                        } else {
+                                        dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
+                                            [req.body.quotation_number, req.user.user_id, "", "UPDATED"], function(err3, data3, fields3){})
+                                        res.send({
+                                            status: "SUCCESS",
+                                            message: "Quotation #: " + req.body.quotation_number + " has been updated for approval!"
+                                        });
+                                        }
+                                    }
+                                    );
+                            }
+                        }
+                    )
+                }
+            }
+        )
     },
     get_approval_history: (req, res) =>{
         dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=? ORDER BY date_time ASC", 

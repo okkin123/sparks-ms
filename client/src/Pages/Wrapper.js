@@ -31,8 +31,10 @@ import AxiosInstance from "../AxiosInstance";
 import Dashboard from "./Dashboard";
 import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
+import QEdit from "./Quotations/Edit";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
+
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
@@ -95,6 +97,13 @@ export default function SideMenu() {
   useEffect(() => {
     // make the API call
 
+    window.addEventListener('beforeunload', (event) => {
+      navigate(location.pathname, { replace: true, state: {} });
+      // Optionally, you can show a confirmation dialog
+      event.preventDefault();
+      
+    });
+
     AxiosInstance.get("/user/info")
       .then((result) => {
         // assign the message in our result to the message we initialized above
@@ -111,13 +120,13 @@ export default function SideMenu() {
 
      
      
-  }, []);
+  }, [location.pathname, navigate]);
 
 useEffect(()=>{
   if (location.state) {
-    setComponent({
+    setComponent((component)=>({
         ...component,
-        element: (
+        element: location.state.quotation_created_updated ? (
             <QList message={
                 <React.Fragment>
                     <Grid item>
@@ -129,7 +138,7 @@ useEffect(()=>{
                                         color="inherit"
                                         size="small"
                                         onClick={() => {
-                                            navigate(location.pathname, { replace: false, state: {} });
+                                            navigate(location.pathname, { replace: true, state: {quotation_created_updated: true, message: false} });
                                         }}
                                     >
                                         <CloseIcon fontSize="inherit" />
@@ -145,11 +154,14 @@ useEffect(()=>{
                     </Grid>
                 </React.Fragment>
             } />
-            ),
-        qnew: { selected: false },
-        qlist: { selected: true }
-    });
+            ) : location.state.quotation_edit ? (
+                <QEdit quotation_number={location.state.quotation_number} />
+            ) : <Dashboard />,
+      qlist: location.state.quotation_created ? {...component.qlist, selected: true} : location.state.quotation_edit ? {...component.qlist, selected: false}  : {...component.qlist, selected: false} ,
+      qnew: {...component.qnew, selected: false}      
+    }));
 }
+
 
 // eslint-disable-next-line 
 },[location.state, navigate])
@@ -270,7 +282,9 @@ useEffect(()=>{
                 <ListItemButton
                   selected={component.qlist.selected}
                   onClick={() => {
-                    handleSelect('qlist', <QList />)
+                    handleSelect('qlist', (
+                        <QList />
+                    ))
                   }}
                  sx={{ pl: 4 }}>
                   <ListItemIcon>

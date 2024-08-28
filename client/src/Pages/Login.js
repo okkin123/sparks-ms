@@ -217,7 +217,7 @@ export default function Login() {
               </LoadingButton>
               <Button
                 variant="text"
-                color="secondary"
+                color="info"
                 onClick={() => navigate("/forgotpassword")}
               >
                 Forgot Password

@@ -1,18 +1,28 @@
-import React, {useState, useEffect, useMemo, useContext} from 'react';
-import {Toolbar, Typography, Grid, Chip, Link, Checkbox, Button, Box, Paper} from '@mui/material';
+import React, {useState, useEffect} from 'react';
+import {Toolbar, Typography, Grid, Chip, Link, Icon, Box, Paper} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
-  useMaterialReactTable
 } from 'material-react-table';
-// import { DataGrid } from "@mui/x-data-grid";
 import AxiosInstance from '../../AxiosInstance';
 import { theme } from '../../Theme';
-import { blue } from '@mui/material/colors';
+import LockIcon from '@mui/icons-material/Lock';
 
 
-function createMessageHandler(quotation_number, setRefresh, refresh) {
-  return function handleMessage(event) {
-      if (event.data === "childClosed") {
+
+const parentHeight = window.innerHeight;
+const parentWidth = window.innerWidth;
+
+// Calculate the center position
+const top = (window.innerHeight - parentHeight) / 2;
+const left = (window.innerWidth - parentWidth) / 2;
+
+function createMessageHandler(navigate, quotation_number, setRefresh, refresh) {
+
+  return function HandleMessage(event) {
+    
+      if (event.data.childClosed || event.data.childSubmit) {
+        
           AxiosInstance.post("/quotation/unlock", { quotation_number: quotation_number })
               .then(function(response) {
                 setRefresh(!refresh)
@@ -20,29 +30,30 @@ function createMessageHandler(quotation_number, setRefresh, refresh) {
               .catch(function(error) {
                   console.error("Axios error:", error.response ? error.response.data : error.message);
               });
-          window.removeEventListener('message', handleMessage);
+         
       }
+      else if(event.data.childEdit) {
+        navigate('/', { 
+          state: {
+            quotation_edit: true,
+            quotation_number: quotation_number
+          }
+         });
+      }
+
+      window.removeEventListener('message', HandleMessage);
+      
   };
 }
 
 
 
-// const calculateColumnWidth = (rows, field) => {
-//   const maxLength = Math.max(
-//     ...rows.map(row => String(row[field]).length),
-//     field.length
-//   );
-//   return maxLength * 10; // Adjust multiplier as needed
-// }
-
-    const parentHeight = window.innerHeight;
-    const parentWidth = window.innerWidth;
-  
-    // Calculate the center position
-    const top = (window.innerHeight - parentHeight) / 2;
-    const left = (window.innerWidth - parentWidth) / 2;
-
 const columns = [
+    {
+      accessorKey: 'locked',
+      header: 'LOCKED',
+      Cell: ({renderedCellValue, row}) => renderedCellValue ? <Icon color="primary" fontSize="small"><LockIcon /></Icon> : ""
+    },
     {
       accessorKey: 'quotation_number', //normal accessorKey
       header: 'QUOTATION NO.',
@@ -51,13 +62,13 @@ const columns = [
        
            // Open a new window with the quotation details
            window.open(
-                `https://3000-okkin123-sparksms-3bd5wpxfxws.ws-us115.gitpod.io/quotation/details?quotation_number=${renderedCellValue}&ref=${row.original.refresh.refresh}`,
+                window.location.pathname+`quotation/details?quotation_number=${renderedCellValue}&ref=${row.original.refresh.refresh}`,
                 "_blank",
                 `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
             );
 
             // Create the handler with the specific quotation number
-            const messageHandler = createMessageHandler(renderedCellValue, row.original.refresh.setRefresh, row.original.refresh.refresh);
+            const messageHandler = createMessageHandler(row.original.refresh.navigate, renderedCellValue, row.original.refresh.setRefresh, row.original.refresh.refresh);
 
             // Add the event listener
             window.addEventListener('message', messageHandler);
@@ -78,7 +89,7 @@ const columns = [
     {
       accessorKey: 'created_by',
       header: 'CREATED BY',
-      Cell: ({renderedCellValue, row}) =>  <Chip label={renderedCellValue} />
+      Cell: ({renderedCellValue, row}) =>  <Chip color="secondary" label={renderedCellValue} />
     },
     {
       accessorKey: 'client_name',
@@ -101,6 +112,11 @@ const columns = [
       header: 'COST w/o VAT'
     },
     {
+      accessorKey: 'vat_percentage',
+      header: 'VAT %',
+      Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue+"%"}</Typography>
+    },
+    {
       accessorKey: 'vat_amount',
       header: 'VAT AMOUNT'
     },
@@ -116,7 +132,7 @@ const columns = [
             return (
               <div>
                 {emails.map((email, index) => (
-                  <Chip key={index} label={email} color={index % 2 === 0  ? 'secondary' : 'success'} />
+                  <Chip key={index} label={email} color={index % 2 === 0  ? 'info' : 'error'} />
                 ))}
               </div>
             );
@@ -126,11 +142,11 @@ const columns = [
 
 export default function List(props){
   const [quotations, setQuotations] = useState([]);
-  const [adjustedColumns, setAdjustedColumns] = useState(columns);
   const [refresh, setRefresh] = useState(false)
   const [loading, setLoading] = useState(false)
-
-
+  
+  const navigate = useNavigate();
+  
   useEffect(() => {
 
     setLoading(true)
@@ -138,7 +154,7 @@ export default function List(props){
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
-            //locked: !!element.locked,
+            locked: !!element.locked,
             quotation_number: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
@@ -147,21 +163,15 @@ export default function List(props){
             project_name: element.project_name,
             project_description: element.project_description,
             cost_without_vat: element.amount_without_vat,
+            vat_percentage: element.vat_percentage,
             vat_amount: element.vat_amount,
             cost_with_vat: element.amount_with_vat,
             assigned_to: element.assigned_to_email,
-            refresh: {setRefresh: setRefresh, refresh: refresh}
+            refresh: {navigate: navigate, setRefresh: setRefresh, refresh: refresh}
           })); 
           setQuotations(fetchedQuotations);
 
           setLoading(false)
-
-
-          // const updatedColumns = columns.map(column => ({
-          //   ...column,
-          //   width: calculateColumnWidth(fetchedQuotations, column.field),
-          // }));
-          // setAdjustedColumns(updatedColumns);
 
          
         } else {
@@ -206,10 +216,18 @@ export default function List(props){
                  initialState={{
                   density: 'compact',
                   isLoading: loading,
-                  columnPinning: { left: ['quotation_number', 'status'] },
+                  columnPinning: { left: ['locked','quotation_number', 'status'] },
                   showGlobalFilter: true,
                  }}
-
+                 state={{
+                  isLoading: loading
+                 }}
+                 muiTableHeadCellProps={{
+                  sx:{
+                    backgroundColor: theme.palette.primary.main,
+                    color: 'white'
+                  }
+                 }}
                  muiSearchTextFieldProps={{
                   placeholder: 'Search Keyword...',
                   sx: { minWidth: '18rem'},
@@ -225,21 +243,6 @@ export default function List(props){
                  </Box>
                  </Paper>
               </Grid>
-              {/* <Grid item sx={{ width: "100%"}}>
-                <DataGrid
-                  autoHeight  
-                  rows={quotations}
-                  columns={adjustedColumns}
-                  initialState={{
-                    pagination: {
-                      paginationModel: { page: 0, pageSize: 10 },
-                    },
-                  }}
-                  pageSizeOptions={[10, 20]}
-                  disableRowSelectionOnClick
-                  density="compact"
-                />
-              </Grid> */}
             </Grid>
         </React.Fragment>
     )

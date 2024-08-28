@@ -82,7 +82,9 @@ const QuotationDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     
   });
-export default function New(){
+export default function Edit(props){
+
+    const quotationNumber = props.quotation_number;
 
     const [modal, setModal] = useState({
       add: {
@@ -91,7 +93,7 @@ export default function New(){
     })
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const [quotationNumber, setQuotationNumber] = useState("");
+
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
       total_cost_without_vat: "",
@@ -193,6 +195,7 @@ export default function New(){
           ...quotationDetails,
           {
             edit_open: false,
+
             description: values.description,
             quantity: values.quantity === '' ? 0 : values.quantity,
             unit_cost: values.quantity === '' ? 0 : (parseFloat(values.total_cost) / parseInt(values.quantity)).toFixed(2),
@@ -224,7 +227,7 @@ export default function New(){
         else
         {
           setError(false)
-          AxiosInstance.post("/quotation/insert", {
+          AxiosInstance.post("/quotation/update", {
             quotation_number: quotationNumber,
             values: values,
             details: quotationDetails,
@@ -270,20 +273,42 @@ export default function New(){
     },[quotationDetails])
 
    useEffect(()=>{
-    AxiosInstance.get("/quotation/generateQuotationNumber")
-    .then(function(result){
-        if(result.data.status === "SUCCESS")
-        {
-          setQuotationNumber(result.data.quotation_number);
-        }
-        else
-        {
-          console.log(result.data)
-        }
-    }) 
-    .catch(function(error){
-      console.log(error)
+
+
+    AxiosInstance.post("/quotation/details", {quotation_number : quotationNumber})
+    .then((result) => {
+      if (result.data.status === "SUCCESS") {
+
+        formik_quotation.setValues({
+            date: dayjs(new Date(result.data.quotation[0].quotation_date)).format('YYYY-MM-DD'),
+            client_name: result.data.quotation[0].client_name,
+            attention_to: result.data.quotation[0].attention_to,
+            project_name: result.data.quotation[0].project_name,
+            project_description: result.data.quotation[0].project_description,
+        });
+
+           
+              
+              setQuotationDetails((quotation_details) => [
+                ...result.data.details.map((element) => ({
+                edit: false,
+                quotation_detail_id: element.quotation_detail_id,
+                description: element.description,
+                quantity: element.qty === null ? 0 : element.qty,
+                unit_cost: parseFloat(element.unit_cost).toFixed(2),
+                total_cost: parseFloat(element.total_cost).toFixed(2)
+                })),
+              ]);
+              
+      } else {
+        console.log(result.data.message);
+      }
     })
+    .catch((error) => {
+      console.log(error);
+    });
+
+
 
       AxiosInstance.get("/preferences/vat")
       .then(function(result){
@@ -293,7 +318,7 @@ export default function New(){
         console.log(error)
       })
 
-
+    // eslint-disable-next-line
    }, [])
 
     return(
@@ -302,7 +327,7 @@ export default function New(){
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
                 <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
-                  <Typography variant="h6">NEW QUOTATION</Typography>
+                  <Typography variant="h6">EDIT QUOTATION</Typography>
                 </Stack>
               <Grid item>
                  <Divider />
@@ -633,7 +658,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Submit for Approval</LoadingButton>
+                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Update for Approval</LoadingButton>
                  </Grid>
             </Grid>
             </Paper>
@@ -642,37 +667,3 @@ export default function New(){
     )
 }
 
-// CREATE TABLE year_counter (
-//   id INT AUTO_INCREMENT PRIMARY KEY,
-//   year INT NOT NULL,
-//   counter INT NOT NULL
-// );
-
-// INSERT INTO year_counter (year, counter) VALUES (2024, 1);
-
-// DELIMITER //
-
-// CREATE PROCEDURE increment_counter()
-// BEGIN
-//     DECLARE current_year INT;
-//     DECLARE current_counter INT;
-
-//     -- Get the current year and counter
-//     SELECT year, counter INTO current_year, current_counter
-//     FROM year_counter
-//     ORDER BY id DESC
-//     LIMIT 1;
-
-//     -- Check if the year has changed
-//     IF current_year = YEAR(CURDATE()) THEN
-//         -- Increment the counter
-//         UPDATE year_counter
-//         SET counter = counter + 1
-//         WHERE year = current_year;
-//     ELSE
-//         -- Insert a new record for the new year
-//         INSERT INTO year_counter (year, counter) VALUES (YEAR(CURDATE()), 1);
-//     END IF;
-// END //
-
-// DELIMITER ;

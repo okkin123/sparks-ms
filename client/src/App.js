@@ -7,7 +7,8 @@ import Wrapper from "./Pages/Wrapper";
 import ForgotPassword from "./Pages/ForgotPassword";
 import EnterCode from "./Pages/EnterCode";
 import ChangePassword from "./Pages/ChangePassword";
-import Details from "./Pages/Quotations/Details";
+import QDetails from "./Pages/Quotations/Details";
+import QEdit from "./Pages/Quotations/Edit";
 import ProtectedRoutes from "./ProtectedRoutes";
 
 function App() {
@@ -43,7 +44,8 @@ function App() {
                 </ProtectedRoutes>
               }
             />
-            <Route path="/quotation/details" Component={Details} />
+            <Route path="/quotation/details" Component={QDetails} />
+            <Route path="/quotation/edit" Component={QEdit} />
           </Routes>
         </BrowserRouter>
       </div>
