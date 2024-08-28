@@ -10,16 +10,20 @@ export const theme = createTheme({
       main: "#4C4A48",
     },
     secondary: {
-      main: "#0063B1",
-    },
-    warning: {
-      main: "#ff8c00",
+      main: "#1877F2",
     },
     info: {
-      main: "#0099bc",
+      main: "#8E44AD",
     },
     success: {
-      main: "#10893e",
+      main: "#27AE60",
     },
+    warning: {
+      main: "#F57D00",
+    },
+    error: {
+      main: "#E4405F",
+    },
+
   },
 });

@@ -14,6 +14,7 @@ import {Typography,
         TextField,
         Button} from '@mui/material';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../AxiosInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
@@ -70,20 +71,23 @@ export default function Details(){
         project_name: "",
         project_description: "",
     });
-
     const [bankAccount, setBankAccount] = useState([]);
     const [address, setAddress] = useState('');
     const [quotationDetails, setQuotationDetails] = useState([]);
- 
+
     const [user, setUser] = useState({
       email_address: ""
     })
     const [approvalHistory, setApprovalHistory] = useState([])
-    
+    const [loading, setLoading] = useState(false);
     useEffect(()=>{
 
        window.addEventListener("beforeunload", function(event){
-        window.opener.postMessage('childClosed', window.location.origin);
+        window.opener.postMessage({
+          childClosed: true,
+          childSubmit: false,
+          childEdit: false
+        }, window.location.origin);
        })
 
         AxiosInstance.post("/quotation/details", {quotation_number : paramValue})
@@ -199,13 +203,20 @@ export default function Details(){
       },
       validateOnChange: false,
       onSubmit: (values, {validateForm})=>{
+        setLoading(true)
         AxiosInstance.post("/quotation/update_quotation_status", values)
         .then(function(response){
            if(response.data.status === "SUCCESS")
             {
-           
+              setLoading(false)
+
               if (window.opener) {
                 alert(response.data.message);
+                window.opener.postMessage({
+                  childClosed: false,
+                  childSubmit: true,
+                  childEdit: false
+                }, window.location.origin);
                 window.close(); // Close the child window after sending data
               }
 
@@ -241,7 +252,7 @@ export default function Details(){
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
                         <img src={bsLogo} width={220} alt="logo" />
-                        <Typography variant="subtitle1" color="secondary"><strong>STATUS: {quotation.status}</strong></Typography>
+                        <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography>
                       </Stack>
                     <Typography variant="subtitle1">TRN NUMBER: {quotation.trn}</Typography>
                 </Stack>
@@ -256,6 +267,11 @@ export default function Details(){
                     <Stack direction="column" spacing={2}>
                         <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography>
                         <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography>
+                    </Stack>
+                </Grid>
+                <Grid item>
+                    <Stack direction="column" spacing={2}>
+                        <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography>
                     </Stack>
                 </Grid>
                 <Grid item>
@@ -392,22 +408,22 @@ export default function Details(){
                           </Grid>
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <Button variant="text" color="primary"
+                                <LoadingButton loading={loading} variant="text" color="primary"
                                 onClick={()=>{
                                   formik_update_quotation_status.setFieldValue("status", "VOIDED")
                                   formik_update_quotation_status.handleSubmit()
                                 }}
-                                >Void</Button>
-                              <Button variant="contained" color="primary"
+                                >Void</LoadingButton>
+                              <LoadingButton loading={loading} variant="contained" color="primary"
                               onClick={()=>{
                                 formik_update_quotation_status.setFieldValue("status", "RETURNED")
                                 formik_update_quotation_status.handleSubmit()
                               }}
-                              >Return</Button>
-                              <Button variant="contained" color="secondary" onClick={()=>{
+                              >Return</LoadingButton>
+                              <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
                                 formik_update_quotation_status.setFieldValue("status", "APPROVED")
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Approve</Button>
+                              }}>Approve</LoadingButton>
                             </Stack>
                           </Grid>
                         </React.Fragment>
@@ -424,14 +440,26 @@ export default function Details(){
                         <React.Fragment key={email}>
                           <Grid item>
                           <Stack direction="row" spacing={2} justifyContent="center">
-                            <Button variant="text" color="primary"
+                            <LoadingButton loading={loading} variant="text" color="primary"
                             onClick={()=>{
                               formik_update_quotation_status.setFieldValue("status", "VOIDED")
                               formik_update_quotation_status.handleSubmit()
                             }}
-                            >Void</Button>
+                            >Void</LoadingButton>
                             <Button variant="contained" color="success" onClick={()=>{
-                          
+       
+
+                              if(window.opener)
+                              {
+                                window.opener.postMessage({
+                                  childClosed: false,
+                                  childSubmit: false,
+                                  childEdit: true
+                                }, window.location.origin);
+                                window.close();
+                              }
+                             
+                       
                             }}>Edit</Button>
                           </Stack>
                           </Grid>
