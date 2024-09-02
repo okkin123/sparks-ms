@@ -110,13 +110,14 @@ export default function Details(){
                     cost_with_vat: result.data.quotation[0].amount_with_vat
                   });
 
+                  console.log(result.data.quotation)
                
                   
                   setQuotationDetails((quotation_details) => [
                     ...result.data.details.map((element) => ({
                     description: element.description,
                     qty: element.qty,
-                    unit_cost: parseFloat(element.unit_cost).toFixed(2),
+                    unit_cost: element.unit_cost === null ? '' : parseFloat(element.unit_cost).toFixed(2),
                     total_cost: parseFloat(element.total_cost).toFixed(2)
                     })),
                   ]);

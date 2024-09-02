@@ -6,36 +6,43 @@ const { company_address } = require('./preferences_controller');
 module.exports = {
     generateQuotationNumber: (req, res)=>
     {
-        dbConnection.query("SELECT MAX(quotation_number) as quotation_number FROM tbl_quotations",
-            function(err, data, fields)
-            {
-                if(err)
-                {
+        let initializedValue = 1;
+        const currentYear = new Date().getFullYear();
+        const prefix = 'BS';
+        let quotationNumber;
+
+        dbConnection.query( `SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(MAX(quotation_number), '/', 1), 'BS', -1) AS storedValue, SUBSTRING_INDEX(MAX(quotation_number), '/', -1) AS storedYear FROM tbl_quotations`, 
+            function(err, data, fields){
+                if(err){
                     res.send({
                         status: "ERROR",
                         message: err.sqlMessage
                     })
-                }
-                else
-                {
-                    if(data.length > 0)
-                    {
-                        if(data[0].quotation_number == null)
+                }else{
+                    const result = data[0]; // Access the first element of the results array
+                    let nextValue;
+              
+                    if (result.storedValue === null) {
+                      nextValue = initializedValue;
+                    } else{
+                        if(result.storedYear != currentYear)
                         {
-                            res.send({
-                                status: "SUCCESS",
-                                quotation_number: 1
-                            })
+                            nextValue = initializedValue;
                         }
                         else
                         {
-                            res.send({
-                                status: "SUCCESS",
-                                quotation_number: data[0].quotation_number + 1
-                            })
+                            console.log(result.storedValue)
+                            nextValue = parseInt(result.storedValue) + 1;
                         }
-                        
                     }
+              
+                    quotationNumber = `${prefix}${nextValue}/${currentYear}`;
+                  
+                    res.send({
+                        status: "SUCCESS",
+                        quotation_number: quotationNumber
+                    })
+                   
                 }
             }
         )
@@ -72,8 +79,8 @@ module.exports = {
                                 const values = quotation_details.flatMap(quotation_detail => [
                                 req.body.quotation_number,
                                 quotation_detail.description,
-                                quotation_detail.quantity,
-                                quotation_detail.unit_cost,
+                                quotation_detail.quantity === '' ? null : quotation_detail.quantity,
+                                quotation_detail.unit_cost === '' ? null : quotation_detail.unit_cost,
                                 quotation_detail.total_cost
                                 ]);
             
@@ -86,7 +93,7 @@ module.exports = {
                                       if (err2) {
                                         res.send({
                                             status: "ERROR",
-                                            message: err
+                                            message: err2
                                         })
                                       } else {
                                         dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
@@ -119,6 +126,7 @@ module.exports = {
                 {
                     res.send({
                         status: "SUCCESS",
+                        user_email: req.user.user_email,
                         quotations: data
                     })
                 }
@@ -194,42 +202,66 @@ module.exports = {
                             }
                             else
                             {
-                                const quotation_details = req.body.details;
-                                const values = quotation_details.flatMap(quotation_detail => [
-                                quotation_detail.description,
-                                quotation_detail.quantity,
-                                quotation_detail.unit_cost,
-                                quotation_detail.total_cost,
-                                quotation_detail.quotation_detail_id
-                                ]);
-            
-                                const placeholders = quotation_details.map(() => 'description=?, qty=?, unit_cost=?, total_cost=? WHERE quotation_detail_id=?').join(',');
-
-                                dbConnection.query(
-                                    `UPDATE tbl_quotation_details SET ${placeholders}`,
-                                    [...values, req.body.quotation_number],
-                                    function(err2, data2, fields2) {
-                                        if (err2) {
-                                            res.send({
-                                                status: "ERROR",
-                                                message: err2
-                                            })
-                                        } else {
-                                        dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
-                                            [req.body.quotation_number, req.user.user_id, "", "UPDATED"], function(err3, data3, fields3){})
-                                        res.send({
-                                            status: "SUCCESS",
-                                            message: "Quotation #: " + req.body.quotation_number + " has been updated for approval!"
+                                const deleteQuery = "DELETE FROM tbl_quotation_details WHERE quotation_number=?";
+                                dbConnection.query(deleteQuery, [req.body.quotation_number], function(err4, data4, fields4){
+                                    if(err4){
+                                        return res.send({
+                                            status: "ERROR",
+                                            message: err4
                                         });
-                                        }
                                     }
-                                    );
+                                    else{
+
+                                        const quotation_details = req.body.details;
+                                        const values = quotation_details.flatMap(quotation_detail => [
+                                        req.body.quotation_number,
+                                        quotation_detail.description,
+                                        quotation_detail.quantity === '' ? null : quotation_detail.quantity,
+                                        quotation_detail.unit_cost === '' ? null : quotation_detail.unit_cost,
+                                        quotation_detail.total_cost
+                                        ]);
+                    
+                                        const placeholders = quotation_details.map(() => '(?,?,?,?,?)').join(',');
+
+                                        dbConnection.query(
+                                            `INSERT INTO tbl_quotation_details (quotation_number, description, qty, unit_cost, total_cost) VALUES ${placeholders}`,
+                                            values,
+                                            function(err2, data2, fields2) {
+                                            if (err2) {
+                                                res.send({
+                                                    status: "ERROR",
+                                                    message: err
+                                                })
+                                            } 
+
+                                            const insertQuery = "INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)";
+                                            const insertValues = [req.body.quotation_number, req.user.user_id, "", "UPDATED"];
+                                            
+                                                dbConnection.query(insertQuery, insertValues, function(err3, data3, fields3) {
+                                                    if (err3) {
+                                                        return res.send({
+                                                            status: "ERROR",
+                                                            message: err3
+                                                        });
+                                                    }
+                                            
+                                                    res.send({
+                                                        status: "SUCCESS",
+                                                        message: `Quotation #: ${req.body.quotation_number} has been updated for approval!`
+                                                    });
+                                                });
+
+                                        });
+                                            
+                                    }
+                                })
+                              
+                                
                             }
-                        }
-                    )
+                       
+                        })
                 }
-            }
-        )
+            });
     },
     get_approval_history: (req, res) =>{
         dbConnection.query("SELECT * FROM vw_quotation_approval_history WHERE quotation_number=? ORDER BY date_time ASC", 

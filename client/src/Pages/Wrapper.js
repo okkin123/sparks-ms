@@ -20,7 +20,7 @@ import {
   Alert,
   IconButton
 } from "@mui/material";
-import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList} from "@mui/icons-material";
+import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList, Receipt} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";

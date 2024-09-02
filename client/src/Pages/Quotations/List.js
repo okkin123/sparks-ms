@@ -17,6 +17,17 @@ const parentWidth = window.innerWidth;
 const top = (window.innerHeight - parentHeight) / 2;
 const left = (window.innerWidth - parentWidth) / 2;
 
+let openedWindows = {};
+
+function openWindow(url, name, specs) {
+    if (openedWindows[url] && !openedWindows[url].closed) {
+        // Window is already open, bring it to focus
+        openedWindows[url].focus();
+    } else {
+        // Open a new window and store the reference
+        openedWindows[url] = window.open(url, name, specs);
+    }
+}
 function createMessageHandler(navigate, quotation_number, setRefresh, refresh) {
 
   return function HandleMessage(event) {
@@ -60,11 +71,20 @@ const columns = [
       Cell: ({ renderedCellValue, row }) =>(
         <Link href="#" color="secondary" variant="outlined" onClick={()=>{
        
+          const locked = row.original.locked;
+
+          if(!locked)
+          {
+          // Usage
+          const url = window.location.pathname + `quotation/details?quotation_number=${renderedCellValue}`;
+          const specs = `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`;
+
+
            // Open a new window with the quotation details
-           window.open(
-                window.location.pathname+`quotation/details?quotation_number=${renderedCellValue}&ref=${row.original.refresh.refresh}`,
+           openWindow(
+                url,
                 "_blank",
-                `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`
+                specs
             );
 
             // Create the handler with the specific quotation number
@@ -72,6 +92,12 @@ const columns = [
 
             // Add the event listener
             window.addEventListener('message', messageHandler);
+          }
+          else
+          {
+            alert(`Quotation Number: ${renderedCellValue} is already opened by another user!`);
+          }
+
         }}>{renderedCellValue}</Link>
       )
     },
@@ -154,7 +180,7 @@ export default function List(props){
       .then((result) => {
         if (result.data.status === "SUCCESS") {
           const fetchedQuotations = result.data.quotations.map((element) => ({
-            locked: !!element.locked,
+            locked: element.created_by_email !== result.data.user_email ? !!element.locked : false,
             quotation_number: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
