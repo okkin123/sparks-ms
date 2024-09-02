@@ -62,8 +62,9 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const QuotationDetailSchema = Yup.object().shape({
   description: Yup.string()
     .required('This field is required!'),
-  quantity: Yup.string()
-    .matches(/^\d+$/, 'Only whole numbers are allowed'),
+  quantity: Yup.number()
+      .integer('Only whole numbers are allowed')
+      .notOneOf([0], 'Quantity is 0 or leave this field as blank'),
   total_cost: Yup.string()
     .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
     .required('This field is required!')
@@ -144,8 +145,8 @@ export default function New(){
             i === index ? { ...quotationDetail, 
               edit_open: false,
               description: formik_quotation_detail.values.description,
-              unit_cost: formik_quotation_detail.values.quantity === '' ? 0 : (parseFloat(formik_quotation_detail.values.total_cost) / parseInt(formik_quotation_detail.values.quantity)).toFixed(2),
-              quantity: formik_quotation_detail.values.quantity === '' ? 0 : formik_quotation_detail.values.quantity,
+              unit_cost: formik_quotation_detail.values.quantity === '' ? '' : (parseFloat(formik_quotation_detail.values.total_cost) / parseInt(formik_quotation_detail.values.quantity)).toFixed(2),
+              quantity: formik_quotation_detail.values.quantity === '' ? '' : formik_quotation_detail.values.quantity,
               total_cost: parseFloat(formik_quotation_detail.values.total_cost).toFixed(2)
             } : quotationDetail
           ));
@@ -194,8 +195,8 @@ export default function New(){
           {
             edit_open: false,
             description: values.description,
-            quantity: values.quantity === '' ? 0 : values.quantity,
-            unit_cost: values.quantity === '' ? 0 : (parseFloat(values.total_cost) / parseInt(values.quantity)).toFixed(2),
+            quantity: values.quantity === '' ? '' : values.quantity,
+            unit_cost: values.quantity === '' ? '' : (parseFloat(values.total_cost) / parseInt(values.quantity)).toFixed(2),
             total_cost: parseFloat(values.total_cost).toFixed(2)
           }
         ]);
@@ -228,7 +229,7 @@ export default function New(){
             quotation_number: quotationNumber,
             values: values,
             details: quotationDetails,
-            amount_without_vat: quotationBreakdown.total_cost_with_vat,
+            amount_without_vat: quotationBreakdown.total_cost_without_vat,
             vat_percentage: vat
           })
           .then(function(response){

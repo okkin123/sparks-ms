@@ -222,7 +222,7 @@ export default function Register() {
               >
                 SUBMIT
               </Button>
-              <Button variant="text" color="info" onClick={() => navigate("/")}>
+              <Button variant="text" color="secondary" onClick={() => navigate("/")}>
                 BACK TO LOGIN
               </Button>
             </Stack>
