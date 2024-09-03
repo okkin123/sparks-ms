@@ -60,5 +60,23 @@ module.exports = {
             
             }
         )
+    },
+    selected_ref_quotation: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_quotations WHERE quotation_number=?", 
+            [req.body.quotation_number], function(err, data, fields){
+                if(err){
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }else{
+                    res.send({
+                        status: "SUCCESS",
+                        quotation: data
+                    })
+                }
+
+            }
+        )
     }
 }
