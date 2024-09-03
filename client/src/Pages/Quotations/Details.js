@@ -106,6 +106,8 @@ export default function Details(){
                     project_name: result.data.quotation[0].project_name,
                     project_description: result.data.quotation[0].project_description,
                     cost_without_vat: result.data.quotation[0].amount_without_vat,
+                    is_vat: result.data.quotation[0].is_vat,
+                    vat_percentage: result.data.quotation[0].vat_percentage,
                     vat_amount: result.data.quotation[0].vat_amount,
                     currency: result.data.quotation[0].currency,
                     company_trn: result.data.quotation[0].company_trn,
@@ -300,20 +302,31 @@ export default function Details(){
                                 ))
                             }
                         </TableBody>
-                        <TableFooter>
+                       {
+                        quotation.vat_percentage !== null ? (
+                          <TableFooter>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
+                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
                             <StyledTableRow>
-                            <StyledTableCell colSpan={4} align="right">VAT 5%:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
+                            <StyledTableCell colSpan={4} align="right">VAT {quotation.vat_percentage}%:</StyledTableCell>
+                            <StyledTableCell align="right">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
                             </StyledTableRow>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.currency+' '+quotation.cost_with_vat}</StyledTableCell>
+                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_with_vat}</StyledTableCell>
                             </StyledTableRow>
-                        </TableFooter>
+                          </TableFooter>
+                        ) : (
+                          <TableFooter>
+                            <StyledTableRow>
+                            <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST:</StyledTableCell>
+                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
+                            </StyledTableRow>
+                          </TableFooter>
+                        )
+                       }
                         
                     </Table>
                 </TableContainer>

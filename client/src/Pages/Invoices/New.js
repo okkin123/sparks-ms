@@ -80,7 +80,8 @@ const QuotationDetailSchema = Yup.object().shape({
     date: Yup.date().required('Date is required'),
     ref_quotation_number: Yup.string()
     .required('This field is required!'),
-    client_trn: Yup.string()
+    client_trn: Yup.number()
+    .integer('Only whole numbers are allowed')
     .required('This field is required!'),
     client_name: Yup.string()
     .required('This field is required!'),
@@ -183,6 +184,8 @@ export default function New(){
       });
     };
 
+
+
    
     const formik_quotation_detail = useFormik({
       initialValues: {
@@ -217,7 +220,7 @@ export default function New(){
     })
 
 
-    const formik_quotation = useFormik({
+    const formik_invoice = useFormik({
       initialValues: {
         date: null,
         ref_quotation_number: "",
@@ -269,6 +272,26 @@ export default function New(){
         }
       }
     })
+
+    const handleRefQuotationNumberChange = (quotation_number)=>{
+      AxiosInstance.post("/invoice/selected_ref_quotation", {quotation_number: quotation_number})
+      .then(function(result){
+        if(result.data.status === "SUCCESS"){
+  
+          formik_invoice.setFieldValue('ref_quotation_number', result.data.quotation[0].quotation_number);
+          formik_invoice.setFieldValue('client_name', result.data.quotation[0].client_name);
+          formik_invoice.setFieldValue('attention_to', result.data.quotation[0].attention_to);
+          formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
+          formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
+        }else{
+          console.log(result.data.message);
+        }
+
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }
 
     useEffect(()=>{
 
@@ -350,8 +373,8 @@ export default function New(){
                   <TextField size="small" variant="outlined" label="Invoice #" value={invoiceNumber} readOnly fullWidth />
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker 
-                    value={dayjs(formik_quotation.values.date)}
-                    onChange={(value)=>formik_quotation.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                    value={dayjs(formik_invoice.values.date)}
+                    onChange={(value)=>formik_invoice.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
                     slotProps={{
                         textField: {
                           label: 'Date',
@@ -359,8 +382,8 @@ export default function New(){
                           name: 'date',
                           size: 'small', 
                           fullWidth: true,
-                          error: Boolean(formik_quotation.errors.date),
-                          helperText:formik_quotation.touched.date && formik_quotation.errors.date
+                          error: Boolean(formik_invoice.errors.date),
+                          helperText:formik_invoice.touched.date && formik_invoice.errors.date
                         },
                       }} />
                   </LocalizationProvider>
@@ -371,15 +394,14 @@ export default function New(){
                     <FormControl
                         fullWidth
                         size="small"
-                        error={formik_quotation.touched.ref_quotation_number && Boolean(formik_quotation.errors.ref_quotation_number)}
+                        error={formik_invoice.touched.ref_quotation_number && Boolean(formik_invoice.errors.ref_quotation_number)}
                     >
                         <InputLabel>Reference Quotation #</InputLabel>
                         <Select
                         name="ref_quotation_number"
-                        value={formik_quotation.values.ref_quotation_number}
+                        value={formik_invoice.values.ref_quotation_number}
                         label="Reference Quotation #"
-                        onBlur={formik_quotation.handleBlur}
-                        onChange={formik_quotation.handleChange}
+                        onChange={(event)=>handleRefQuotationNumberChange(event.target.value)}
                         >
                         {quotationNumbers.map((element, key) => {
                           return (
@@ -390,19 +412,19 @@ export default function New(){
                         }) }
                         </Select>
                         <FormHelperText>
-                        {formik_quotation.touched.role && formik_quotation.errors.role}
+                        {formik_invoice.touched.ref_quotation_number && formik_invoice.errors.ref_quotation_number}
                         </FormHelperText>
                     </FormControl>
                     <TextField variant='outlined' label="Client TRN #"
-                      name="attention_to"
-                      value={formik_quotation.values.attention_to}
-                      onChange={formik_quotation.handleChange}
+                      name="client_trn"
+                      value={formik_invoice.values.client_trn}
+                      onChange={formik_invoice.handleChange}
                       size="small"
                       error={
-                        formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
+                        formik_invoice.touched.client_trn && Boolean(formik_invoice.errors.client_trn)
                         }
                       helperText={
-                        formik_quotation.touched.attention_to && formik_quotation.errors.attention_to
+                        formik_invoice.touched.client_trn && formik_invoice.errors.client_trn
                         } fullWidth/>
                  </Stack>
                </Grid>
@@ -410,69 +432,70 @@ export default function New(){
                  <Stack direction="row" spacing={2}>
                     <TextField variant='outlined' label="Client Name"
                       name="client_name"
-                      value={formik_quotation.values.client_name}
-                      onChange={formik_quotation.handleChange}
+                      value={formik_invoice.values.client_name}
                       size="small"
                       error={
-                        formik_quotation.touched.client_name && Boolean(formik_quotation.errors.client_name)
+                        formik_invoice.touched.client_name && Boolean(formik_invoice.errors.client_name)
                         }
                       helperText={
-                        formik_quotation.touched.client_name && formik_quotation.errors.client_name
+                        formik_invoice.touched.client_name && formik_invoice.errors.client_name
                         }
-                    fullWidth />
+                      readOnly
+                      fullWidth />
                     <TextField variant='outlined' label="Attention to"
                       name="attention_to"
-                      value={formik_quotation.values.attention_to}
-                      onChange={formik_quotation.handleChange}
+                      value={formik_invoice.values.attention_to}
                       size="small"
                       error={
-                        formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
+                        formik_invoice.touched.attention_to && Boolean(formik_invoice.errors.attention_to)
                         }
                       helperText={
-                        formik_quotation.touched.attention_to && formik_quotation.errors.attention_to
-                        } fullWidth/>
+                        formik_invoice.touched.attention_to && formik_invoice.errors.attention_to
+                        } 
+                        readOnly
+                        fullWidth/>
                  </Stack>
                </Grid>
                <Grid item>
                     <TextField variant='outlined' label="Address"
-                    name="project_name"
-                    value={formik_quotation.values.project_name}
-                    onChange={formik_quotation.handleChange}
+                    name="address"
+                    value={formik_invoice.values.address}
+                    onChange={formik_invoice.handleChange}
                     size="small"
                     error={
-                      formik_quotation.touched.project_name && Boolean(formik_quotation.errors.project_name)
+                      formik_invoice.touched.address && Boolean(formik_invoice.errors.address)
                       }
                     helperText={
-                      formik_quotation.touched.project_name && formik_quotation.errors.project_name
+                      formik_invoice.touched.address && formik_invoice.errors.address
                       }
                      fullWidth />
                 </Grid>
                 <Grid item>
                   <TextField variant='outlined' label="Project Name"
                     name="project_name"
-                    value={formik_quotation.values.project_name}
-                    onChange={formik_quotation.handleChange}
+                    value={formik_invoice.values.project_name}
                     size="small"
                     error={
-                      formik_quotation.touched.project_name && Boolean(formik_quotation.errors.project_name)
+                      formik_invoice.touched.project_name && Boolean(formik_invoice.errors.project_name)
                       }
                     helperText={
-                      formik_quotation.touched.project_name && formik_quotation.errors.project_name
+                      formik_invoice.touched.project_name && formik_invoice.errors.project_name
                       }
+                     readOnly
                      fullWidth />
                 </Grid>
                 <Grid item>
                     <TextField variant='outlined' label="Project Description"
                     name="project_description"
-                    value={formik_quotation.values.project_description}
-                    onChange={formik_quotation.handleChange}
+                    value={formik_invoice.values.project_description}
                     size="small"
                     error={
-                      formik_quotation.touched.project_description && Boolean(formik_quotation.errors.project_description)
+                      formik_invoice.touched.project_description && Boolean(formik_invoice.errors.project_description)
                       }
                     helperText={
-                      formik_quotation.touched.project_description && formik_quotation.errors.project_description
+                      formik_invoice.touched.project_description && formik_invoice.errors.project_description
                       }
+                     readOnly
                      multiline rows={2} fullWidth />
                 </Grid>
                 <Grid item>
@@ -709,7 +732,7 @@ export default function New(){
                                     <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
+                                    <StyledTableCell colSpan={5} align="right">VAT {formik_invoice.vat_percentage}%:</StyledTableCell>
                                     <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
@@ -724,7 +747,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Submit for Approval</LoadingButton>
+                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_invoice.handleSubmit} loading={loading}>Submit for Approval</LoadingButton>
                  </Grid>
             </Grid>
             </Paper>
