@@ -37,6 +37,11 @@ const TRNSchema = Yup.object().shape({
     .matches(/^\d+$/, 'Only whole numbers are allowed')
   });
 
+const CurrencySchema = Yup.object().shape({
+  currency: Yup.string()
+    .required('Currency value is required!')
+  });
+
 const VATSchema = Yup.object().shape({
   vat: Yup.string()
     .required('VAT % value is required!')
@@ -66,6 +71,7 @@ export default function Preferences(){
   const [edit, setEdit] = useState({
     company_address: false,
     trn: false,
+    currency: false,
     vat: false,
     bank_account: false
   })
@@ -78,6 +84,12 @@ export default function Preferences(){
       severity: ''
     },
     trn: {
+      open: false,
+      icon: null,
+      message: '',
+      severity: ''
+    },
+    currency: {
       open: false,
       icon: null,
       message: '',
@@ -184,6 +196,50 @@ export default function Preferences(){
     }
   })
 
+  const formik_currency = useFormik({
+    initialValues:{
+      currency: ""
+    },
+    validateOnChange: false,
+    validationSchema: CurrencySchema,
+    onSubmit:(values, {validateForm})=>{
+      AxiosInstance.post("/preferences/setCurrency", values)
+      .then(function(response){
+        if(response.data.status === "SUCCESS")
+        {
+          setEdit({...edit, currency: false})
+          setAlert({
+            ...alert,
+            currency: {
+                ...alert.currency,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+           });
+        }
+        else
+        {
+          setAlert({
+            ...alert,
+            currency: {
+                ...alert.currency,
+                open: true,
+                icon: (<ErrorIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'error'
+            }
+           });
+        }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }
+  })
+
+
   const formik_vat = useFormik({
     initialValues:{
       vat: ""
@@ -211,8 +267,8 @@ export default function Preferences(){
         {
           setAlert({
             ...alert,
-            company_address: {
-                ...alert.company_address,
+            vat: {
+                ...alert.vat,
                 open: true,
                 icon: (<ErrorIcon fontSize="inherit" />),
                 message: response.data.message,
@@ -304,6 +360,18 @@ export default function Preferences(){
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[edit.trn]);
+
+  useEffect(()=>{
+    AxiosInstance.get("/preferences/currency")
+    .then(function(result){
+      formik_currency.setFieldValue("currency",result.data.currency);
+      
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[edit.currency]);
 
   useEffect(()=>{
     AxiosInstance.get("/preferences/vat")
@@ -497,8 +565,80 @@ export default function Preferences(){
                     <Button variant="contained" color="secondary" onClick={formik_trn.handleSubmit} disabled={edit.trn ? false : true}>Save TRN</Button>
                 </Grid>
               </Grid>
-
               <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+                    <Typography variant="body1">CURRENCY:</Typography>
+                </Grid>
+               <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+               <FormControl
+                 variant="outlined"
+                 error={
+                   formik_currency.touched.currency && Boolean(formik_currency.errors.currency)
+                 }
+                 size="small"
+                 fullWidth={true}
+               >
+                 <OutlinedInput
+                   name="currency"
+                   value={formik_currency.values.currency}
+                   onChange={formik_currency.handleChange}
+                   disabled={edit.currency ? false : true}
+                   endAdornment={
+                     <InputAdornment position="end">
+                       <IconButton
+                         aria-label="toggle password visibility"
+                         edge="end"
+                         onClick={()=>setEdit({...edit, currency: !edit.currency})}
+                       >
+                        { edit.currency ? (<CloseIcon />) : (<EditIcon />)}   
+                       </IconButton>
+                     </InputAdornment>
+                   }
+                 />
+                 <FormHelperText>
+                   {formik_currency.touched.currency && formik_currency.errors.currency}
+                 </FormHelperText>
+               </FormControl>
+               </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                  <Collapse in={alert.currency.open}>
+                    <Alert
+                      action={
+                        <IconButton
+                          aria-label="close"
+                          color="inherit"
+                          size="small"
+                          onClick={() => {
+                            setAlert({...alert, currency: {...alert.currency, open: false, message: ''}});
+                          }}
+                        >
+                          <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                      }
+                      sx={{ mb: 2 }}
+                      icon={alert.currency.icon}
+                      severity={alert.currency.severity}
+                    >
+                      {alert.currency.message}
+                    </Alert>
+                  </Collapse>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
+            
+                </Grid>
+                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
+                    <Button variant="contained" color="secondary" onClick={formik_currency.handleSubmit} disabled={edit.currency ? false : true}>Save Currency</Button>
+                </Grid>
+              </Grid>
+              <Grid item container direction="row" spacing={2} alignItems="center">
+               
                 <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
                     <Typography variant="body1">VAT %:</Typography>
                 </Grid>
@@ -534,6 +674,8 @@ export default function Preferences(){
                 </FormControl>
                 </Grid>
               </Grid>
+
+
               <Grid item container direction="row" spacing={2} alignItems="center">
                 <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
             

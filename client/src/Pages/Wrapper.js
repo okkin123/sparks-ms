@@ -32,6 +32,7 @@ import Dashboard from "./Dashboard";
 import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
 import QEdit from "./Quotations/Edit";
+import InvoiceNew from "./Invoices/New";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
 
@@ -68,6 +69,9 @@ export default function SideMenu() {
     qnew: {
       selected: false
     },
+    invoice_new: {
+      selected: false
+    },
     manage_users: {
       selected: false
     },
@@ -91,7 +95,10 @@ export default function SideMenu() {
     setAnchorEl(null);
   };
 
-  const [dropdownMenu, setDropdownMenu] = useState(!location.state ? false : true);
+  const [dropdownMenu, setDropdownMenu] = useState({
+    quotation: !location.state ? false : true,
+    invoice: !location.state ? false : true
+  });
 
 
   useEffect(() => {
@@ -256,17 +263,17 @@ useEffect(()=>{
             <ListItem
               disablePadding
               
-              onClick={()=>setDropdownMenu(!dropdownMenu)}
+              onClick={()=>setDropdownMenu({...dropdownMenu, quotation: !dropdownMenu.quotation})}
             >
               <ListItemButton>
                 <ListItemIcon>
                   <Description />
                 </ListItemIcon>
                 <ListItemText primary="Quotations" />
-                {dropdownMenu ? <ExpandLess /> : <ExpandMore />}
+                {dropdownMenu.quotation ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
             </ListItem>
-              <Collapse in={dropdownMenu} timeout="auto" unmountOnExit>
+              <Collapse in={dropdownMenu.quotation} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <ListItemButton 
                  selected={component.qnew.selected}
@@ -295,6 +302,43 @@ useEffect(()=>{
               </List>
             </Collapse>
           </List>
+          <List>
+          <ListItem
+              disablePadding
+              
+              onClick={()=>setDropdownMenu({...dropdownMenu, invoice: !dropdownMenu.invoice})}
+            >
+              <ListItemButton>
+                <ListItemIcon>
+                  <Receipt />
+                </ListItemIcon>
+                <ListItemText primary="Invoices" />
+                {dropdownMenu.invoice ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+          </ListItem>
+          <Collapse in={dropdownMenu.invoice} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+               {user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <ListItemButton 
+                 selected={component.invoice_new.selected}
+                 onClick={() => {
+                   handleSelect('invoice_new', <InvoiceNew/>)
+                 }}
+                 sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <Add />
+                  </ListItemIcon>
+                  <ListItemText primary="New" />
+                </ListItemButton>}
+                <ListItemButton
+                 sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <ViewList />
+                  </ListItemIcon>
+                  <ListItemText primary="View List" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </List>
           <Divider />
           { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
           <ListItem
@@ -312,7 +356,7 @@ useEffect(()=>{
               </ListItemButton>
             </ListItem>
           </List>  : null }
-          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <List>
+          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
             <ListItem
               disablePadding
               selected={component.preferences.selected}
@@ -327,7 +371,7 @@ useEffect(()=>{
                 <ListItemText primary="Preferences" />
               </ListItemButton>
             </ListItem>
-          </List> }
+          </List> : null }
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
