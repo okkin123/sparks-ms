@@ -8,6 +8,7 @@ require("dotenv").config();
 const userRoutes = require("./routes/user_routes");
 const forgotRoutes = require("./routes/forgot_routes");
 const quotationRoutes = require("./routes/quotation_routes");
+const invoiceRoutes = require("./routes/invoice_routes");
 const preferencesRoutes = require("./routes/preferences_routes");
 
 const port = process.env.PORT;
@@ -27,6 +28,7 @@ app.use(
 app.use("/user", userRoutes);
 app.use("/forgot", forgotRoutes);
 app.use("/quotation", quotationRoutes);
+app.use("/invoice", invoiceRoutes);
 app.use("/preferences", preferencesRoutes);
 
 app.listen(port, () => {

@@ -151,6 +151,10 @@ const columns = [
       header: 'COST w/ VAT'
     },
     {
+      accessorKey: 'currency',
+      header: 'CURRENCY'
+    },
+    {
       accessorKey: 'assigned_to',
       header: 'ASSIGNED TO',
       Cell: ({renderedCellValue, row})=>{
@@ -192,6 +196,7 @@ export default function List(props){
             vat_percentage: element.vat_percentage,
             vat_amount: element.vat_amount,
             cost_with_vat: element.amount_with_vat,
+            currency: element.currency,
             assigned_to: element.assigned_to_email,
             refresh: {navigate: navigate, setRefresh: setRefresh, refresh: refresh}
           })); 

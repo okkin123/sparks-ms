@@ -19,6 +19,11 @@ import { Toolbar,
          Button,
          Alert,
          Collapse,
+         FormControl,
+         InputLabel,
+         Select,
+         MenuItem,
+         FormHelperText,
          IconButton} from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
@@ -71,11 +76,17 @@ const QuotationDetailSchema = Yup.object().shape({
   });
 
 
-  const QuotationSchema = Yup.object().shape({
+  const InvoiceSchema = Yup.object().shape({
     date: Yup.date().required('Date is required'),
+    ref_quotation_number: Yup.string()
+    .required('This field is required!'),
+    client_trn: Yup.string()
+    .required('This field is required!'),
     client_name: Yup.string()
     .required('This field is required!'),
     attention_to: Yup.string()
+    .required('This field is required!'),
+    address: Yup.string()
     .required('This field is required!'),
     project_name: Yup.string()
     .required('This field is required!'),
@@ -92,14 +103,14 @@ export default function New(){
     })
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const [quotationNumber, setQuotationNumber] = useState("");
+    const [invoiceNumber, setInvoiceNumber] = useState("");
+    const [quotationNumbers, setQuotationNumbers] = useState([]);
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
       total_cost_without_vat: "",
       vat_amount: "",
       total_cost_with_vat: ""
     })
-    const [currency, setCurrency] = useState("");
     const [vat, setVat] = useState("");
     const [error, setError] = useState(false);
 
@@ -209,13 +220,17 @@ export default function New(){
     const formik_quotation = useFormik({
       initialValues: {
         date: null,
+        ref_quotation_number: "",
+        client_trn: "",
         client_name: "",
         attention_to: "",
+        address: "",
         project_name: "",
         project_description: ""
+
       },
       validateOnChange: false,
-      validationSchema: QuotationSchema,
+      validationSchema: InvoiceSchema,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
         if(quotationDetails.length === 0)
@@ -226,11 +241,10 @@ export default function New(){
         {
           setError(false)
           AxiosInstance.post("/quotation/insert", {
-            quotation_number: quotationNumber,
+            invoice_number: invoiceNumber,
             values: values,
             details: quotationDetails,
             amount_without_vat: quotationBreakdown.total_cost_without_vat,
-            currency: currency,
             vat_percentage: vat
           })
           .then(function(response){
@@ -272,11 +286,12 @@ export default function New(){
     },[quotationDetails])
 
    useEffect(()=>{
-    AxiosInstance.get("/quotation/generateQuotationNumber")
+
+    AxiosInstance.get("/invoice/generateInvoiceNumber")
     .then(function(result){
         if(result.data.status === "SUCCESS")
         {
-          setQuotationNumber(result.data.quotation_number);
+          setInvoiceNumber(result.data.invoice_number);
         }
         else
         {
@@ -287,16 +302,6 @@ export default function New(){
       console.log(error)
     })
 
-
-    AxiosInstance.get("/preferences/currency")
-    .then(function(result){
-         setCurrency(result.data.currency);
-    })
-    .catch(function(error){
-      console.log(error)
-    })
-
-
       AxiosInstance.get("/preferences/vat")
       .then(function(result){
         setVat(result.data.vat)
@@ -305,8 +310,29 @@ export default function New(){
         console.log(error)
       })
 
+      AxiosInstance.get("/invoice/ref_quotation_numbers")
+      .then(function(result){
+          if(result.data.status === "SUCCESS")
+          {
+            const fetchQuotationNumbers = [
+                ...quotationNumbers,
+                ...result.data.quotations.map(quotation => quotation.quotation_number)
+            ];
+    
+            setQuotationNumbers(fetchQuotationNumbers)
+          }
+          else
+          {
+            console.log(result.data)
+          }
+      }) 
+      .catch(function(error){
+        console.log(error)
+      })
 
+      // eslint-disable-next-line
    }, [])
+
 
     return(
         <React.Fragment>
@@ -314,14 +340,14 @@ export default function New(){
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
                 <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
-                  <Typography variant="h6">NEW QUOTATION</Typography>
+                  <Typography variant="h6">NEW INVOICE</Typography>
                 </Stack>
               <Grid item>
                  <Divider />
               </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-                  <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
+                  <TextField size="small" variant="outlined" label="Invoice #" value={invoiceNumber} readOnly fullWidth />
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker 
                     value={dayjs(formik_quotation.values.date)}
@@ -341,7 +367,46 @@ export default function New(){
                  </Stack>
                </Grid>
                <Grid item>
-                
+                 <Stack direction="row" spacing={2}>
+                    <FormControl
+                        fullWidth
+                        size="small"
+                        error={formik_quotation.touched.ref_quotation_number && Boolean(formik_quotation.errors.ref_quotation_number)}
+                    >
+                        <InputLabel>Reference Quotation #</InputLabel>
+                        <Select
+                        name="ref_quotation_number"
+                        value={formik_quotation.values.ref_quotation_number}
+                        label="Reference Quotation #"
+                        onBlur={formik_quotation.handleBlur}
+                        onChange={formik_quotation.handleChange}
+                        >
+                        {quotationNumbers.map((element, key) => {
+                          return (
+                            <MenuItem key={key} value={element}>
+                                {element}
+                            </MenuItem>
+                            );
+                        }) }
+                        </Select>
+                        <FormHelperText>
+                        {formik_quotation.touched.role && formik_quotation.errors.role}
+                        </FormHelperText>
+                    </FormControl>
+                    <TextField variant='outlined' label="Client TRN #"
+                      name="attention_to"
+                      value={formik_quotation.values.attention_to}
+                      onChange={formik_quotation.handleChange}
+                      size="small"
+                      error={
+                        formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
+                        }
+                      helperText={
+                        formik_quotation.touched.attention_to && formik_quotation.errors.attention_to
+                        } fullWidth/>
+                 </Stack>
+               </Grid>
+               <Grid item>
                  <Stack direction="row" spacing={2}>
                     <TextField variant='outlined' label="Client Name"
                       name="client_name"
@@ -369,7 +434,21 @@ export default function New(){
                  </Stack>
                </Grid>
                <Grid item>
-                    <TextField variant='outlined' label="Project Name"
+                    <TextField variant='outlined' label="Address"
+                    name="project_name"
+                    value={formik_quotation.values.project_name}
+                    onChange={formik_quotation.handleChange}
+                    size="small"
+                    error={
+                      formik_quotation.touched.project_name && Boolean(formik_quotation.errors.project_name)
+                      }
+                    helperText={
+                      formik_quotation.touched.project_name && formik_quotation.errors.project_name
+                      }
+                     fullWidth />
+                </Grid>
+                <Grid item>
+                  <TextField variant='outlined' label="Project Name"
                     name="project_name"
                     value={formik_quotation.values.project_name}
                     onChange={formik_quotation.handleChange}
@@ -526,8 +605,8 @@ export default function New(){
                                     <StyledTableCell align="left">SN</StyledTableCell>
                                     <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
                                     <StyledTableCell align="center">QUANTITY</StyledTableCell>
-                                    <StyledTableCell align="right">UNIT COST({currency})</StyledTableCell>
-                                    <StyledTableCell align="right">TOTAL COST({currency})</StyledTableCell>
+                                    <StyledTableCell align="right">UNIT COST(AED)</StyledTableCell>
+                                    <StyledTableCell align="right">TOTAL COST(AED)</StyledTableCell>
                                     <StyledTableCell align="center">ACTION</StyledTableCell>
                                 </StyledTableRow>
                                 </TableHead>
@@ -627,15 +706,15 @@ export default function New(){
                                 <TableFooter>
                                   <StyledTableRow>
                                     <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
                                     <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                   <StyledTableRow>
                                     <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                   </StyledTableRow>
                                 </TableFooter>
                             </Table>
@@ -653,3 +732,5 @@ export default function New(){
         </React.Fragment>
     )
 }
+
+

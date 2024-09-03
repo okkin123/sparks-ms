@@ -25,15 +25,17 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
+      whiteSpace: 'nowrap'
     },
     [`&.${tableCellClasses.body}`]: {
       fontSize: 14,
-      color: theme.palette.primary.dark,
+      color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
       fontSize: 14,
       color: theme.palette.primary.main,
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      whiteSpace: 'nowrap'
     }
 
   }));
@@ -72,7 +74,6 @@ export default function Details(){
         project_description: "",
     });
     const [bankAccount, setBankAccount] = useState([]);
-    const [address, setAddress] = useState('');
     const [quotationDetails, setQuotationDetails] = useState([]);
 
     const [user, setUser] = useState({
@@ -95,7 +96,6 @@ export default function Details(){
           if (result.data.status === "SUCCESS") {
 
             setQuotation({
-                    trn: result.data.trn,
                     quotation_number: result.data.quotation[0].quotation_number,
                     status: result.data.quotation[0].STATUS,
                     created_by: result.data.quotation[0].created_by_email,
@@ -107,10 +107,12 @@ export default function Details(){
                     project_description: result.data.quotation[0].project_description,
                     cost_without_vat: result.data.quotation[0].amount_without_vat,
                     vat_amount: result.data.quotation[0].vat_amount,
+                    currency: result.data.quotation[0].currency,
+                    company_trn: result.data.quotation[0].company_trn,
+                    company_address: result.data.quotation[0].company_address,
                     cost_with_vat: result.data.quotation[0].amount_with_vat
                   });
 
-                  console.log(result.data.quotation)
                
                   
                   setQuotationDetails((quotation_details) => [
@@ -145,15 +147,6 @@ export default function Details(){
             routing_code: result.data.routing_code,
             
           });
-        })
-        .catch(function(error){
-          console.log(error)
-        })
-
-        AxiosInstance.get("/preferences/company_address")
-        .then(function(result){
-          setAddress(result.data.company_address);
-          
         })
         .catch(function(error){
           console.log(error)
@@ -255,7 +248,7 @@ export default function Details(){
                         <img src={bsLogo} width={220} alt="logo" />
                         <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography>
                       </Stack>
-                    <Typography variant="subtitle1">TRN NUMBER: {quotation.trn}</Typography>
+                    <Typography variant="subtitle1">TRN NUMBER: {quotation.company_trn}</Typography>
                 </Stack>
                 </Grid>
                 <Grid item>
@@ -279,13 +272,12 @@ export default function Details(){
                 <TableContainer>
                     <Table size="small">
                         <TableHead>
-              
                         <StyledTableRow>
                             <StyledTableCell align="left">SN</StyledTableCell>
                             <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">QUANTITY</StyledTableCell>
-                            <StyledTableCell align="right">UNIT COST(AED)</StyledTableCell>
-                            <StyledTableCell align="right">TOTAL COST(AED)</StyledTableCell>
+                            <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
+                            <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
                         </StyledTableRow>
                         </TableHead>
                         <TableBody>
@@ -311,15 +303,15 @@ export default function Details(){
                         <TableFooter>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.cost_without_vat}</StyledTableCell  >
+                            <StyledTableCell align="center">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">VAT 5%:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.vat_amount}</StyledTableCell>
+                            <StyledTableCell align="center">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
                             </StyledTableRow>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                            <StyledTableCell align="center">{quotation.cost_with_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{quotation.currency+' '+quotation.cost_with_vat}</StyledTableCell>
                             </StyledTableRow>
                         </TableFooter>
                         
@@ -475,7 +467,7 @@ export default function Details(){
                 
                 <Grid item>
                     <Stack direction="row" spacing={2} justifyContent="center">
-                     <Typography variant="subtitle1">{address}</Typography>
+                     <Typography variant="subtitle1">{quotation.company_address}</Typography>
                     </Stack>  
                 </Grid>
             </Grid>
