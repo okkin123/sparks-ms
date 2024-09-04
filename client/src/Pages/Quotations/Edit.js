@@ -19,6 +19,11 @@ import { Toolbar,
          Button,
          Alert,
          Collapse,
+         MenuItem,
+         FormHelperText,
+         FormControl,
+         Select,
+         InputLabel,
          IconButton} from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
@@ -101,6 +106,7 @@ export default function Edit(props){
       vat_amount: "",
       total_cost_with_vat: ""
     })
+    const [currency, setCurrency] = useState("");
     const [vat, setVat] = useState("");
     const [error, setError] = useState(false);
 
@@ -210,6 +216,7 @@ export default function Edit(props){
 
     const formik_quotation = useFormik({
       initialValues: {
+        is_vat: null,
         date: null,
         client_name: "",
         attention_to: "",
@@ -224,6 +231,7 @@ export default function Edit(props){
         if(quotationDetails.length === 0)
         {
           setError(true)
+          setLoading(false)
         }
         else
         {
@@ -233,6 +241,7 @@ export default function Edit(props){
             values: values,
             details: quotationDetails,
             amount_without_vat: quotationBreakdown.total_cost_without_vat,
+            currency: currency,
             vat_percentage: vat
           })
           .then(function(response){
@@ -281,6 +290,7 @@ export default function Edit(props){
       if (result.data.status === "SUCCESS") {
 
         formik_quotation.setValues({
+            is_vat: !!result.data.quotation[0].is_vat,
             date: dayjs(new Date(result.data.quotation[0].quotation_date)).format('YYYY-MM-DD'),
             client_name: result.data.quotation[0].client_name,
             attention_to: result.data.quotation[0].attention_to,
@@ -295,8 +305,8 @@ export default function Edit(props){
                 edit: false,
                 quotation_detail_id: element.quotation_detail_id,
                 description: element.description,
-                quantity: element.qty === null ? 0 : element.qty,
-                unit_cost: parseFloat(element.unit_cost).toFixed(2),
+                quantity: element.qty === null ? '' : element.qty,
+                unit_cost: element.qty === null ? '' : parseFloat(element.unit_cost).toFixed(2),
                 total_cost: parseFloat(element.total_cost).toFixed(2)
                 })),
               ]);
@@ -309,8 +319,19 @@ export default function Edit(props){
       console.log(error);
     });
 
+    AxiosInstance.get("/preferences/currency")
+    .then(function(result){
+         setCurrency(result.data.currency);
+    })
+    .catch(function(error){
+      console.log(error)
+    })
 
+    // eslint-disable-next-line
+   }, [])
 
+   const handleVatApplicableOnChange = (is_vat)=>{
+    if(is_vat){
       AxiosInstance.get("/preferences/vat")
       .then(function(result){
         setVat(result.data.vat)
@@ -318,17 +339,43 @@ export default function Edit(props){
       .catch(function(error){
         console.log(error)
       })
+    }else{
+      setVat(null);
+    }
+    formik_quotation.setFieldValue('is_vat', is_vat)
 
-    // eslint-disable-next-line
-   }, [])
+   }
 
     return(
         <React.Fragment>
             <Toolbar />
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
-                <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
+                <Stack direction="row" justifyContent="space-between" spacing={100} sx={{paddingLeft: 2, paddingRight: 2, whiteSpace: 'nowrap'}}>
                   <Typography variant="h6">EDIT QUOTATION</Typography>
+                  <FormControl
+                        fullWidth
+                        size="small"
+                        error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
+                      >
+                        <InputLabel>VAT Appicable</InputLabel>
+                        <Select
+                        name="is_vat"
+                        value={formik_quotation.values.is_vat}
+                        label="VAT Applicable"
+                        onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
+                        >
+                            <MenuItem value={true}>
+                                Yes
+                            </MenuItem>
+                            <MenuItem value={false}>
+                                No
+                            </MenuItem>
+                        </Select>
+                        <FormHelperText>
+                        {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                        </FormHelperText>
+                    </FormControl>
                 </Stack>
               <Grid item>
                  <Divider />

@@ -19,6 +19,11 @@ import { Toolbar,
          Button,
          Alert,
          Collapse,
+         FormHelperText,
+         MenuItem,
+         Select,
+         FormControl,
+         InputLabel,
          IconButton} from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
@@ -71,7 +76,7 @@ const QuotationDetailSchema = Yup.object().shape({
   });
 
 
-  const QuotationSchema = Yup.object().shape({
+  const QuotationSchema = Yup.object().shape({  
     date: Yup.date().required('Date is required'),
     client_name: Yup.string()
     .required('This field is required!'),
@@ -208,6 +213,7 @@ export default function New(){
 
     const formik_quotation = useFormik({
       initialValues: {
+        is_vat: true,
         date: null,
         client_name: "",
         attention_to: "",
@@ -221,6 +227,7 @@ export default function New(){
         if(quotationDetails.length === 0)
         {
           setError(true)
+          setLoading(false)
         }
         else
         {
@@ -269,7 +276,7 @@ export default function New(){
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[quotationDetails])
+    },[quotationDetails, vat])
 
    useEffect(()=>{
     AxiosInstance.get("/quotation/generateQuotationNumber")
@@ -296,7 +303,11 @@ export default function New(){
       console.log(error)
     })
 
+ // eslint-disable-next-line  
+   }, [])
 
+   const handleVatApplicableOnChange = (is_vat)=>{
+    if(is_vat){
       AxiosInstance.get("/preferences/vat")
       .then(function(result){
         setVat(result.data.vat)
@@ -304,17 +315,43 @@ export default function New(){
       .catch(function(error){
         console.log(error)
       })
+    }else{
+      setVat(null);
+    }
+    formik_quotation.setFieldValue('is_vat', is_vat)
 
-
-   }, [])
+   }
 
     return(
         <React.Fragment>
             <Toolbar />
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
-                <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
-                  <Typography variant="h6">NEW QUOTATION</Typography>
+                <Stack direction="row" justifyContent="space-between" spacing={100} sx={{paddingLeft: 2, paddingRight: 2, whiteSpace: 'nowrap'}}>
+                    <Typography variant="h6">NEW QUOTATION</Typography>
+                     <FormControl
+                        fullWidth
+                        size="small"
+                        error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
+                      >
+                        <InputLabel>VAT Appicable</InputLabel>
+                        <Select
+                        name="is_vat"
+                        value={formik_quotation.values.is_vat}
+                        label="VAT Applicable"
+                        onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
+                        >
+                            <MenuItem value={true}>
+                                Yes
+                            </MenuItem>
+                            <MenuItem value={false}>
+                                No
+                            </MenuItem>
+                        </Select>
+                        <FormHelperText>
+                        {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                        </FormHelperText>
+                    </FormControl>
                 </Stack>
               <Grid item>
                  <Divider />
@@ -624,20 +661,31 @@ export default function New(){
                                     </StyledTableRow>
                                 ))}
                                 </TableBody>
-                                <TableFooter>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                </TableFooter>
+                                {
+                                  vat !== null ? (
+                                    <TableFooter>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
+                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right">VAT {vat}%:</StyledTableCell>
+                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
+                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                  </TableFooter>
+                                  ) : (
+                                    <TableFooter>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST:</StyledTableCell>
+                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                  </TableFooter>
+                                  )
+                                }
                             </Table>
                         </TableContainer>
                 </Grid>
