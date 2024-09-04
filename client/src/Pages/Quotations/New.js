@@ -327,37 +327,38 @@ export default function New(){
             <Toolbar />
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
-                <Stack direction="row" justifyContent="space-between" spacing={100} sx={{paddingLeft: 2, paddingRight: 2, whiteSpace: 'nowrap'}}>
+                <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
                     <Typography variant="h6">NEW QUOTATION</Typography>
-                     <FormControl
-                        fullWidth
-                        size="small"
-                        error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
-                      >
-                        <InputLabel>VAT Appicable</InputLabel>
-                        <Select
-                        name="is_vat"
-                        value={formik_quotation.values.is_vat}
-                        label="VAT Applicable"
-                        onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
-                        >
-                            <MenuItem value={true}>
-                                Yes
-                            </MenuItem>
-                            <MenuItem value={false}>
-                                No
-                            </MenuItem>
-                        </Select>
-                        <FormHelperText>
-                        {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
-                        </FormHelperText>
-                    </FormControl>
+
                 </Stack>
               <Grid item>
                  <Divider />
               </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
+                    >
+                      <InputLabel>VAT Appicable</InputLabel>
+                      <Select
+                      name="is_vat"
+                      value={formik_quotation.values.is_vat}
+                      label="VAT Applicable"
+                      onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
+                      >
+                          <MenuItem value={true}>
+                              Yes
+                          </MenuItem>
+                          <MenuItem value={false}>
+                              No
+                          </MenuItem>
+                      </Select>
+                      <FormHelperText>
+                      {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                      </FormHelperText>
+                  </FormControl>
                   <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker 
