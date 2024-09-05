@@ -216,7 +216,7 @@ export default function Edit(props){
 
     const formik_quotation = useFormik({
       initialValues: {
-        is_vat: null,
+        is_vat: true,
         date: null,
         client_name: "",
         attention_to: "",
@@ -280,7 +280,7 @@ export default function Edit(props){
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[quotationDetails])
+    },[quotationDetails, vat])
 
    useEffect(()=>{
 
@@ -290,13 +290,14 @@ export default function Edit(props){
       if (result.data.status === "SUCCESS") {
 
         formik_quotation.setValues({
-            is_vat: !!result.data.quotation[0].is_vat,
             date: dayjs(new Date(result.data.quotation[0].quotation_date)).format('YYYY-MM-DD'),
             client_name: result.data.quotation[0].client_name,
             attention_to: result.data.quotation[0].attention_to,
             project_name: result.data.quotation[0].project_name,
             project_description: result.data.quotation[0].project_description,
         });
+
+        handleVatApplicableOnChange(!!result.data.quotation[0].is_vat)
 
            
               
@@ -327,6 +328,7 @@ export default function Edit(props){
       console.log(error)
     })
 
+    
     // eslint-disable-next-line
    }, [])
 
@@ -342,6 +344,7 @@ export default function Edit(props){
     }else{
       setVat(null);
     }
+
     formik_quotation.setFieldValue('is_vat', is_vat)
 
    }
@@ -351,37 +354,38 @@ export default function Edit(props){
             <Toolbar />
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
-                <Stack direction="row" justifyContent="space-between" spacing={100} sx={{paddingLeft: 2, paddingRight: 2, whiteSpace: 'nowrap'}}>
+                <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
                   <Typography variant="h6">EDIT QUOTATION</Typography>
-                  <FormControl
-                        fullWidth
-                        size="small"
-                        error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
-                      >
-                        <InputLabel>VAT Appicable</InputLabel>
-                        <Select
-                        name="is_vat"
-                        value={formik_quotation.values.is_vat}
-                        label="VAT Applicable"
-                        onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
-                        >
-                            <MenuItem value={true}>
-                                Yes
-                            </MenuItem>
-                            <MenuItem value={false}>
-                                No
-                            </MenuItem>
-                        </Select>
-                        <FormHelperText>
-                        {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
-                        </FormHelperText>
-                    </FormControl>
+                 
                 </Stack>
               <Grid item>
                  <Divider />
               </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
+                  >
+                    <InputLabel>VAT Appicable</InputLabel>
+                    <Select
+                    name="is_vat"
+                    value={formik_quotation.values.is_vat}
+                    label="VAT Applicable"
+                    onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
+                    >
+                        <MenuItem value={true}>
+                            Yes
+                        </MenuItem>
+                        <MenuItem value={false}>
+                            No
+                        </MenuItem>
+                    </Select>
+                    <FormHelperText>
+                    {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                    </FormHelperText>
+                    </FormControl>
                   <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker 
@@ -685,20 +689,32 @@ export default function Edit(props){
                                     </StyledTableRow>
                                 ))}
                                 </TableBody>
-                                <TableFooter>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
-                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                  <StyledTableRow>
-                                    <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                                    <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                  </StyledTableRow>
-                                </TableFooter>
+                                {
+                                  vat !== null ? (
+                                    <TableFooter>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
+                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.vat_percentage}%:</StyledTableCell>
+                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
+                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                  </TableFooter>
+                                  ) : (
+                                    <TableFooter>
+                                    <StyledTableRow>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST:</StyledTableCell>
+                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                    </StyledTableRow>
+                                  </TableFooter>
+                                  )
+                                }
+
                             </Table>
                         </TableContainer>
                 </Grid>
