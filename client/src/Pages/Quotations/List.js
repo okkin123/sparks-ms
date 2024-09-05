@@ -230,7 +230,7 @@ export default function List(props){
             <Grid container direction="column" spacing={2}>
               
               <Grid item>
-                <Typography variant="h6">QUOTATION LIST</Typography>
+                <Typography variant="h6">LIST OF QUOTATIONS</Typography>
               </Grid> 
               {props.message}
               <Grid item>

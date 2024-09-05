@@ -103,17 +103,19 @@ export default function New(){
       total_cost_with_vat: ""
     })
    
-    const [error, setError] = useState(false);
+    const [error, setError] = useState({
+      open: false,
+      message: ""
+    });
 
 
-    const handleEditQuotaionDetails = (index) => {
+    const handleEditInvoiceDetails = (index) => {
 
       invoiceDetails.map((invoiceDetail, i) => 
            i === index ? 
            formik_invoice_detail.setValues({
             topics:invoiceDetail.topics,
-            quantity: invoiceDetail.quantity,
-            total_cost: invoiceDetail.total_cost
+            amount_without_vat: invoiceDetail.amount_without_vat
            })
            : null
       );
@@ -139,7 +141,7 @@ export default function New(){
       ));
     }
 
-    const handleUpdateQuotationDetails = (index)=>{
+    const handleUpdateInvoiceDetails = (index)=>{
       formik_invoice_detail.validateForm().then((errors)=>{
         if (Object.keys(errors).length === 0) {
          handleClearForms();
@@ -147,7 +149,9 @@ export default function New(){
             i === index ? { ...invoiceDetail, 
               edit_open: false,
               topics: formik_invoice_detail.values.topics,
-              amount_without_vat: parseFloat(formik_invoice_detail.values.amount_without_vat).toFixed(2)
+              amount_without_vat: parseFloat(formik_invoice_detail.values.amount_without_vat).toFixed(2),
+              vat_amount: (parseFloat(formik_invoice_detail.values.amount_without_vat) * (parseFloat(formik_invoice.values.vat_percentage) / 100)).toFixed(2),
+              amount_with_vat: (parseFloat(formik_invoice_detail.values.amount_without_vat) + (parseFloat(formik_invoice_detail.values.amount_without_vat) * (parseFloat(formik_invoice.values.vat_percentage)  / 100))).toFixed(2)
             } : invoiceDetail
           ));
         } else {
@@ -163,7 +167,7 @@ export default function New(){
 
     }
     
-    const handleRemoveQuotationDetails = (index) => {
+    const handleRemoveInvoiceDetails = (index) => {
       setInvoiceDetails((invoiceDetails) => {
         const invoiceDetail = [...invoiceDetails];
         invoiceDetail.splice(index, 1);
@@ -193,8 +197,8 @@ export default function New(){
             edit_open: false,
             topics: values.topics,
             amount_without_vat: parseFloat(values.amount_without_vat).toFixed(2),
-            vat_amount: formik_invoice.values.vat_percentage !== null ?  parseFloat(values.amount_without_vat) * (formik_invoice.values.vat_percentage  / 100) : "",
-            amount_with_vat: formik_invoice.values.vat_percentage !== null ? parseFloat(values.amount_without_vat) + (parseFloat(values.amount_without_vat) * (formik_invoice.values.vat_percentage  / 100)) : "",
+            vat_amount: formik_invoice.values.vat_percentage !== null ? (parseFloat(values.amount_without_vat) * (parseFloat(formik_invoice.values.vat_percentage) / 100)).toFixed(2) : "",
+            amount_with_vat: formik_invoice.values.vat_percentage !== null ? (parseFloat(values.amount_without_vat) + (parseFloat(values.amount_without_vat) * (parseFloat(formik_invoice.values.vat_percentage)  / 100))).toFixed(2) : ""
           }
         ]);
 
@@ -215,6 +219,7 @@ export default function New(){
         project_description: "",
         vat_percentage: null,
         amount_with_vat: "",
+        currency: ""
       },
       validateOnChange: false,
       validationSchema: InvoiceSchema,
@@ -222,37 +227,52 @@ export default function New(){
         setLoading(true)
         if(invoiceDetails.length === 0)
         {
-          setError(true)
+          setError({
+            open: true,
+            message: "Invoice details is empty! Please enter details for the invoice."
+          })
         }
         else
         {
-          setError(false)
-          AxiosInstance.post("/quotation/insert", {
-            invoice_number: invoiceNumber,
-            values: values,
-            details: invoiceDetails,
-            amount_without_vat: quotationBreakdown.total_cost_without_vat
-          })
-          .then(function(response){
-            if(response.data.status === "SUCCESS")
-            {
-              setLoading(false)
-              navigate('/', {
-                state: {
-                  quotation_created_updated: true,
-                  message: response.data.message
-                }
-              })
-            }
-            else
-            {
-              console.log(response.data.message)
-            }
-          })
-          .catch(function(error){
-            console.log(error)
-          })
+          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.amount_with_vat))
+          {
+            setError({
+              open: true,
+              message: "Total amount for this invoice is invalid! The remaining balance for this quotation is insufficient. Please check and try again!" 
+            })
+          }else{
+            setError({
+              ...error,
+              open: false
+            })
+            AxiosInstance.post("/invoice/insert", {
+              invoice_number: invoiceNumber,
+              values: values,
+              details: invoiceDetails,
+              amount_without_vat: quotationBreakdown.total_cost_without_vat
+            })
+            .then(function(response){
+              if(response.data.status === "SUCCESS")
+              {
+                alert(response.data.message)
+                // navigate('/', {
+                //   state: {
+                //     quotation_created_updated: true,
+                //     message: response.data.message
+                //   }
+                // })
+              }
+              else
+              {
+                console.log(response.data.message)
+              }
+            })
+            .catch(function(error){
+              console.log(error)
+            })
+          }
         }
+        setLoading(false)
       }
     })
 
@@ -269,6 +289,16 @@ export default function New(){
           formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
           formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
           formik_invoice.setFieldValue('amount_with_vat', result.data.quotation[0].amount_with_vat);
+          formik_invoice.setFieldValue('currency', result.data.quotation[0].currency);
+
+          const updateInvoiceDetails = invoiceDetails.map(invoiceDetail => ({
+            ...invoiceDetail,
+            vat_amount: (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage) / 100)).toFixed(2),
+            amount_with_vat: (parseFloat(invoiceDetail.amount_without_vat) + (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage)  / 100))).toFixed(2)
+          }));
+          
+          setInvoiceDetails(updateInvoiceDetails);
+          
         }else{
           console.log(result.data.message);
         }
@@ -531,7 +561,7 @@ export default function New(){
                   >
                     Add Details
                   </Button>
-                  <Collapse in={error} sx={{ mb: 2, width: 'stretch' }}>
+                  <Collapse in={error.open} sx={{ mb: 2, width: 'stretch' }}>
                   <Alert
                     action={
                       <IconButton
@@ -539,7 +569,10 @@ export default function New(){
                         color="inherit"
                         size="small"
                         onClick={() => {
-                          setError(false);
+                          setError({
+                            ...error,
+                            open: false
+                          });
                         }}
                       >
                         <CloseIcon fontSize="inherit" />
@@ -550,7 +583,7 @@ export default function New(){
                     severity="error"
 
                   >
-                    Invoice Details is empty!
+                    {error.message}
                   </Alert>
                   </Collapse>
                  
@@ -583,7 +616,7 @@ export default function New(){
                     </Grid>
                     <Grid item>
                       <TextField 
-                       label="Total Amount (AED)"
+                       label="Amount"
                        variant="outlined"
                        name="amount_without_vat"
                        value={formik_invoice_detail.values.amount_without_vat}
@@ -622,20 +655,20 @@ export default function New(){
                                 <StyledTableRow>
                                     <StyledTableCell align="left">SN</StyledTableCell>
                                     <StyledTableCell sx={{ minWidth: 400 }}>TOPICS</StyledTableCell>
-                                    <StyledTableCell align="right">AMOUNT</StyledTableCell>
+                                    <StyledTableCell align="right">AMOUNT {formik_invoice.values.currency}</StyledTableCell>
                                     {
                                       formik_invoice.values.vat_percentage !== null ? (
                                         <React.Fragment>
                                           <StyledTableCell align="right">VAT {formik_invoice.values.vat_percentage}%</StyledTableCell>
-                                          <StyledTableCell align="right">TOTAL</StyledTableCell>
+                                          <StyledTableCell align="right">TOTAL {formik_invoice.values.currency}</StyledTableCell>
                                         </React.Fragment>
                                       ): (
                                         <React.Fragment>
-                                        <StyledTableCell align="right">TOTAL</StyledTableCell>
+                                        <StyledTableCell align="right">TOTAL {formik_invoice.values.currency}</StyledTableCell>
                                         </React.Fragment>
                                       )
                                     }
-                                      <StyledTableCell align="right">ACTION</StyledTableCell>
+                                      <StyledTableCell align="center">ACTION</StyledTableCell>
                                 </StyledTableRow>
                                 </TableHead>
                                 <TableBody>
@@ -657,11 +690,12 @@ export default function New(){
                                       ) : (
                                         <React.Fragment>
                                         <StyledTableCell align="right">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                        <StyledTableCell align="right">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                         </React.Fragment>
                                       )
                                     }
                                     <StyledTableCell align="center">
-                                    <IconButton size='small' color="success" onClick={()=>handleEditQuotaionDetails(i)}>
+                                    <IconButton size='small' color="success" onClick={()=>handleEditInvoiceDetails(i)}>
                                       <EditIcon fontSize='inherit' />
                                     </IconButton>
                                     <Dialog open={invoiceDetail.edit_open} content={
@@ -690,34 +724,17 @@ export default function New(){
                                         </Grid>
                                         <Grid item>
                                           <TextField 
-                                          label="Quantity"
+                                          label="Amount"
                                           variant="outlined"
-                                          name="quantity"
-                                          value={formik_invoice_detail.values.quantity}
+                                          name="amount_without_vat"
+                                          value={formik_invoice_detail.values.amount_without_vat}
                                           size="small"
                                           onChange={formik_invoice_detail.handleChange}
                                           error={
-                                            formik_invoice_detail.touched.quantity && Boolean(formik_invoice_detail.errors.quantity)
+                                            formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
                                             }
                                             helperText={
-                                              formik_invoice_detail.touched.quantity && formik_invoice_detail.errors.quantity
-                                            }
-                                          fullWidth
-                                          />
-                                        </Grid>
-                                        <Grid item>
-                                          <TextField 
-                                          label="Total Cost (AED)"
-                                          variant="outlined"
-                                          name="total_cost"
-                                          value={formik_invoice_detail.values.total_cost}
-                                          size="small"
-                                          onChange={formik_invoice_detail.handleChange}
-                                          error={
-                                            formik_invoice_detail.touched.total_cost && Boolean(formik_invoice_detail.errors.total_cost)
-                                            }
-                                            helperText={
-                                              formik_invoice_detail.touched.total_cost && formik_invoice_detail.errors.total_cost
+                                              formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
                                             }
                                           fullWidth
                                           />
@@ -727,12 +744,12 @@ export default function New(){
                                                 <Button variant="text" color="primary" onClick={()=>handleEditCancel(i)}>Cancel</Button>
                                             </Grid>
                                             <Grid item>
-                                              <Button variant="contained" color="success" onClick={()=>handleUpdateQuotationDetails(i)}>Update</Button>
+                                              <Button variant="contained" color="success" onClick={()=>handleUpdateInvoiceDetails(i)}>Update</Button>
                                             </Grid>
                                         </Grid>
                                       </Grid>
                                     } />
-                                    <IconButton size='small' onClick={()=>handleRemoveQuotationDetails(i)} color="error">
+                                    <IconButton size='small' onClick={()=>handleRemoveInvoiceDetails(i)} color="error">
                                       <DeleteIcon fontSize='inherit' />
                                     </IconButton>
                                     </StyledTableCell>
@@ -744,22 +761,22 @@ export default function New(){
                                     <TableFooter>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">VAT {formik_invoice.values.vat_percentage}%:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   ) : ( 
                                     <TableFooter>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell colSpan={4} align="right"  >TOTAL AMOUNT COST:</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   )

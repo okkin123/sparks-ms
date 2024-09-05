@@ -524,7 +524,7 @@ export default function New(){
                     </Grid>
                     <Grid item>
                       <TextField 
-                       label="Total Cost (AED)"
+                       label="Total Cost"
                        variant="outlined"
                        name="total_cost"
                        value={formik_quotation_detail.values.total_cost}
@@ -564,8 +564,8 @@ export default function New(){
                                     <StyledTableCell align="left">SN</StyledTableCell>
                                     <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
                                     <StyledTableCell align="center">QUANTITY</StyledTableCell>
-                                    <StyledTableCell align="right">UNIT COST({currency})</StyledTableCell>
-                                    <StyledTableCell align="right">TOTAL COST({currency})</StyledTableCell>
+                                    <StyledTableCell align="right">UNIT COST {currency}</StyledTableCell>
+                                    <StyledTableCell align="right">TOTAL COST {currency}</StyledTableCell>
                                     <StyledTableCell align="center">ACTION</StyledTableCell>
                                 </StyledTableRow>
                                 </TableHead>
@@ -630,7 +630,7 @@ export default function New(){
                                         </Grid>
                                         <Grid item>
                                           <TextField 
-                                          label="Total Cost (AED)"
+                                          label="Total Cost"
                                           variant="outlined"
                                           name="total_cost"
                                           value={formik_quotation_detail.values.total_cost}
