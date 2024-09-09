@@ -131,8 +131,7 @@ module.exports = {
   },
   list: (req, res) => {
     dbConnection.query(
-      "SELECT * from vw_users WHERE user_id!=?",
-      [req.user.user_id],
+      "SELECT * from vw_users",
       function (err, data, fields) {
         if (data.length > 0) {
           res.send(data);
@@ -183,4 +182,34 @@ module.exports = {
       }
     );
   },
+  reporting_to_list: (req, res) => {
+    dbConnection.query(
+      "SELECT * from vw_users WHERE user_id!=?",
+      [req.body.user_id],
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send(data);
+        }
+      }
+    );
+  },
+  update_reporting_to: (req, res) => {
+    
+    const reportingTos = JSON.stringify({ 'user_id': req.body.reportingTos.map(reportingTo => reportingTo.user_id) });
+    dbConnection.query("UPDATE tbl_registration_codes SET reporting_to=? WHERE code=?", 
+      [reportingTos, req.body.user_id], function(err, data, fields){
+        if(err){
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage,
+          });
+        }else{
+          res.send({
+            status: "SUCCESS",
+            message: "Done! Updated Successfully!",
+          });
+        }
+      }
+    )
+  }
 };
