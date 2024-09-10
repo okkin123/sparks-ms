@@ -93,6 +93,7 @@ module.exports = {
                     {
                       user_id: data[0].user_id,
                       user_email: data[0].email_address,
+                      reporting_to: data[0].reporting_to
                     },
                     process.env.SECRET_KEY,
                     {
@@ -194,10 +195,19 @@ module.exports = {
     );
   },
   update_reporting_to: (req, res) => {
+    const reportingTos = req.body.reportingTos;
+    const no_selection = reportingTos.every(reportingTo => reportingTo.selected === false);
+    const filteredReportingTos = reportingTos.filter(reportingTo => reportingTo.selected === true)
+    let updatedReportingTos; 
+   
+    if(no_selection){
+      updatedReportingTos = null
+    }else{
+      updatedReportingTos = JSON.stringify({ 'user_id': filteredReportingTos.map(reportingTo => reportingTo.user_id) });
+    }
     
-    const reportingTos = JSON.stringify({ 'user_id': req.body.reportingTos.map(reportingTo => reportingTo.user_id) });
     dbConnection.query("UPDATE tbl_registration_codes SET reporting_to=? WHERE code=?", 
-      [reportingTos, req.body.user_id], function(err, data, fields){
+      [updatedReportingTos, req.body.code], function(err, data, fields){
         if(err){
           res.send({
             status: "ERROR",

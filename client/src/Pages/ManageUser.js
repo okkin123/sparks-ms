@@ -64,23 +64,23 @@ const columns = [
     accessorKey: 'reporting_to',
     header: 'REPORTING TO',
     Cell: ({renderedCellValue, row})=>{
-      if(renderedCellValue.reporting_to !== null)
+      if(renderedCellValue !== null)
       {
-        const emails = JSON.parse(renderedCellValue.reporting_to_email).email_address;
+        const emails = JSON.parse(row.original.reporting_to_email.reporting_to_email).email_address;
         return (
           <div>
+            <IconButton size='small' color="success" onClick={()=>row.original.reporting_to_email.handleShowReportingTo(row.original.id, row.original.code, row.original.fullname, row.original.reporting_to)}>
+              <EditIcon fontSize='inherit' />
+            </IconButton>
             {emails.map((email, index) => (
               <Chip key={index} label={email} color={index % 2 === 0  ? 'info' : 'error'} />
             ))}
-            <IconButton size='small' color="success" onClick={()=>renderedCellValue.handleShowReportingTo(row.original.id)}>
-              <EditIcon fontSize='inherit' />
-            </IconButton>
           </div>
 
         );
       }else{
         return(
-          <IconButton size='small' color="success" onClick={()=>renderedCellValue.OpenReportingTo(row.original.id)}>
+          <IconButton size='small' color="success" onClick={()=>row.original.reporting_to_email.handleShowReportingTo(row.original.id, row.original.code, row.original.fullname, row.original.reporting_to)}>
             <EditIcon fontSize='inherit' />
           </IconButton>
         )
@@ -116,7 +116,10 @@ export default function ManageUser() {
   });
   const [registrationCodes, setRegistrationCodes] = useState([]);
   const [reportingTos, setReportingTos] = useState([]);
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUser, setSelectedUser] = useState({
+    code: "",
+    name: ""
+  });
   const [userTypes, setUserTypes] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [generateState, setGenerateState] = useState({
@@ -176,34 +179,18 @@ export default function ManageUser() {
     setRefresh(!refresh);
   }
 
-  function OpenReportingTo(user_id) {
+  function OpenReportingTo(code, name) {
     setOpen({
       ...open,
       reportingTo: true
     });
-    setSelectedUser(user_id);
+    setSelectedUser({
+      code: code,
+      name: name
+    });
   }
 
   useEffect(() => {
-    setLoading(true)
-    AxiosInstance.get("/user/list")
-      .then((result) => {
-        setUsers((users) => [
-          ...result.data.map((element) => ({
-            id: element.user_id,
-            fullname: element.fullname,
-            email_address: element.email_address,
-            user_type: element.user_type,
-            reporting_to: {reporting_to_email: element.reporting_to_email, handleShowReportingTo: handleShowReportingTo},
-            code: element.code
-          })),
-        ]);
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-
     setUserTypes([]);
     AxiosInstance.get("/user/get_user_types")
       .then((result) => {
@@ -225,6 +212,29 @@ export default function ManageUser() {
   }, []);
 
   useEffect(() => {
+
+    setUsers([])
+    setLoading(true)
+    AxiosInstance.get("/user/list")
+      .then((result) => {
+        setUsers((users) => [
+          ...result.data.map((element) => ({
+            id: element.user_id,
+            fullname: element.fullname,
+            email_address: element.email_address,
+            user_type: element.user_type,
+            reporting_to: element.reporting_to,
+            reporting_to_email: {reporting_to_email: element.reporting_to_email, handleShowReportingTo: handleShowReportingTo},
+            code: element.code
+          })),
+        ]);
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+
     setRegistrationCodes([]);
     AxiosInstance.get("/user/get_registration_code")
       .then((result) => {
@@ -241,8 +251,6 @@ export default function ManageUser() {
         console.log(error);
       });
 
-
-
         // eslint-disable-next-line
   }, [refresh]);
 
@@ -254,31 +262,32 @@ export default function ManageUser() {
     });
   }
 
-  function handleShowReportingTo(user_id){
-    OpenReportingTo(user_id)
+  function handleShowReportingTo(user_id, code, name, reporting_to){
+    OpenReportingTo(code, name)
     setReportingTos([]);
-    AxiosInstance.post("/user/reporting_to_list", {user_id: user_id})
+    AxiosInstance.post("/user/reporting_to_list", {user_id : user_id})
       .then((result) => {
-        setReportingTos((reportingTos) => [
-          ...result.data.map((element) => ({
+        const fetchReportingTos = result.data.map((element) => ({
             user_id: element.user_id,
             name: element.fullname,
             role: element.user_type,
-            selected: false
-          })),
-        ]);
+            selected: reporting_to !== null ? JSON.parse(reporting_to).user_id.some((user_id) => user_id === element.user_id) : false
+          }));
+
+        setReportingTos(fetchReportingTos)
+        
       })
       .catch((error) => {
         console.log(error);
       });
   }
 
-  function handleUpdateReportingTo(user_id) {
-    const no_selection = reportingTos.every(reportingTo => reportingTo.selected === false);
-    if(!no_selection){
-      AxiosInstance.post("user/update_reporting_to", {reportingTos: reportingTos.filter(reportingTo => reportingTo.selected === true), user_id : user_id})
+  function handleUpdateReportingTo(code, setRefresh, refresh) {
+   
+      AxiosInstance.post("user/update_reporting_to", {reportingTos: reportingTos, code : code})
       .then((response)=>{
         if(response.data.status === "SUCCESS"){
+          setRefresh(refresh)
           setAlert({
             open: true,
             icon: (<CheckIcon fontSize="inherit" />),
@@ -296,7 +305,7 @@ export default function ManageUser() {
       .catch((error)=>{
         console.log(error)
       })
-    }
+    
   }
 
   return (
@@ -565,7 +574,7 @@ export default function ManageUser() {
               <Grid container direction="column" spacing={2}>
                 <Grid item>
                     <Typography variant="subtitle1">
-                      REPORTING TO
+                      <strong>{selectedUser.name.toUpperCase()}</strong> IS REPORTING TO:
                     </Typography>
                 </Grid>
                 <Grid item>
@@ -619,7 +628,7 @@ export default function ManageUser() {
                         ...open,
                         reportingTo: false
                       })}  >Cancel</Button>
-                  <Button variant="contained" color="success" onClick={()=>handleUpdateReportingTo(selectedUser)}>Update</Button>
+                  <Button variant="contained" color="success" onClick={()=>handleUpdateReportingTo(selectedUser.code, setRefresh, !refresh)}>Update</Button>
                   </Stack>
                 </Grid>
               </Grid>

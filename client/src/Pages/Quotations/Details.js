@@ -405,7 +405,7 @@ export default function Details(){
                 </Grid>
                 {
                   JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (email === user.email_address && email !== quotation.created_by) {
+                    if (email === user.email_address && quotation.status === "WAITING FOR APPROVAL") {
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
@@ -441,7 +441,7 @@ export default function Details(){
 
                 {
                 JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (email === user.email_address && email === quotation.created_by && quotation.status === "RETURNED") {
+                    if (user.email_address === quotation.created_by && quotation.status === "RETURNED") {
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
