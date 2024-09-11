@@ -20,5 +20,7 @@ router.route("/add_registration_code").post(controller.add_registration_code);
 
 router.route("/list").get(middleware.authentication, controller.list);
 router.route("/get_user_types").get(middleware.authentication, controller.get_user_types);
+router.route("/reporting_to_list").post(controller.reporting_to_list);
+router.route("/update_reporting_to").post(controller.update_reporting_to);
 
 module.exports = router;

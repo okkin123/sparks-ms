@@ -105,7 +105,7 @@ export default function New(){
       total_cost_with_vat: ""
     })
     const [currency, setCurrency] = useState("");
-    const [vat, setVat] = useState("");
+    const [vat, setVat] = useState(null);
     const [error, setError] = useState(false);
 
 
@@ -213,7 +213,7 @@ export default function New(){
 
     const formik_quotation = useFormik({
       initialValues: {
-        is_vat: true,
+        is_vat: false,
         date: null,
         client_name: "",
         attention_to: "",

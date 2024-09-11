@@ -275,7 +275,7 @@ useEffect(()=>{
             </ListItem>
               <Collapse in={dropdownMenu.quotation} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <ListItemButton 
+               <ListItemButton 
                  selected={component.qnew.selected}
                  onClick={() => {
                    handleSelect('qnew', <QNew/>)
@@ -285,7 +285,7 @@ useEffect(()=>{
                     <Add />
                   </ListItemIcon>
                   <ListItemText primary="New" />
-                </ListItemButton>}
+                </ListItemButton>
                 <ListItemButton
                   selected={component.qlist.selected}
                   onClick={() => {
@@ -318,7 +318,7 @@ useEffect(()=>{
           </ListItem>
           <Collapse in={dropdownMenu.invoice} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-               {user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? null : <ListItemButton 
+               <ListItemButton 
                  selected={component.invoice_new.selected}
                  onClick={() => {
                    handleSelect('invoice_new', <InvoiceNew/>)
@@ -328,7 +328,7 @@ useEffect(()=>{
                     <Add />
                   </ListItemIcon>
                   <ListItemText primary="New" />
-                </ListItemButton>}
+                </ListItemButton>
                 <ListItemButton
                  sx={{ pl: 4 }}>
                   <ListItemIcon>

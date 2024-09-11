@@ -93,6 +93,7 @@ module.exports = {
                     {
                       user_id: data[0].user_id,
                       user_email: data[0].email_address,
+                      reporting_to: data[0].reporting_to
                     },
                     process.env.SECRET_KEY,
                     {
@@ -131,8 +132,7 @@ module.exports = {
   },
   list: (req, res) => {
     dbConnection.query(
-      "SELECT * from vw_users WHERE user_id!=?",
-      [req.user.user_id],
+      "SELECT * from vw_users",
       function (err, data, fields) {
         if (data.length > 0) {
           res.send(data);
@@ -183,4 +183,43 @@ module.exports = {
       }
     );
   },
+  reporting_to_list: (req, res) => {
+    dbConnection.query(
+      "SELECT * from vw_users WHERE user_id!=?",
+      [req.body.user_id],
+      function (err, data, fields) {
+        if (data.length > 0) {
+          res.send(data);
+        }
+      }
+    );
+  },
+  update_reporting_to: (req, res) => {
+    const reportingTos = req.body.reportingTos;
+    const no_selection = reportingTos.every(reportingTo => reportingTo.selected === false);
+    const filteredReportingTos = reportingTos.filter(reportingTo => reportingTo.selected === true)
+    let updatedReportingTos; 
+   
+    if(no_selection){
+      updatedReportingTos = null
+    }else{
+      updatedReportingTos = JSON.stringify({ 'user_id': filteredReportingTos.map(reportingTo => reportingTo.user_id) });
+    }
+    
+    dbConnection.query("UPDATE tbl_registration_codes SET reporting_to=? WHERE code=?", 
+      [updatedReportingTos, req.body.code], function(err, data, fields){
+        if(err){
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage,
+          });
+        }else{
+          res.send({
+            status: "SUCCESS",
+            message: "Done! Updated Successfully!",
+          });
+        }
+      }
+    )
+  }
 };
