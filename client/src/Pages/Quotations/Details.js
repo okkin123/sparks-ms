@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import {Typography, 
         Box,
@@ -12,6 +12,11 @@ import {Typography,
         TableFooter,
         TableRow,
         TextField,
+        InputLabel,
+        Select,
+        MenuItem,
+        FormControl,
+        FormHelperText,
         Button} from '@mui/material';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -19,7 +24,7 @@ import AxiosInstance from '../../AxiosInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
 import { useFormik } from 'formik';
-
+import * as Yup from 'yup';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -49,6 +54,20 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: 0
     }
   }));
+
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  });
+
+  
 
 
 export default function Details(){
@@ -81,6 +100,7 @@ export default function Details(){
     })
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
+    const fileRef = useRef(null);
     useEffect(()=>{
 
        window.addEventListener("beforeunload", function(event){
@@ -195,9 +215,25 @@ export default function Details(){
         quotation_number: "",
         user_id: "",
         comments: "",
-        status: ""
+        status: "",
+        file_data: null,
+        file_name: ""
       },
       validateOnChange: false,
+      validationSchema: Yup.object({
+        file_data: Yup.mixed()
+          .required('A file is required')
+          .test(
+            'fileSize',
+            'File too large',
+            value => value && value.size <= 16 * 1024 * 1024 // 16MB
+          )
+          .test(
+            'fileFormat',
+            'Unsupported Format',
+            value => value && ['image/jpeg', 'image/png'].includes(value.type)
+          ),
+      }),
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
         AxiosInstance.post("/quotation/update_quotation_status", values)
@@ -405,7 +441,7 @@ export default function Details(){
                 </Grid>
                 {
                   JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (email === user.email_address && quotation.status === "WAITING FOR APPROVAL") {
+                    if (email === user.email_address && quotation.status === "WAITING FOR VERIFICATION") {
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
@@ -427,9 +463,9 @@ export default function Details(){
                               }}
                               >Return</LoadingButton>
                               <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "APPROVED")
+                                formik_update_quotation_status.setFieldValue("status", "VERIFIED")
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Approve</LoadingButton>
+                              }}>Verify</LoadingButton>
                             </Stack>
                           </Grid>
                         </React.Fragment>
@@ -468,6 +504,93 @@ export default function Details(){
                        
                             }}>Edit</Button>
                           </Stack>
+                          </Grid>
+                        </React.Fragment>
+                      );
+                    }
+                      
+                    return null;
+                  })
+
+                }
+
+                {
+                JSON.parse(quotation.assigned_to).email_address.map((email) => {
+                    if (user.email_address === quotation.created_by && quotation.status === "VERIFIED") {
+                      return (
+                        <React.Fragment key={email}>
+                          <Grid item>
+                            
+                            <FormControl
+                              fullWidth
+                              size="small"
+                              error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
+                              >
+                              <InputLabel>Feedback</InputLabel>
+                              <Select
+                              name="status"
+                              value={formik_update_quotation_status.values.status}
+                              label="Reference Quotation #"
+                              onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
+                              >
+                                <MenuItem value="APPROVED">
+                                    APPROVED
+                                </MenuItem>
+                                <MenuItem value="REVISION">
+                                    REVISION
+                                </MenuItem>
+                                <MenuItem value="NO RESPONSE">
+                                    NO RESPONSE
+                                </MenuItem>
+                                <MenuItem value="REJECTED">
+                                    REJECTED
+                                </MenuItem>
+                              </Select>
+                              <FormHelperText>
+                              {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
+                              </FormHelperText>
+                          </FormControl>
+
+                          </Grid>
+                          <Grid item>
+                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
+                            name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
+                          </Grid>
+                          <Grid item>
+                          <Stack direction="row" spacing={2} alignItems="center" sx={{whiteSpace: 'nowrap'}}>
+                          <Button
+                              component="label"
+                              role={undefined}
+                              variant="contained"
+                              color="info"
+                              tabIndex={-1}
+                              size="small"
+                            >
+                              Upload file
+                              <VisuallyHiddenInput type="file" ref={fileRef}
+                                  name="file_data"
+                                  style={{ display: 'none' }}
+                                  onChange={(event) => {
+                                    const file = event.currentTarget.files[0];
+                                    formik_update_quotation_status.setFieldValue('file_data', file);
+                                    formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
+                                  }} />
+                            </Button>
+                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            </Stack>
+                          </Grid>
+                          <Grid item>
+                            <Stack direction="row" spacing={2} justifyContent="center">
+                                <LoadingButton loading={loading} variant="text" color="primary"
+                                onClick={()=>{
+                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
+                                  formik_update_quotation_status.handleSubmit()
+                                }}
+                                >Void</LoadingButton>
+                              <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
+                                formik_update_quotation_status.handleSubmit()
+                              }}>Submit</LoadingButton>
+                            </Stack>
                           </Grid>
                         </React.Fragment>
                       );
