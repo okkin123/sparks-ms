@@ -221,8 +221,9 @@ export default function Details(){
       },
       validateOnChange: false,
       validationSchema: Yup.object({
+        status: Yup.string().required("This field is required!"),
         file_data: Yup.mixed()
-          .required('A file is required')
+          .required('Supporting document is required!')
           .test(
             'fileSize',
             'File too large',
@@ -230,8 +231,8 @@ export default function Details(){
           )
           .test(
             'fileFormat',
-            'Unsupported Format',
-            value => value && ['image/jpeg', 'image/png'].includes(value.type)
+            'Unsupported file format!',
+            value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
           ),
       }),
       onSubmit: (values, {validateForm})=>{
@@ -526,11 +527,11 @@ export default function Details(){
                               size="small"
                               error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
                               >
-                              <InputLabel>Feedback</InputLabel>
+                              <InputLabel>Client's Feedback</InputLabel>
                               <Select
                               name="status"
                               value={formik_update_quotation_status.values.status}
-                              label="Reference Quotation #"
+                              label="Client's Feedback"
                               onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
                               >
                                 <MenuItem value="APPROVED">
@@ -557,7 +558,9 @@ export default function Details(){
                             name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
                           </Grid>
                           <Grid item>
-                          <Stack direction="row" spacing={2} alignItems="center" sx={{whiteSpace: 'nowrap'}}>
+                          <Stack direction="column" spacing={2}>
+                          <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
+                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
                           <Button
                               component="label"
                               role={undefined}
@@ -566,8 +569,8 @@ export default function Details(){
                               tabIndex={-1}
                               size="small"
                             >
-                              Upload file
-                              <VisuallyHiddenInput type="file" ref={fileRef}
+                              Upload File
+                              <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
                                   name="file_data"
                                   style={{ display: 'none' }}
                                   onChange={(event) => {
@@ -577,6 +580,10 @@ export default function Details(){
                                   }} />
                             </Button>
                             <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            </Stack>
+                            <FormHelperText sx={{color: "red"}}>
+                            {formik_update_quotation_status.touched.file_data && formik_update_quotation_status.errors.file_data}
+                            </FormHelperText>
                             </Stack>
                           </Grid>
                           <Grid item>

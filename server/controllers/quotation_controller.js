@@ -279,9 +279,9 @@ module.exports = {
                 }
                 else
                 {
-                    dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
-                    [req.body.quotation_number, req.user.user_id, req.body.comments, req.body.status], function(err2, data2, fields2){
-                       
+                    dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, supporting_doc, supporting_doc_name, status) VALUES (?, ?, ?, ?, ?, ?)",
+                    [req.body.quotation_number, req.user.user_id, req.body.comments, req.body.file_data, req.body.file_name, req.body.status], function(err2, data2, fields2){
+                       console.log(err2)
                     })
                     res.send({
                         status: "SUCCESS",
