@@ -21,6 +21,7 @@ import {Typography,
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../AxiosInstance';
+import AxiosFileInstance from '../../AxiosFileInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
 import { useFormik } from 'formik';
@@ -197,6 +198,8 @@ export default function Details(){
             user_type: element.user_type,
             date_time: element.date_time,
             comments: element.comments,
+            supporting_doc_name: element.supporting_doc_name,
+            supporting_doc_path : element.supporting_doc_path,
             status: element.status
             })),
           ]);
@@ -216,13 +219,14 @@ export default function Details(){
         user_id: "",
         comments: "",
         status: "",
-        file_data: null,
+        file: null,
         file_name: ""
       },
       validateOnChange: false,
       validationSchema: Yup.object({
-        file_data: Yup.mixed()
-          .required('A file is required')
+        status: Yup.string().required("This field is required!"),
+        file: Yup.mixed()
+          .required('Supporting document is required!')
           .test(
             'fileSize',
             'File too large',
@@ -230,13 +234,17 @@ export default function Details(){
           )
           .test(
             'fileFormat',
-            'Unsupported Format',
-            value => value && ['image/jpeg', 'image/png'].includes(value.type)
+            'Unsupported file format!',
+            value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
           ),
       }),
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
-        AxiosInstance.post("/quotation/update_quotation_status", values)
+
+        const formData = new FormData();
+        formData.append('file', values.file);
+        formData.append('values', JSON.stringify(values))
+        AxiosFileInstance.post("/quotation/update_quotation_status", formData)
         .then(function(response){
            if(response.data.status === "SUCCESS")
             {
@@ -264,6 +272,25 @@ export default function Details(){
         })
       }
     })
+
+    const downloadSupportingDoc = async (filename) => {
+      try {
+        const response = await AxiosInstance.get(`/download_supporting_doc/${filename}`, {
+          responseType: 'blob', // Important for handling binary data
+        });
+    
+        // Create a URL for the file
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename); // Set the file name
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        console.error('Error downloading the file:', error);
+      }
+    };
 
 
 
@@ -429,8 +456,14 @@ export default function Details(){
                             <Typography variant="body1">{approval.user_type}</Typography>
                           </TableCell>
                           <TableCell>{dayjs(approval.date_time).format('YYYY-MM-DD | HH:mm:ss')}</TableCell>
-                          <TableCell>{approval.comments}</TableCell>
+                          
                           <TableCell>{approval.status}</TableCell>
+                          <TableCell>{approval.comments}</TableCell>
+                          { approval.supporting_doc_name !== '' ? <TableCell>
+                            <Button size="small" color="secondary" variant="text" 
+                            onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>
+                              Download</Button>
+                            </TableCell> : null }
                         </TableRow>
                         ))
                       }
@@ -526,11 +559,11 @@ export default function Details(){
                               size="small"
                               error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
                               >
-                              <InputLabel>Feedback</InputLabel>
+                              <InputLabel>Client's Feedback</InputLabel>
                               <Select
                               name="status"
                               value={formik_update_quotation_status.values.status}
-                              label="Reference Quotation #"
+                              label="Client's Feedback"
                               onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
                               >
                                 <MenuItem value="APPROVED">
@@ -557,7 +590,9 @@ export default function Details(){
                             name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
                           </Grid>
                           <Grid item>
-                          <Stack direction="row" spacing={2} alignItems="center" sx={{whiteSpace: 'nowrap'}}>
+                          <Stack direction="column" spacing={2}>
+                          <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
+                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
                           <Button
                               component="label"
                               role={undefined}
@@ -566,17 +601,21 @@ export default function Details(){
                               tabIndex={-1}
                               size="small"
                             >
-                              Upload file
-                              <VisuallyHiddenInput type="file" ref={fileRef}
-                                  name="file_data"
+                              Upload File
+                              <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
+                                  name="file"
                                   style={{ display: 'none' }}
                                   onChange={(event) => {
                                     const file = event.currentTarget.files[0];
-                                    formik_update_quotation_status.setFieldValue('file_data', file);
+                                    formik_update_quotation_status.setFieldValue('file', file);
                                     formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
                                   }} />
                             </Button>
                             <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            </Stack>
+                            <FormHelperText sx={{color: "red"}}>
+                            {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
+                            </FormHelperText>
                             </Stack>
                           </Grid>
                           <Grid item>
