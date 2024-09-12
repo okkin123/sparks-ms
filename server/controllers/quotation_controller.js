@@ -1,7 +1,5 @@
 const dbConnection = require('../config/database');
 
-
-
 module.exports = {
     generateQuotationNumber: (req, res)=>
     {
@@ -266,8 +264,10 @@ module.exports = {
         )
     },
     update_quotation_status: (req, res)=>{
+        const file = req.file;
+        const values = JSON.parse(req.body.values);
         dbConnection.query("UPDATE tbl_quotations SET status=? WHERE quotation_number=?",
-            [req.body.status, req.body.quotation_number],
+            [values.status, values.quotation_number],
             function(err, data, fields)
             {
                 if(err)
@@ -279,17 +279,27 @@ module.exports = {
                 }
                 else
                 {
-                    dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, supporting_doc, supporting_doc_name, status) VALUES (?, ?, ?, ?, ?, ?)",
-                    [req.body.quotation_number, req.user.user_id, req.body.comments, req.body.file_data, req.body.file_name, req.body.status], function(err2, data2, fields2){
+                    dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, supporting_doc_path, supporting_doc_name, status) VALUES (?, ?, ?, ?, ?, ?)",
+                    [values.quotation_number, req.user.user_id, values.comments, file.path, file.filename, values.status], function(err2, data2, fields2){
                        console.log(err2)
                     })
                     res.send({
                         status: "SUCCESS",
-                        message: "Quotation #: " + req.body.quotation_number + " has been "+req.body.status.toLowerCase()+" !"
+                        message: "Quotation #: " + values.quotation_number + " has been "+ values.status.toLowerCase() +" !"
                     });
                 }
             }
         )
+    },
+    download_supporting_doc: (req, res)=>{
+        const filename = req.params.filename;
+        const filePath = `uploads/${filename}`;
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error(err);
+            res.status(500).send('File not found.');
+          }
+        });
     },
     unlock: (req, res)=>{
      

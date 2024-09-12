@@ -140,5 +140,25 @@ module.exports = {
                 }
             }
         )
-    }
+    },
+    list: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_quotations WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=? ORDER BY quotation_number DESC", 
+            [req.user.user_id], function(err, data, fields){
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    res.send({
+                        status: "SUCCESS",
+                        user_email: req.user.user_email,
+                        quotations: data
+                    })
+                }
+        })
+    },
 }
