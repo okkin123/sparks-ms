@@ -10,19 +10,19 @@ export const theme = createTheme({
       main: "#4C4A48",
     },
     secondary: {
-      main: "#1877F2",
+      main: "#0078D7",
     },
     info: {
-      main: "#744DA9",
+      main: "#8764B8",
     },
     success: {
-      main: "#018574",
+      main: "#388E3C",
     },
     warning: {
-      main: "#F57D00",
+      main: "#FFB900",
     },
     error: {
-      main: "#E4405F",
+      main: "#E74856",
     },
 
   },

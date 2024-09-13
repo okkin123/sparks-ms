@@ -17,7 +17,14 @@ import {Typography,
         MenuItem,
         FormControl,
         FormHelperText,
+        Avatar,
+        ListItem,
+        ListItemAvatar,
+        ListItemText,
+        Divider,
+        List,
         Button} from '@mui/material';
+        
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../AxiosInstance';
@@ -223,7 +230,7 @@ export default function Details(){
         file_name: ""
       },
       validateOnChange: false,
-      validationSchema: Yup.object({
+      validationSchema: user.email_address === quotation.created_by && quotation.status === "VERIFIED" ? Yup.object({
         status: Yup.string().required("This field is required!"),
         file: Yup.mixed()
           .required('Supporting document is required!')
@@ -237,7 +244,7 @@ export default function Details(){
             'Unsupported file format!',
             value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
           ),
-      }),
+      }): null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
 
@@ -275,18 +282,21 @@ export default function Details(){
 
     const downloadSupportingDoc = async (filename) => {
       try {
-        const response = await AxiosInstance.get(`/download_supporting_doc/${filename}`, {
-          responseType: 'blob', // Important for handling binary data
+        const response = await AxiosInstance.get(`/quotation/download_supporting_doc/${filename}`, {
+          responseType: 'blob',
         });
     
-        // Create a URL for the file
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename); // Set the file name
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        if (response.status === 200) {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        } else {
+          console.error('Error: File not found or server error');
+        }
       } catch (error) {
         console.error('Error downloading the file:', error);
       }
@@ -440,37 +450,47 @@ export default function Details(){
                 </TableContainer>
                 </Grid>
                 <Grid item>
-                  
-                <TableContainer>
-                  <Table size="small">
-                    <TableBody>
-                      <TableRow>
-                        <TableCell colSpan={4}><strong>WORK HISTORY</strong></TableCell>
-                      </TableRow>
-                      {
-                        approvalHistory.map((approval)=>(
-                          <TableRow>
-                          <TableCell>
-                            <Typography variant="subtitle1">{approval.fullname}</Typography>
-                            <Typography variant="body1">{approval.email_address}</Typography>
-                            <Typography variant="body1">{approval.user_type}</Typography>
-                          </TableCell>
-                          <TableCell>{dayjs(approval.date_time).format('YYYY-MM-DD | HH:mm:ss')}</TableCell>
-                          
-                          <TableCell>{approval.status}</TableCell>
-                          <TableCell>{approval.comments}</TableCell>
-                          { approval.supporting_doc_name !== '' ? <TableCell>
-                            <Button size="small" color="secondary" variant="text" 
-                            onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>
-                              Download</Button>
-                            </TableCell> : null }
-                        </TableRow>
-                        ))
-                      }
-
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                  <Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
+                  <List sx={{ bgcolor: 'background.paper' }} dense={true}>
+                  {
+                   approvalHistory.map((approval ,key)=>(
+                    <React.Fragment key={key}>
+                    <ListItem alignItems="flex-start">
+                      <ListItemAvatar>
+                        <Avatar alt={approval.fullname} src="/static/images/avatar/1.jpg" />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body1">{approval.status}</Typography>
+                            <Typography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</Typography>
+                          </Stack>
+                        } 
+                        secondary={
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography
+                              sx={{ display: 'inline' }}
+                              component="span"
+                              variant="body2"
+                              color="text.primary"
+                            >
+                              <strong>{approval.fullname}</strong>
+                              {approval.comments !== '' ? ' - '+approval.comments : ''}
+                            </Typography>
+                             {
+                                approval.supporting_doc_name !== '' ? 
+                                  <Button color="secondary" size="small" justifyContent="flex-end" onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>Download Supporting Document</Button> : null 
+                             }
+                          </Stack>
+                        }
+                      />
+                    </ListItem>
+                    <Divider variant="inset" component="li" />
+                    </React.Fragment>
+                      ))
+                    }
+                  </List>
+        
                 </Grid>
                 {
                   JSON.parse(quotation.assigned_to).email_address.map((email) => {
@@ -491,7 +511,7 @@ export default function Details(){
                                 >Void</LoadingButton>
                               <LoadingButton loading={loading} variant="contained" color="primary"
                               onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "RETURNED")
+                                formik_update_quotation_status.setFieldValue("status", "RETURNED FOR REVISION")
                                 formik_update_quotation_status.handleSubmit()
                               }}
                               >Return</LoadingButton>
@@ -510,7 +530,7 @@ export default function Details(){
 
                 {
                 JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (user.email_address === quotation.created_by && quotation.status === "RETURNED") {
+                    if (user.email_address === quotation.created_by && quotation.status === "RETURNED FOR REVISION") {
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
