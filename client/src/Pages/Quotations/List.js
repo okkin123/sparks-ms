@@ -110,8 +110,8 @@ const columns = [
           color={
             renderedCellValue === "APPROVED" ? "success" :
             renderedCellValue === "VERIFIED" ? "secondary" :
-            renderedCellValue === "RETURNED" ? "warning" :
-            renderedCellValue === "WAITING FOR VERIFICATION" ? "info" :
+            renderedCellValue === "RETURNED FOR REVISION" ? "warning" :
+            renderedCellValue === "WAITING FOR VERIFICATION" ? "secondary" :
             "error"
           } 
         />
