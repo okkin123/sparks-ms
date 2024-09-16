@@ -478,7 +478,7 @@ export default function Details(){
                               {approval.comments !== '' ? ' - '+approval.comments : ''}
                             </Typography>
                              {
-                                approval.supporting_doc_name !== '' ? 
+                                approval.supporting_doc_name !== '' && approval.supporting_doc_name !== null? 
                                   <Button color="secondary" size="small" justifyContent="flex-end" onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>Download Supporting Document</Button> : null 
                              }
                           </Stack>
@@ -515,7 +515,7 @@ export default function Details(){
                                 formik_update_quotation_status.handleSubmit()
                               }}
                               >Return</LoadingButton>
-                              <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
+                              <LoadingButton loading={loading} loadingIndicator="Verifying..." variant="contained" color="secondary" onClick={()=>{
                                 formik_update_quotation_status.setFieldValue("status", "VERIFIED")
                                 formik_update_quotation_status.handleSubmit()
                               }}>Verify</LoadingButton>
@@ -529,10 +529,10 @@ export default function Details(){
                 }
 
                 {
-                JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (user.email_address === quotation.created_by && quotation.status === "RETURNED FOR REVISION") {
-                      return (
-                        <React.Fragment key={email}>
+       
+                     user.email_address === quotation.created_by && quotation.status === "RETURNED FOR REVISION" ? 
+                       (
+                        <React.Fragment>
                           <Grid item>
                           <Stack direction="row" spacing={2} justifyContent="center">
                             <LoadingButton loading={loading} variant="text" color="primary"
@@ -559,19 +559,13 @@ export default function Details(){
                           </Stack>
                           </Grid>
                         </React.Fragment>
-                      );
-                    }
-                      
-                    return null;
-                  })
-
+                      ) : null
                 }
 
                 {
-                JSON.parse(quotation.assigned_to).email_address.map((email) => {
-                    if (user.email_address === quotation.created_by && quotation.status === "VERIFIED") {
-                      return (
-                        <React.Fragment key={email}>
+                    user.email_address === quotation.created_by && quotation.status === "VERIFIED" ?
+                       (
+                        <React.Fragment>
                           <Grid item>
                             
                             <FormControl
@@ -586,16 +580,16 @@ export default function Details(){
                               label="Client's Feedback"
                               onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
                               >
-                                <MenuItem value="APPROVED">
+                                <MenuItem value="APPROVED BY CLIENT">
                                     APPROVED
                                 </MenuItem>
-                                <MenuItem value="REVISION">
-                                    REVISION
+                                <MenuItem value="RETURNED FOR REVISION">
+                                    RETURN FOR REVISION
                                 </MenuItem>
-                                <MenuItem value="NO RESPONSE">
+                                <MenuItem value="NO RESPONSE BY CLIENT">
                                     NO RESPONSE
                                 </MenuItem>
-                                <MenuItem value="REJECTED">
+                                <MenuItem value="REJECTED BY CLIENT">
                                     REJECTED
                                 </MenuItem>
                               </Select>
@@ -646,19 +640,18 @@ export default function Details(){
                                   formik_update_quotation_status.handleSubmit()
                                 }}
                                 >Void</LoadingButton>
-                              <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="secondary" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
                               }}>Submit</LoadingButton>
                             </Stack>
                           </Grid>
                         </React.Fragment>
-                      );
+                      ) : null
                     }
                       
-                    return null;
-                  })
+                    
 
-                }
+                
                 
                 <Grid item>
                     <Stack direction="row" spacing={2} justifyContent="center">

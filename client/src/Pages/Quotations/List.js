@@ -107,11 +107,13 @@ const columns = [
       Cell: ({ renderedCellValue }) => (
         <Chip 
           label={renderedCellValue} 
+          size="small"
           color={
-            renderedCellValue === "APPROVED" ? "success" :
+            renderedCellValue === "APPROVED BY CLIENT" ? "success" :
             renderedCellValue === "VERIFIED" ? "secondary" :
             renderedCellValue === "RETURNED FOR REVISION" ? "warning" :
-            renderedCellValue === "WAITING FOR VERIFICATION" ? "secondary" :
+            renderedCellValue === "WAITING FOR VERIFICATION" ? "info" :
+            renderedCellValue === "VOIDED" ? "primary" :
             "error"
           } 
         />
@@ -120,7 +122,14 @@ const columns = [
     {
       accessorKey: 'created_by',
       header: 'CREATED BY',
-      Cell: ({renderedCellValue, row}) =>  <Chip color="info" label={renderedCellValue} />
+      Cell: ({ renderedCellValue }) => (
+        <Chip 
+          variant='outlined'
+          label={renderedCellValue} 
+          size="small"
+          color="info" 
+        />
+      )
     },
     {
       accessorKey: 'client_name',
@@ -171,7 +180,7 @@ const columns = [
             return (
               <div>
                 {emails.map((email, index) => (
-                  <Chip key={index} label={email} color={index % 2 === 0  ? 'secondary' : 'info'} />
+                  <Chip key={index} size="small" variant='outlined' label={email} color={index % 2 === 0  ? 'secondary' : 'warning'} />
                 ))}
               </div>
             );

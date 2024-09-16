@@ -1,5 +1,10 @@
 const dbConnection = require('../config/database');
 
+function formatNumber(num) {
+    return num < 10 ? num.toString().padStart(2, '0') : num
+}
+
+
 module.exports = {
     generateInvoiceNumber: (req, res)=>
     {
@@ -32,7 +37,7 @@ module.exports = {
                         }
                     }
                 
-                    invoiceNumber = `${nextValue}/${currentYear}`;
+                    invoiceNumber = `${formatNumber(nextValue)}/${currentYear}`;
                     
                     res.send({
                         status: "SUCCESS",
@@ -44,7 +49,7 @@ module.exports = {
         )
     },
     ref_quotation_numbers: (req, res) => {
-        dbConnection.query("SELECT * FROM vw_quotations WHERE status='APPROVED'",
+        dbConnection.query("SELECT * FROM vw_quotations WHERE status='APPROVED BY CLIENT'",
             function(err, data, fields){
                 if(err){
                     res.send({
