@@ -1,5 +1,9 @@
 const dbConnection = require('../config/database');
 
+function formatNumber(num) {
+    return num < 10 ? num.toString().padStart(2, '0') : num
+}
+
 module.exports = {
     generateQuotationNumber: (req, res)=>
     {
@@ -8,7 +12,7 @@ module.exports = {
         const prefix = 'BS';
         let quotationNumber;
 
-        dbConnection.query( `SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(MAX(quotation_number), '/', 1), 'BS', -1) AS storedValue, SUBSTRING_INDEX(MAX(quotation_number), '/', -1) AS storedYear FROM tbl_quotations`, 
+        dbConnection.query( `SELECT MAX(quotation_number), SUBSTRING_INDEX(SUBSTRING_INDEX(MAX(quotation_number), '/', 1), 'BS', -1) AS storedValue, SUBSTRING_INDEX(MAX(quotation_number), '/', -1) AS storedYear FROM tbl_quotations`, 
             function(err, data, fields){
                 if(err){
                     res.send({
@@ -17,6 +21,7 @@ module.exports = {
                     })
                 }else{
                     const result = data[0]; // Access the first element of the results array
+           
                     let nextValue;
               
                     if (result.storedValue === null) {
@@ -32,7 +37,7 @@ module.exports = {
                         }
                     }
               
-                    quotationNumber = `${prefix}${nextValue}/${currentYear}`;
+                    quotationNumber = `${prefix}${formatNumber(nextValue)}/${currentYear}`;
                   
                     res.send({
                         status: "SUCCESS",
@@ -58,10 +63,12 @@ module.exports = {
                         {
                             if(err)
                             {
+                               
                                 res.send({
                                     status: "ERROR",
                                     message: err
                                 })
+
                             }
                             else
                             {
@@ -87,7 +94,9 @@ module.exports = {
                                         })
                                       } else {
                                         dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
-                                            [req.body.quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){})
+                                            [req.body.quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){
+                                                console.log(err3)
+                                            })
                                         res.send({
                                           status: "SUCCESS",
                                           message: "Quotation #: " + req.body.quotation_number + " has been submitted for approval!"
@@ -102,7 +111,7 @@ module.exports = {
     },
     list: (req, res)=>{
         //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?
-        dbConnection.query("SELECT * FROM vw_quotations ORDER BY quotation_id DESC", 
+        dbConnection.query("SELECT * FROM vw_quotations ORDER BY quotation_number DESC", 
             [req.user.user_id], function(err, data, fields){
                 if(err)
                 {
@@ -172,7 +181,7 @@ module.exports = {
             assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
         }
         dbConnection.query("UPDATE tbl_quotations SET quotation_date=?, client_name=?, attention_to=?, project_name=?, project_description=?, amount_without_vat=?, is_vat=?, vat_percentage=?, currency=?, company_trn=?, company_address=?, created_by=?, assigned_to=?, status=? WHERE quotation_number=?",
-            [req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR APPROVAL", req.body.quotation_number],
+            [req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.quotation_number],
             function(err, data, fields)
             {
                 if(err)
@@ -264,8 +273,18 @@ module.exports = {
         )
     },
     update_quotation_status: (req, res)=>{
-        const file = req.file;
+        let filePath, fileName;
         const values = JSON.parse(req.body.values);
+        if(values.file === null)
+        {
+            filePath = values.file;
+            fileName = values.file;
+        }
+        else
+        {
+            filePath = req.file.path;
+            fileName = req.file.filename
+        }
         dbConnection.query("UPDATE tbl_quotations SET status=? WHERE quotation_number=?",
             [values.status, values.quotation_number],
             function(err, data, fields)
@@ -280,7 +299,7 @@ module.exports = {
                 else
                 {
                     dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, supporting_doc_path, supporting_doc_name, status) VALUES (?, ?, ?, ?, ?, ?)",
-                    [values.quotation_number, req.user.user_id, values.comments, file.path, file.filename, values.status], function(err2, data2, fields2){
+                    [values.quotation_number, req.user.user_id, values.comments, filePath, fileName, values.status], function(err2, data2, fields2){
                        console.log(err2)
                     })
                     res.send({

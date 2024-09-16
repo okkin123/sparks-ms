@@ -54,7 +54,7 @@ const columns = [
   {
     accessorKey: 'email_address',
     header: 'EMAIL ADDRESS',
-    Cell: ({renderedCellValue, row}) =>  <Chip color="secondary" label={renderedCellValue} />
+    Cell: ({renderedCellValue, row}) =>  <Chip size="small" color="secondary" label={renderedCellValue} />
   },
   {
     accessorKey: 'user_type',
@@ -73,7 +73,7 @@ const columns = [
               <EditIcon fontSize='inherit' />
             </IconButton>
             {emails.map((email, index) => (
-              <Chip key={index} label={email} color={index % 2 === 0  ? 'info' : 'error'} />
+              <Chip variant="outlined" size="small" key={index} label={email} color={index % 2 === 0  ? 'secondary' : 'info'} />
             ))}
           </div>
 
