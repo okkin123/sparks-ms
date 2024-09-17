@@ -111,8 +111,7 @@ module.exports = {
     },
     list: (req, res)=>{
         //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?
-        dbConnection.query("SELECT * FROM vw_quotations ORDER BY quotation_number DESC", 
-            [req.user.user_id], function(err, data, fields){
+        dbConnection.query("SELECT * FROM vw_quotations ORDER BY quotation_number DESC", function(err, data, fields){
                 if(err)
                 {
                     res.send({

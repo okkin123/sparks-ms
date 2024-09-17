@@ -148,12 +148,12 @@ const columns = [
       header: 'PROJECT DESCRIPTION'
     },
     {
-      accessorKey: 'cost_without_vat',
-      header: 'COST w/o VAT'
-    },
-    {
       accessorKey: 'is_vat',
       header: 'VAT APPLICABLE'
+    },
+    {
+      accessorKey: 'cost_without_vat',
+      header: 'COST w/o VAT'
     },
     {
       accessorKey: 'vat_percentage',

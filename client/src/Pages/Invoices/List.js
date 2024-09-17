@@ -66,8 +66,8 @@ const columns = [
       Cell: ({renderedCellValue, row}) => renderedCellValue ? <Icon color="primary" fontSize="small"><LockIcon /></Icon> : ""
     },
     {
-      accessorKey: 'quotation_number', //normal accessorKey
-      header: 'QUOTATION NO.',
+      accessorKey: 'invoice_number', //normal accessorKey
+      header: 'INVOICE NO.',
       Cell: ({ renderedCellValue, row }) =>(
         <Link href="#" color="secondary" variant="outlined" onClick={()=>{
        
@@ -76,7 +76,7 @@ const columns = [
           if(!locked)
           {
           // Usage
-          const url = window.location.pathname + `quotation/details?quotation_number=${renderedCellValue}`;
+          const url = window.location.pathname + `invoice/details?invoice_number=${renderedCellValue}`;
           const specs = `location=yes,height=${parentHeight},width=${parentWidth},scrollbars=yes,status=yes,left=${left},top=${top}`;
 
 
@@ -95,7 +95,7 @@ const columns = [
           }
           else
           {
-            alert(`Quotation Number: ${renderedCellValue} is already opened by another user!`);
+            alert(`Invoice Number: ${renderedCellValue} is already opened by another user!`);
           }
 
         }}>{renderedCellValue}</Link>
@@ -118,6 +118,10 @@ const columns = [
           } 
         />
       )
+    },
+    {
+      accessorKey: 'quotation_number',
+      header: 'QUOTATION NO.'
     },
     {
       accessorKey: 'created_by',
@@ -148,12 +152,12 @@ const columns = [
       header: 'PROJECT DESCRIPTION'
     },
     {
-      accessorKey: 'cost_without_vat',
-      header: 'COST w/o VAT'
-    },
-    {
       accessorKey: 'is_vat',
       header: 'VAT APPLICABLE'
+    },
+    {
+      accessorKey: 'amount_without_vat',
+      header: 'AMOUNT w/o VAT'
     },
     {
       accessorKey: 'vat_percentage',
@@ -189,7 +193,7 @@ const columns = [
   ];
 
 export default function List(props){
-  const [quotations, setQuotations] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [refresh, setRefresh] = useState(false)
   const [loading, setLoading] = useState(false)
   
@@ -198,10 +202,10 @@ export default function List(props){
   useEffect(() => {
 
     setLoading(true)
-    AxiosInstance.get("/invoices/list")
+    AxiosInstance.get("/invoice/list")
       .then((result) => {
         if (result.data.status === "SUCCESS") {
-          const fetchedQuotations = result.data.quotations.map((element) => ({
+          const fetchedInvoices = result.data.invoices.map((element) => ({
             locked: element.created_by_email !== result.data.user_email ? !!element.locked : false,
             invoice_number: element.invoice_number,
             quotation_number: element.quotation_number,
@@ -211,7 +215,7 @@ export default function List(props){
             attention_to: element.attention_to,
             project_name: element.project_name,
             project_description: element.project_description,
-            cost_without_vat: element.amount_without_vat,
+            amount_without_vat: element.amount_without_vat,
             is_vat: !!element.is_vat ? 'Yes' : 'No',
             vat_percentage: element.vat_percentage === null ? '' : element.vat_percentage+'%',
             vat_amount: element.vat_amount,
@@ -220,7 +224,7 @@ export default function List(props){
             assigned_to: element.assigned_to_email,
             refresh: {navigate: navigate, setRefresh: setRefresh, refresh: refresh}
           })); 
-          setQuotations(fetchedQuotations);
+          setInvoices(fetchedInvoices);
 
           setLoading(false)
 
@@ -245,7 +249,7 @@ export default function List(props){
             <Grid container direction="column" spacing={2}>
               
               <Grid item>
-                <Typography variant="h6">LIST OF QUOTATIONS</Typography>
+                <Typography variant="h6">LIST OF INVOICES</Typography>
               </Grid> 
               {props.message}
               <Grid item>
@@ -267,7 +271,7 @@ export default function List(props){
                  initialState={{
                   density: 'compact',
                   isLoading: loading,
-                  columnPinning: { left: ['locked','quotation_number', 'status'] },
+                  columnPinning: { left: ['locked','invoice_number', 'status'] },
                   showGlobalFilter: true,
                  }}
                  state={{
@@ -289,7 +293,7 @@ export default function List(props){
                   variant: 'outlined',
                  }}
                 paginationDisplayMode='pages'
-                 columns={columns} data={quotations} />
+                 columns={columns} data={invoices} />
                 
                  </Box>
                  </Paper>

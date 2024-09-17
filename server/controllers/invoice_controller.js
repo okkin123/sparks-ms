@@ -32,7 +32,6 @@ module.exports = {
                         }
                         else
                         {
-                            console.log(result.storedValue)
                             nextValue = parseInt(result.storedValue) + 1;
                         }
                     }
@@ -49,7 +48,7 @@ module.exports = {
         )
     },
     ref_quotation_numbers: (req, res) => {
-        dbConnection.query("SELECT * FROM vw_quotations WHERE status='APPROVED BY CLIENT'",
+        dbConnection.query("SELECT * FROM vw_quotations WHERE status='APPROVED BY CLIENT' AND remaining_quotation_balance!=0",
             function(err, data, fields){
                 if(err){
                     res.send({
@@ -99,7 +98,7 @@ module.exports = {
                 {
                     const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
                     dbConnection.query("INSERT INTO tbl_invoices(invoice_number, quotation_number, invoice_date, address, client_trn, amount_without_vat, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR APPROVAL"],
+                        [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
                         function(err, data, fields)
                         {
                             if(err)
@@ -148,8 +147,7 @@ module.exports = {
     },
     list: (req, res)=>{
         //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?
-        dbConnection.query("SELECT * FROM vw_invoices ORDER BY invoice_number DESC", 
-            [req.user.user_id], function(err, data, fields){
+        dbConnection.query("SELECT * FROM vw_invoices ORDER BY invoice_number DESC", function(err, data, fields){
                 if(err)
                 {
                     res.send({
@@ -166,5 +164,104 @@ module.exports = {
                     })
                 }
         })
-    }
+    },
+    details: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_invoices WHERE invoice_number=?", 
+            [req.body.invoice_number], function(err, data, fields){
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    // dbConnection.query("UPDATE tbl_quotations SET locked=true WHERE quotation_number=?",
+                    //     [req.body.quotation_number],function(err, data, res){
+                    //         if(err)
+                    //             console.log(err)
+                    //     })
+                    dbConnection.query("SELECT * FROM tbl_invoice_details WHERE invoice_number=?",
+                        [req.body.invoice_number], function(err2, data2, fields)
+                        {
+                            if(err2)
+                            {
+                                res.send({
+                                    status: "ERROR",
+                                    message: err2.sqlMessage
+                                })
+                            }
+                            else
+                            {
+                                res.send({
+                                    status: "SUCCESS",
+                                    invoice: data,
+                                    details: data2
+                                })
+                            }
+                        }
+                    )
+                    
+                }
+        })
+    },
+    get_approval_history: (req, res) =>{
+        dbConnection.query("SELECT * FROM vw_invoice_approval_history WHERE invoice_number=? ORDER BY date_time ASC", 
+            [req.body.invoice_number], function(err, data, fields){
+                if(err)
+                    {
+                        res.send({
+                            status: "ERROR",
+                            message: err.sqlMessage
+                        })
+                    }
+                    else
+                    {
+                        res.send({
+                            status: "SUCCESS",
+                            approval_history: data
+                        })
+                    }
+            }
+        )
+    },
+    update_invoice_status: (req, res)=>{
+        let filePath, fileName;
+        const values = JSON.parse(req.body.values);
+        if(values.file === null)
+        {
+            filePath = values.file;
+            fileName = values.file;
+        }
+        else
+        {
+            filePath = req.file.path;
+            fileName = req.file.filename
+        }
+        dbConnection.query("UPDATE tbl_invoices SET status=? WHERE invoice_number=?",
+            [values.status, values.invoice_number],
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err.sqlMessage
+                    })
+                }
+                else
+                {
+                    dbConnection.query("INSERT INTO tbl_invoice_approval_history (invoice_number, user_id, comments, supporting_doc_path, supporting_doc_name, status) VALUES (?, ?, ?, ?, ?, ?)",
+                    [values.invoice_number, req.user.user_id, values.comments, filePath, fileName, values.status], function(err2, data2, fields2){
+                       console.log(err2)
+                    })
+                    res.send({
+                        status: "SUCCESS",
+                        message: "Quotation #: " + values.invoice_number + " has been "+ values.status.toLowerCase() +" !"
+                    });
+                }
+            }
+        )
+    },
 }

@@ -9,6 +9,7 @@ import EnterCode from "./Pages/EnterCode";
 import ChangePassword from "./Pages/ChangePassword";
 import QDetails from "./Pages/Quotations/Details";
 import QEdit from "./Pages/Quotations/Edit";
+import InvoiceDetails from "./Pages/Invoices/Details";
 import ProtectedRoutes from "./ProtectedRoutes";
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
             />
             <Route path="/quotation/details" Component={QDetails} />
             <Route path="/quotation/edit" Component={QEdit} />
+            <Route path="/invoice/details" Component={InvoiceDetails} />
           </Routes>
         </BrowserRouter>
       </div>

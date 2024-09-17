@@ -219,7 +219,9 @@ export default function New(){
         project_description: "",
         vat_percentage: null,
         amount_with_vat: "",
-        currency: ""
+        currency: "",
+        total_invoice_amount_with_vat: "",
+        remaining_quotation_balance: ""
       },
       validateOnChange: false,
       validationSchema: InvoiceSchema,
@@ -234,7 +236,7 @@ export default function New(){
         }
         else
         {
-          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.amount_with_vat))
+          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance))
           {
             setError({
               open: true,
@@ -254,13 +256,12 @@ export default function New(){
             .then(function(response){
               if(response.data.status === "SUCCESS")
               {
-                alert(response.data.message)
-                // navigate('/', {
-                //   state: {
-                //     quotation_created_updated: true,
-                //     message: response.data.message
-                //   }
-                // })
+                navigate('/', {
+                  state: {
+                    invoice_created_updated: true,
+                    message: response.data.message
+                  }
+                })
               }
               else
               {
@@ -290,6 +291,8 @@ export default function New(){
           formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
           formik_invoice.setFieldValue('amount_with_vat', result.data.quotation[0].amount_with_vat);
           formik_invoice.setFieldValue('currency', result.data.quotation[0].currency);
+          formik_invoice.setFieldValue('total_invoice_amount_with_vat', result.data.quotation[0].total_invoice_amount_with_vat);
+          formik_invoice.setFieldValue('remaining_quotation_balance', result.data.quotation[0].remaining_quotation_balance);
 
           const updateInvoiceDetails = invoiceDetails.map(invoiceDetail => ({
             ...invoiceDetail,
@@ -344,6 +347,7 @@ export default function New(){
 
       AxiosInstance.get("/invoice/ref_quotation_numbers")
       .then(function(result){
+         
           if(result.data.status === "SUCCESS")
           {
             const fetchQuotationNumbers = [
@@ -437,27 +441,6 @@ export default function New(){
                         {formik_invoice.touched.ref_quotation_number && formik_invoice.errors.ref_quotation_number}
                         </FormHelperText>
                     </FormControl>
-                    <TextField variant='outlined' 
-                    sx={{ '& .MuiInputBase-root': {
-                        color: theme.palette.secondary.main, // You can use theme colors or any valid CSS color value
-                        fontWeight: 'bold'
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: theme.palette.secondary.main,  // Label color
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: theme.palette.secondary.main, // Border color
-                      },
-                    }} label={formik_invoice.values.vat_percentage !== null ? 'Total Quotation Cost w/ Vat: ' : 'Total Quotation Cost: '}
-                    name="amount_with_vat"
-                    value={formik_invoice.values.amount_with_vat}
-                    size="small"
-                    readOnly
-                    fullWidth />
-                 </Stack>
-               </Grid>
-               <Grid item>
-                 <Stack direction="row" spacing={2}>
                     <TextField variant='outlined' label="Client Name"
                       name="client_name"
                       value={formik_invoice.values.client_name}
@@ -482,6 +465,61 @@ export default function New(){
                         } 
                         readOnly
                         fullWidth/>
+                 </Stack>
+               </Grid>
+               <Grid item>
+                 <Stack direction="row" spacing={2}>
+                 <TextField variant='outlined' 
+                    sx={{ '& .MuiInputBase-root': {
+                        color: theme.palette.secondary.main, // You can use theme colors or any valid CSS color value
+                        fontWeight: 'bold'
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: theme.palette.secondary.main,  // Label color
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.secondary.main, // Border color
+                      },
+                    }} label={formik_invoice.values.vat_percentage !== null ? 'Total Quotation Cost w/ Vat: ' : 'Total Quotation Cost: '}
+                    name="amount_with_vat"
+                    value={formik_invoice.values.amount_with_vat}
+                    size="small"
+                    readOnly
+                    fullWidth />
+                    <TextField variant='outlined' 
+                    sx={{ '& .MuiInputBase-root': {
+                        color: theme.palette.info.main, // You can use theme colors or any valid CSS color value
+                        fontWeight: 'bold'
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: theme.palette.info.main,  // Label color
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.info.main, // Border color
+                      },
+                    }} label={formik_invoice.values.vat_percentage !== null ? 'Total Invoice Amount w/ Vat: ' : 'Total Invoice Amount: '}
+                    name="total_invoice_amount_with_vat"
+                    value={formik_invoice.values.total_invoice_amount_with_vat}
+                    size="small"
+                    readOnly
+                    fullWidth />
+                    <TextField variant='outlined' 
+                    sx={{ '& .MuiInputBase-root': {
+                        color: theme.palette.warning.main, // You can use theme colors or any valid CSS color value
+                        fontWeight: 'bold'
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: theme.palette.warning.main,  // Label color
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.warning.main, // Border color
+                      },
+                    }} label={formik_invoice.values.vat_percentage !== null ? 'Remaining Balance w/ Vat: ' : 'Remaining Balance: '}
+                    name="remaining_quotation_balance"
+                    value={formik_invoice.values.remaining_quotation_balance}
+                    size="small"
+                    readOnly
+                    fullWidth />
                  </Stack>
                </Grid>
                <Grid item>

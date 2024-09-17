@@ -33,6 +33,7 @@ import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
 import QEdit from "./Quotations/Edit";
 import InvoiceNew from "./Invoices/New";
+import InvoiceList from "./Invoices/List";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
 
@@ -71,6 +72,9 @@ export default function SideMenu() {
     },
     invoice_new: {
       selected: false
+    },
+    invoice_list: {
+      selected: false,
     },
     manage_users: {
       selected: false
@@ -163,7 +167,37 @@ useEffect(()=>{
             } />
             ) : location.state.quotation_edit ? (
                 <QEdit quotation_number={location.state.quotation_number} />
-            ) : <Dashboard />,
+            ) : 
+            location.state.invoice_created_updated ? (
+              <InvoiceList message={
+                  <React.Fragment>
+                      <Grid item>
+                          <Collapse in={Boolean(location.state.message)}>
+                              <Alert
+                                  action={
+                                      <IconButton
+                                          aria-label="close"
+                                          color="inherit"
+                                          size="small"
+                                          onClick={() => {
+                                              navigate(location.pathname, { replace: true, state: {invoice_created_updated: true, message: false} });
+                                          }}
+                                      >
+                                          <CloseIcon fontSize="inherit" />
+                                      </IconButton>
+                                  }
+                                  sx={{ mb: 2 }}
+                                  icon={<CheckIcon fontSize="inherit" />}
+                                  severity="success"
+                              >
+                                  {location.state.message}
+                              </Alert>
+                          </Collapse>
+                      </Grid>
+                  </React.Fragment>
+              } />
+              ) :
+            <Dashboard />,
       qlist: location.state.quotation_created ? {...component.qlist, selected: true} : location.state.quotation_edit ? {...component.qlist, selected: false}  : {...component.qlist, selected: false} ,
       qnew: {...component.qnew, selected: false}      
     }));
@@ -330,6 +364,12 @@ useEffect(()=>{
                   <ListItemText primary="New" />
                 </ListItemButton>
                 <ListItemButton
+                 selected={component.invoice_list.selected}
+                 onClick={() => {
+                   handleSelect('invoice_list', (
+                       <InvoiceList />
+                   ))
+                 }}
                  sx={{ pl: 4 }}>
                   <ListItemIcon>
                     <ViewList />
