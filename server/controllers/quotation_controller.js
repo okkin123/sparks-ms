@@ -142,11 +142,11 @@ module.exports = {
                 }
                 else
                 {
-                    dbConnection.query("UPDATE tbl_quotations SET locked=true WHERE quotation_number=?",
-                        [req.body.quotation_number],function(err, data, res){
-                            if(err)
-                                console.log(err)
-                        })
+                    // dbConnection.query("UPDATE tbl_quotations SET locked=true WHERE quotation_number=?",
+                    //     [req.body.quotation_number],function(err, data, res){
+                    //         if(err)
+                    //             console.log(err)
+                    //     })
                     dbConnection.query("SELECT * FROM tbl_quotation_details WHERE quotation_number=?",
                         [req.body.quotation_number], function(err2, data2, fields)
                         {

@@ -147,7 +147,8 @@ module.exports = {
         )
     },
     list: (req, res)=>{
-        dbConnection.query("SELECT * FROM vw_quotations WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=? ORDER BY quotation_number DESC", 
+        //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?
+        dbConnection.query("SELECT * FROM vw_invoices ORDER BY invoice_number DESC", 
             [req.user.user_id], function(err, data, fields){
                 if(err)
                 {
@@ -161,9 +162,9 @@ module.exports = {
                     res.send({
                         status: "SUCCESS",
                         user_email: req.user.user_email,
-                        quotations: data
+                        invoices: data
                     })
                 }
         })
-    },
+    }
 }
