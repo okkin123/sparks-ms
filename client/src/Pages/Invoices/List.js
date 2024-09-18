@@ -28,13 +28,13 @@ function openWindow(url, name, specs) {
         openedWindows[url] = window.open(url, name, specs);
     }
 }
-function createMessageHandler(navigate, quotation_number, setRefresh, refresh) {
+function createMessageHandler(navigate, invoice_number, quotation_number, setRefresh, refresh) {
 
   return function HandleMessage(event) {
     
       if (event.data.childClosed || event.data.childSubmit) {
         
-          AxiosInstance.post("/quotation/unlock", { quotation_number: quotation_number })
+          AxiosInstance.post("/quotation/unlock", { quotation_number: invoice_number })
               .then(function(response) {
                 setRefresh(!refresh)
               })
@@ -46,7 +46,8 @@ function createMessageHandler(navigate, quotation_number, setRefresh, refresh) {
       else if(event.data.childEdit) {
         navigate('/', { 
           state: {
-            quotation_edit: true,
+            invoice_edit: true,
+            invoice_number: invoice_number,
             quotation_number: quotation_number
           }
          });
@@ -88,7 +89,7 @@ const columns = [
             );
 
             // Create the handler with the specific quotation number
-            const messageHandler = createMessageHandler(row.original.refresh.navigate, renderedCellValue, row.original.refresh.setRefresh, row.original.refresh.refresh);
+            const messageHandler = createMessageHandler(row.original.refresh.navigate, renderedCellValue, row.original.quotation_number, row.original.refresh.setRefresh, row.original.refresh.refresh);
 
             // Add the event listener
             window.addEventListener('message', messageHandler);
@@ -109,7 +110,7 @@ const columns = [
           label={renderedCellValue} 
           size="small"
           color={
-            renderedCellValue === "APPROVED BY CLIENT" ? "success" :
+            renderedCellValue === "PAYMENT RECEIVED FROM CLIENT" ? "success" :
             renderedCellValue === "VERIFIED" ? "secondary" :
             renderedCellValue === "RETURNED FOR REVISION" ? "warning" :
             renderedCellValue === "WAITING FOR VERIFICATION" ? "info" :
@@ -169,8 +170,8 @@ const columns = [
       header: 'VAT AMOUNT'
     },
     {
-      accessorKey: 'cost_with_vat',
-      header: 'COST w/ VAT'
+      accessorKey: 'amount_with_vat',
+      header: 'AMOUNT w/ VAT'
     },
     {
       accessorKey: 'currency',
@@ -219,7 +220,7 @@ export default function List(props){
             is_vat: !!element.is_vat ? 'Yes' : 'No',
             vat_percentage: element.vat_percentage === null ? '' : element.vat_percentage+'%',
             vat_amount: element.vat_amount,
-            cost_with_vat: element.amount_with_vat,
+            amount_with_vat: element.amount_with_vat,
             currency: element.currency,
             assigned_to: element.assigned_to_email,
             refresh: {navigate: navigate, setRefresh: setRefresh, refresh: refresh}

@@ -84,66 +84,125 @@ module.exports = {
         )
     },
     insert: (req, res)=>{
-        dbConnection.query("SELECT user_id FROM vw_users WHERE user_type='Operations Manager' OR user_type='Managing Director'",
-            function(err3, data3, fields3)
+        const reporting_to = req.user.reporting_to; 
+        let assigned_to;
+        if(reporting_to !== null){
+            assigned_to = reporting_to;
+        }else{
+            assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
+        }
+        dbConnection.query("INSERT INTO tbl_invoices(invoice_number, quotation_number, invoice_date, address, client_trn, amount_without_vat, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
+            function(err, data, fields)
             {
-                if(err3)
+                if(err)
                 {
                     res.send({
                         status: "ERROR",
-                        message: err3.sqlMessage
+                        message: err
                     })
                 }
                 else
                 {
-                    const assigned_to = JSON.stringify({ 'user_id': data3.map(user_id => user_id.user_id) });
-                    dbConnection.query("INSERT INTO tbl_invoices(invoice_number, quotation_number, invoice_date, address, client_trn, amount_without_vat, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
-                        function(err, data, fields)
-                        {
-                            if(err)
-                            {
-                                res.send({
-                                    status: "ERROR",
-                                    message: err
-                                })
-                            }
-                            else
-                            {
-                                const invoice_details = req.body.details;
-                                const values = invoice_details.flatMap(invoice_detail => [
-                                req.body.invoice_number,
-                                invoice_detail.topics,
-                                invoice_detail.amount_without_vat
-                                ]);
-            
-                                const placeholders = invoice_details.map(() => '(?,?,?)').join(',');
+                    const invoice_details = req.body.details;
+                    const values = invoice_details.flatMap(invoice_detail => [
+                    req.body.invoice_number,
+                    invoice_detail.topics,
+                    invoice_detail.amount_without_vat
+                    ]);
 
-                                dbConnection.query(
-                                    `INSERT INTO tbl_invoice_details(invoice_number, topics, amount_without_vat) VALUES ${placeholders}`,
-                                    values,
-                                    function(err2, data2, fields2) {
-                                      if (err2) {
-                                        res.send({
-                                            status: "ERROR",
-                                            message: err2
-                                        })
-                                      } else {
-                                        dbConnection.query("INSERT INTO tbl_invoice_approval_history (invoice_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
-                                            [req.body.invoice_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){})
-                                        res.send({
-                                          status: "SUCCESS",
-                                          message: "Invoice #: " + req.body.invoice_number + " has been submitted for approval!"
-                                        });
-                                      }
-                                    }
-                                  );
+                    const placeholders = invoice_details.map(() => '(?,?,?)').join(',');
+
+                    dbConnection.query(
+                        `INSERT INTO tbl_invoice_details(invoice_number, topics, amount_without_vat) VALUES ${placeholders}`,
+                        values,
+                        function(err2, data2, fields2) {
+                            if (err2) {
+                            res.send({
+                                status: "ERROR",
+                                message: err2
+                            })
+                            } else {
+                            dbConnection.query("INSERT INTO tbl_invoice_approval_history (invoice_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
+                                [req.body.invoice_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){})
+                            res.send({
+                                status: "SUCCESS",
+                                message: "Invoice #: " + req.body.invoice_number + " has been submitted for approval!"
+                            });
                             }
                         }
-                    )
+                        );
                 }
             }
         )
+            
+    },
+    update: (req, res)=>{
+        const reporting_to = req.user.reporting_to; 
+        let assigned_to;
+        if(reporting_to !== null){
+            assigned_to = reporting_to;
+        }else{
+            assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
+        }
+        dbConnection.query("UPDATE tbl_invoices SET quotation_number=?, invoice_date=?, address=?, client_trn=?, amount_without_vat=?, created_by=?, assigned_to=?, status=? WHERE invoice_number=?",
+            [req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.invoice_number],
+            function(err, data, fields)
+            {
+                if(err)
+                {
+                    res.send({
+                        status: "ERROR",
+                        message: err
+                    })
+                }
+                else
+                {
+                    const deleteQuery = "DELETE FROM tbl_invoice_details WHERE invoice_number=?";
+                    dbConnection.query(deleteQuery, [req.body.invoice_number], function(err4, data4, fields4){
+                        if(err4){
+                            return res.send({
+                                status: "ERROR",
+                                message: err4
+                            });
+                        }else{
+                            const invoice_details = req.body.details;
+                            const values = invoice_details.flatMap(invoice_detail => [
+                            req.body.invoice_number,
+                            invoice_detail.topics,
+                            invoice_detail.amount_without_vat
+                            ]);
+        
+                            const placeholders = invoice_details.map(() => '(?,?,?)').join(',');
+        
+                            dbConnection.query(
+                                `INSERT INTO tbl_invoice_details(invoice_number, topics, amount_without_vat) VALUES ${placeholders}`,
+                                values,
+                                function(err2, data2, fields2) {
+                                    if (err2) {
+                                    res.send({
+                                        status: "ERROR",
+                                        message: err2
+                                    })
+                                    } else {
+                                    dbConnection.query("INSERT INTO tbl_invoice_approval_history (invoice_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
+                                        [req.body.invoice_number, req.user.user_id, "", "UPDATED"], function(err3, data3, fields3){})
+                                            res.send({
+                                                status: "SUCCESS",
+                                                message: "Invoice #: " + req.body.invoice_number + " has been updated for approval!"
+                                            });
+                                    }
+                                }
+                                );
+                        
+                        }
+                    })
+
+                   
+                }
+            }
+        )
+            
     },
     list: (req, res)=>{
         //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?

@@ -33,6 +33,7 @@ import bsLogo from "../../Assets/BS LOGO.png";
 import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useReactToPrint } from 'react-to-print';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -109,6 +110,12 @@ export default function Details(){
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
     const fileRef = useRef(null);
+    const contentToPrint = useRef(null);
+    const handlePrint = useReactToPrint({
+      documentTitle: "Bright Spark Q#"+paramValue.replace(/\//g, "-")+"-"+quotation.project_name,
+      removeAfterPrint: true,
+      copyStyles: true
+    });
     useEffect(()=>{
 
        window.addEventListener("beforeunload", function(event){
@@ -311,12 +318,12 @@ export default function Details(){
             alignItems="center"
             >
             <Grid container justifyContent="center">
-            <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
+            <Grid item xl={7} lg={8} md={10} sm={10} xs={12}>
             <Paper sx={{paddingTop: 4, 
                         paddingRight: 4, 
                         paddingBottom: 1, 
-                        paddingLeft: 4}}>
-            <Grid container direction="column" spacing={4}>
+                        paddingLeft: 4}} >
+            <Grid container direction="column" spacing={4} ref={contentToPrint}>  
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
@@ -448,6 +455,11 @@ export default function Details(){
                     </TableBody>    
                   </Table>
                 </TableContainer>
+                </Grid>
+                <Grid item>
+                    <Stack direction="row" spacing={2} justifyContent="center">
+                     <Typography variant="subtitle1">{quotation.company_address}</Typography>
+                    </Stack>  
                 </Grid>
                 <Grid item>
                   <Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
@@ -649,15 +661,24 @@ export default function Details(){
                       ) : null
                     }
                       
+                    {
+                      quotation.status === 'VERIFIED' || quotation.status === 'APPROVED BY CLIENT' ? 
+                      (
+                        <Grid item>
+                          <Stack direction="row" spacing={2} justifyContent="center">
+                            <Button variant='contained' color="secondary" onClick={() => {
+                              handlePrint(null, () => contentToPrint.current);
+                            }}>Print</Button>
+                          </Stack>
+                        </Grid>
+                      )
+                       : null
+                    }
                     
 
                 
                 
-                <Grid item>
-                    <Stack direction="row" spacing={2} justifyContent="center">
-                     <Typography variant="subtitle1">{quotation.company_address}</Typography>
-                    </Stack>  
-                </Grid>
+               
             </Grid>
             </Paper>
             </Grid>

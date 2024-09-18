@@ -322,7 +322,7 @@ export default function Details(){
             alignItems="center"
             >
             <Grid container justifyContent="center">
-            <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
+            <Grid item xl={7} lg={8} md={10} sm={10} xs={12}>
             <Paper sx={{paddingTop: 4, 
                         paddingRight: 4, 
                         paddingBottom: 1, 
@@ -558,6 +558,82 @@ export default function Details(){
                           </Grid>
                         </React.Fragment>
                       );
+                    }else if(email === user.email_address && invoice.status === "VERIFIED")
+                    {
+                      return(
+                        <React.Fragment key={email}>
+                          <Grid item>
+                            
+                            <FormControl
+                              fullWidth
+                              size="small"
+                              error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
+                              >
+                              <InputLabel>Client's Feedback</InputLabel>
+                              <Select
+                              name="status"
+                              value={formik_update_quotation_status.values.status}
+                              label="Client's Feedback"
+                              onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
+                              >
+                                <MenuItem value="PAYMENT RECEIVED FROM CLIENT">
+                                    PAYMENT RECEIVED
+                                </MenuItem>
+                              </Select>
+                              <FormHelperText>
+                              {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
+                              </FormHelperText>
+                          </FormControl>
+
+                          </Grid>
+                          <Grid item>
+                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
+                            name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
+                          </Grid>
+                          <Grid item>
+                          <Stack direction="column" spacing={2}>
+                          <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
+                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
+                          <Button
+                              component="label"
+                              role={undefined}
+                              variant="contained"
+                              color="info"
+                              tabIndex={-1}
+                              size="small"
+                            >
+                              Upload File
+                              <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
+                                  name="file"
+                                  style={{ display: 'none' }}
+                                  onChange={(event) => {
+                                    const file = event.currentTarget.files[0];
+                                    formik_update_quotation_status.setFieldValue('file', file);
+                                    formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
+                                  }} />
+                            </Button>
+                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            </Stack>
+                            <FormHelperText sx={{color: "red"}}>
+                            {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
+                            </FormHelperText>
+                            </Stack>
+                          </Grid>
+                          <Grid item>
+                            <Stack direction="row" spacing={2} justifyContent="center">
+                                <LoadingButton loading={loading} variant="text" color="primary"
+                                onClick={()=>{
+                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
+                                  formik_update_quotation_status.handleSubmit()
+                                }}
+                                >Void</LoadingButton>
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="secondary" onClick={()=>{
+                                formik_update_quotation_status.handleSubmit()
+                              }}>Submit</LoadingButton>
+                            </Stack>
+                          </Grid>
+                        </React.Fragment>
+                      )
                     }
                     return null;
                   })
@@ -597,7 +673,7 @@ export default function Details(){
                       ) : null
                 }
 
-                {
+                {/* {
                     user.email_address === invoice.created_by && invoice.status === "VERIFIED" ?
                        (
                         <React.Fragment>
@@ -615,17 +691,8 @@ export default function Details(){
                               label="Client's Feedback"
                               onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
                               >
-                                <MenuItem value="APPROVED BY CLIENT">
-                                    APPROVED
-                                </MenuItem>
-                                <MenuItem value="RETURNED FOR REVISION">
-                                    RETURN FOR REVISION
-                                </MenuItem>
-                                <MenuItem value="NO RESPONSE BY CLIENT">
-                                    NO RESPONSE
-                                </MenuItem>
-                                <MenuItem value="REJECTED BY CLIENT">
-                                    REJECTED
+                                <MenuItem value="PAYMENT RECEIVED FROM CLIENT">
+                                    PAYMENT RECEIVED
                                 </MenuItem>
                               </Select>
                               <FormHelperText>
@@ -682,7 +749,7 @@ export default function Details(){
                           </Grid>
                         </React.Fragment>
                       ) : null
-                    }
+                    } */}
                       
                     
 
