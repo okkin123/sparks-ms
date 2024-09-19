@@ -1,0 +1,19 @@
+@page {
+    size: A4; /* You can also use 'Letter', 'A3', etc. */
+}
+  
+@media print {
+    @page {
+      size: portrait; /* Change to 'portrait' for portrait orientation */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    .print-container {
+      width: 100%;
+      height: 100%;
+      page-break-after: always;
+    }
+  }
+  
