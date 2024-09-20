@@ -43,14 +43,15 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      fontSize: 11,
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap'
@@ -61,7 +62,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   
   const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 11,
+      fontSize: 10,
       color: theme.palette.primary.dark
     },
   }));
@@ -234,12 +235,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.name}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount" sx={{width: 230, fontSize: 16}}><strong>Client Approval:</strong></StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BANK ADDRESS:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.address}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">Name:</StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></StyledPrintTableCell>
@@ -249,7 +248,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>IBAN:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.iban}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">Signature:</StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>SWIFT CODE:</strong></StyledPrintTableCell>
@@ -267,8 +265,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </Grid>
       
       </Box>
-
-      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{invoice.company_address}</Typography>
+      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption"><strong>Note: </strong>This is a computer generated invoice, hence no signature is required.</Typography>
+      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{invoice.company_address}<br/><u>www.spark-communications.net</u></Typography>
       </Box>
     )
   })
@@ -310,7 +308,6 @@ export default function Details(){
     const contentToPrint = useRef(null);
     const toWords = new ToWords({localeCode: 'en-AE'});
     const [words, setWords] = useState('')
-
     useEffect(()=>{
 
       setBankLoading(true);
@@ -361,7 +358,7 @@ export default function Details(){
                   ]);
 
                  
-                  setWords(toWords.convert(result.data.invoice[0].amount_with_vat, {currency: true}));
+                  setWords(toWords.convert(parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, '')), {currency: true}));
                   
                   
                   formik_update_quotation_status.setFieldValue("invoice_number", result.data.invoice[0].invoice_number)
@@ -440,20 +437,27 @@ export default function Details(){
       },
       validateOnChange: false,
       validationSchema: user.email_address === invoice.created_by && invoice.status === "VERIFIED" ? Yup.object({
-        status: Yup.string().required("This field is required!"),
-        file: Yup.mixed()
-          .required('Supporting document is required!')
-          .test(
-            'fileSize',
-            'File too large',
-            value => value && value.size <= 16 * 1024 * 1024 // 16MB
-          )
-          .test(
-            'fileFormat',
-            'Unsupported file format!',
-            value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
-          ),
-      }): null,
+          status: Yup.string().required("This field is required!"),
+          file: Yup.mixed()
+            //.required('Supporting document is required!')
+            .test('is-required-if-voided', 'Supporting document is required!', function (value) {
+              const { status } = this.parent;
+              if (status === 'VOIDED') {
+                return true;
+              }
+              return false;
+            })
+            .test(
+              'fileSize',
+              'File too large',
+              value => value && value.size <= 16 * 1024 * 1024 // 16MB
+            )
+            .test(
+              'fileFormat',
+              'Unsupported file format!',
+              value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
+            ),
+        }) : null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
 
@@ -600,14 +604,14 @@ export default function Details(){
                                   {
                                     invoice.vat_percentage !== null ? (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.vat_amount}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_with_vat}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.vat_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_with_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     ) : (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     )
                                   }
@@ -785,6 +789,9 @@ export default function Details(){
                                 <MenuItem value="PAYMENT RECEIVED FROM CLIENT">
                                     PAYMENT RECEIVED
                                 </MenuItem>
+                                <MenuItem value="VOIDED">
+                                    VOID
+                                </MenuItem>
                               </Select>
                               <FormHelperText>
                               {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
@@ -827,18 +834,14 @@ export default function Details(){
                           </Grid></React.Fragment>: null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                            { invoice.status === "VERIFIED" ? <React.Fragment><LoadingButton loading={loading} variant="text" color="primary"
-                                onClick={()=>{
-                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                                  formik_update_quotation_status.handleSubmit()
-                                }}
-                                >Void</LoadingButton>
+                            { invoice.status === "VERIFIED" ? <React.Fragment>
                               <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
                               }}>Submit</LoadingButton></React.Fragment> : null }
                                 { invoice.status === "VERIFIED" || invoice.status === "PAYMENT RECEIVED FROM CLIENT" ? <ReactToPrint
                                 trigger={() => <Button variant='contained' color="secondary">Print</Button>}
                                 content={() => contentToPrint.current}
+                                documentTitle={'BSMM '+ (invoice.is_vat ? 'Tax ' : '') +'Inv.#'+paramValue.replace(/\//g, "-")+' - '+invoice.project_name}
                               /> : null }
                             </Stack>
                           </Grid>

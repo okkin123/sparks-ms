@@ -2,7 +2,7 @@ import { createTheme } from "@mui/material/styles";
 
 export const theme = createTheme({
   typography: {
-    fontFamily: ['"Inconsolata"', "monospace"].join(","),
+    fontFamily: ['"LXGW WenKai Mono TC"', "monospace"].join(","),
   },
   palette: {
     mode: "light",
@@ -19,7 +19,7 @@ export const theme = createTheme({
       main: "#388E3C",
     },
     warning: {
-      main: "#388E3C",
+      main: "#F7630C",
     },
     error: {
       main: "#E74856",

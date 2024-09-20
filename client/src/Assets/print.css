@@ -1,5 +1,6 @@
 @page {
-    size: A4; /* You can also use 'Letter', 'A3', etc. */
+    size: auto; /* You can also use 'Letter', 'A3', etc. */
+    margin: 5mm;
 }
   
 @media print {

@@ -138,6 +138,7 @@ module.exports = {
             
     },
     update: (req, res)=>{
+    
         const reporting_to = req.user.reporting_to; 
         let assigned_to;
         if(reporting_to !== null){

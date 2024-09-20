@@ -243,7 +243,8 @@ export default function New(){
         }
         else
         {
-          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance))
+
+          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
           {
             setError({
               open: true,

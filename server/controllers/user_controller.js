@@ -132,7 +132,7 @@ module.exports = {
   },
   list: (req, res) => {
     dbConnection.query(
-      "SELECT * from vw_users",
+      "SELECT * from vw_users WHERE user_id IS NOT NULL",
       function (err, data, fields) {
         if (data.length > 0) {
           res.send(data);

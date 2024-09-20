@@ -19,14 +19,15 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      fontSize: 11,
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap'

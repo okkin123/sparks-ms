@@ -43,14 +43,14 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
-      fontSize: 12
+      fontSize: 11
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
@@ -60,7 +60,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
   const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 11,
+      fontSize: 10,
       color: theme.palette.primary.dark
     },
   }));
@@ -99,6 +99,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'space-between',
         height: '100vh', // Full viewport height
       }}
       ref={ref}
@@ -165,7 +166,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               quotation.vat_percentage !== null ? (
                 <TableFooter>
                   <StyledTableRow>
-                  <StyledTableCell colSpan={4} align="right" >TOTAL COST w/0 VAT:</StyledTableCell>
+                  <StyledTableCell colSpan={4} align="right" >TOTAL COST w/o VAT:</StyledTableCell>
                   <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                   </StyledTableRow>
                   <StyledTableRow>
@@ -205,12 +206,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.name}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount" sx={{width: 230, fontSize: 16}}><strong>Client Approval:</strong></StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BANK ADDRESS:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.address}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">Name:</StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></StyledPrintTableCell>
@@ -220,7 +219,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>IBAN:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.iban}</StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">Signature:</StyledPrintTableCell>
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>SWIFT CODE:</strong></StyledPrintTableCell>
@@ -236,11 +234,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </TableContainer>
       </Grid>
       </Grid>
-      
-
-      
-
+  
       </Box>
+
+
        <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{quotation.company_address}</Typography>
       </Box>
     )
@@ -606,12 +603,11 @@ export default function Details(){
                 }
 
                 {
-                    user.email_address === quotation.created_by && quotation.status === "VERIFIED" ?
+                    user.email_address === quotation.created_by ?
                        (
                         <React.Fragment>
-                          <Grid item>
-                            
-                            <FormControl
+                          { quotation.status === "VERIFIED" ? <React.Fragment><Grid item>
+                          <FormControl
                               fullWidth
                               size="small"
                               error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
@@ -629,7 +625,7 @@ export default function Details(){
                                 <MenuItem value="RETURNED FOR REVISION">
                                     RETURN FOR REVISION
                                 </MenuItem>
-                                <MenuItem value="NO RESPONSE BY CLIENT">
+                                <MenuItem value="NO RESPONSE FROM CLIENT">
                                     NO RESPONSE
                                 </MenuItem>
                                 <MenuItem value="REJECTED BY CLIENT">
@@ -674,25 +670,37 @@ export default function Details(){
                             {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
                             </FormHelperText>
                             </Stack>
-                          </Grid>
+                          </Grid></React.Fragment> : null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <LoadingButton loading={loading} variant="text" color="primary"
+                            { quotation.status === "VERIFIED" ? <React.Fragment><LoadingButton loading={loading} variant="text" color="primary"
                                 onClick={()=>{
                                   formik_update_quotation_status.setFieldValue("status", "VOIDED")
                                   formik_update_quotation_status.handleSubmit()
                                 }}
                                 >Void</LoadingButton>
-                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="secondary" onClick={()=>{
+                               
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Submit</LoadingButton>
+                              }}>Submit</LoadingButton></React.Fragment> : null }
+                               { quotation.status === "VERIFIED" || quotation.status === 'APPROVED BY CLIENT' ? <ReactToPrint
+                                  trigger={() => (
+                                      <Grid item>
+                                      <Stack direction="row" spacing={2} justifyContent="center">
+                                        <Button variant='contained' color="secondary">Print</Button>
+                                      </Stack>
+                                    </Grid>
+                                  )}
+                                  content={() => contentToPrint.current}
+                                  documentTitle={'Bright Spark Q#'+paramValue.replace(/\//g, "-")+' - '+quotation.project_name}
+                                /> : null }
                             </Stack>
                           </Grid>
                         </React.Fragment>
                       ) : null
                     }
                       
-                    
+{/*                     
                     {
                       quotation.status === 'VERIFIED' || quotation.status === 'APPROVED BY CLIENT' ? 
                       (
@@ -705,11 +713,12 @@ export default function Details(){
                               </Grid>
                             )}
                             content={() => contentToPrint.current}
+                            documentTitle={'Bright Spark Q#'+paramValue.replace(/\//g, "-")+' - '+quotation.project_name}
                           />
                       )
                        : null
                     }
-                    
+                     */}
 
                 
                 
