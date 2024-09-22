@@ -30,28 +30,41 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../AxiosInstance';
 import AxiosFileInstance from '../../AxiosFileInstance';
 import bsLogo from "../../Assets/BS LOGO.png";
+import Data from './Data';
 import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import ReactToPrint from 'react-to-print';
+
+import "../../Assets/print.css";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      fontSize: 11
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 14,
+      fontSize: 11,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 14,
+      fontSize: 11,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
     }
 
   }));
+
+  const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.body}`]: {
+      fontSize: 10,
+      color: theme.palette.primary.dark
+    },
+  }));
+  
   
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
     // hide last border
@@ -75,6 +88,160 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     width: 1,
   });
 
+
+  const PrintComponent = React.forwardRef((props, ref)=>{
+    const quotation = props.quotation;
+    const quotationDetails = props.quotationDetails;
+    const bankAccount = props.bankAccount;
+  
+    return(
+      <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        height: '100vh', // Full viewport height
+      }}
+      ref={ref}
+    >
+      <Box
+        sx={{padding: 2}}
+      >
+      <Grid container direction="column" spacing={3}>
+
+        <Grid item>
+          <Stack direction="column" spacing={2}>
+          <img src={bsLogo} width={220} alt="logo" />
+          <Typography variant="body2">TRN NUMBER: {quotation.company_trn}</Typography>
+          </Stack>
+      </Grid>
+      <Grid item>
+          <Stack direction="column" spacing={1}>
+              <Typography variant="body2"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
+              <Typography variant="body2">DATE: {quotation.quotation_date}</Typography>
+          </Stack>
+      </Grid>
+      <Grid item>
+          <Stack direction="column" spacing={1}>
+              <Typography variant="body2">Client Name: {quotation.client_name}</Typography>
+              <Typography variant="body2">Attention To: {quotation.attention_to}</Typography>
+          </Stack>
+      </Grid>
+      <Grid item>
+          <Typography variant="body2">Project Name: {quotation.project_name}</Typography>
+      </Grid>
+      <Grid item>
+      <TableContainer>
+          <Table size="small">
+              <TableHead>
+              <StyledTableRow>
+                  <StyledTableCell align="left">SN</StyledTableCell>
+                  <StyledTableCell sx={{ minWidth: 300 }}>DESCRIPTION</StyledTableCell>
+                  <StyledTableCell align="center">QUANTITY</StyledTableCell>
+                  <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
+                  <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
+              </StyledTableRow>
+              </TableHead>
+              <TableBody>
+                  <StyledTableRow>
+                      <StyledTableCell align="left"></StyledTableCell>
+                      <StyledTableCell sx={{ minWidth: 300 }}>{quotation.project_description}</StyledTableCell>
+                      <StyledTableCell align="center"></StyledTableCell>
+                      <StyledTableCell align="right"></StyledTableCell>
+                      <StyledTableCell align="right"></StyledTableCell>
+                  </StyledTableRow>
+                  {
+                      quotationDetails.map((quotationDetail, i)=>(
+                          <StyledTableRow>
+                              <StyledTableCell align="left">{i+1}</StyledTableCell>
+                              <StyledTableCell sx={{ minWidth: 300 }}>{quotationDetail.description}</StyledTableCell>
+                              <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
+                              <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                              <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                          </StyledTableRow>
+                      ))
+                  }
+              </TableBody>
+              {
+              quotation.vat_percentage !== null ? (
+                <TableFooter>
+                  <StyledTableRow>
+                  <StyledTableCell colSpan={4} align="right" >TOTAL COST w/o VAT:</StyledTableCell>
+                  <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
+                  </StyledTableRow>
+                  <StyledTableRow>
+                  <StyledTableCell colSpan={4} align="right">VAT {quotation.vat_percentage}%:</StyledTableCell>
+                  <StyledTableCell align="right">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
+                  </StyledTableRow>
+                  <StyledTableRow>
+                  <StyledTableCell colSpan={4} align="right">TOTAL COST w/ VAT:</StyledTableCell>
+                  <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_with_vat}</StyledTableCell>
+                  </StyledTableRow>
+                </TableFooter>
+              ) : (
+                <TableFooter>
+                  <StyledTableRow>
+                  <StyledTableCell colSpan={4} align="right" >TOTAL COST:</StyledTableCell>
+                  <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
+                  </StyledTableRow>
+                </TableFooter>
+              )
+              }
+              
+          </Table>
+      </TableContainer>
+      </Grid>
+      <Grid item>
+      <TableContainer>
+        <Table size="small">
+          <TableBody>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount" colSpan={2} sx={{fontSize: 11}}><strong>Please transfer the amount to the below UAE bank account details:</strong></StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BENIFICIARY:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.benificiary}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.name}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BANK ADDRESS:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.address}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.account_number}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>IBAN:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.iban}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>SWIFT CODE:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.swift_code}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>ROUTING CODE:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.routing_code}</StyledPrintTableCell>
+            </StyledTableRow>
+          </TableBody>    
+        </Table>
+      </TableContainer>
+      </Grid>
+      </Grid>
+  
+      </Box>
+
+
+       <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{quotation.company_address}</Typography>
+      </Box>
+    )
+  })
   
 
 
@@ -109,6 +276,7 @@ export default function Details(){
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
     const fileRef = useRef(null);
+    const contentToPrint = useRef(null);
     useEffect(()=>{
 
        window.addEventListener("beforeunload", function(event){
@@ -311,144 +479,16 @@ export default function Details(){
             alignItems="center"
             >
             <Grid container justifyContent="center">
-            <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
+            <Grid item xl={7} lg={8} md={10} sm={10} xs={12}>
             <Paper sx={{paddingTop: 4, 
                         paddingRight: 4, 
                         paddingBottom: 1, 
-                        paddingLeft: 4}}>
-            <Grid container direction="column" spacing={4}>
-                <Grid item>
-                    <Stack direction="column" spacing={2}>
-                      <Stack direction="row" justifyContent="space-between">
-                        <img src={bsLogo} width={220} alt="logo" />
-                        <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography>
-                      </Stack>
-                    <Typography variant="subtitle1">TRN NUMBER: {quotation.company_trn}</Typography>
-                </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
-                        <Typography variant="subtitle1">DATE: {quotation.quotation_date}</Typography>
-                    </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography>
-                        <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography>
-                    </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography>
-                    </Stack>
-                </Grid>
-                <Grid item>
-                <TableContainer>
-                    <Table size="small">
-                        <TableHead>
-                        <StyledTableRow>
-                            <StyledTableCell align="left">SN</StyledTableCell>
-                            <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
-                            <StyledTableCell align="center">QUANTITY</StyledTableCell>
-                            <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
-                            <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
-                        </StyledTableRow>
-                        </TableHead>
-                        <TableBody>
-                            <StyledTableRow>
-                                <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 400 }}>{quotation.project_description}</StyledTableCell>
-                                <StyledTableCell align="center"></StyledTableCell>
-                                <StyledTableCell align="right"></StyledTableCell>
-                                <StyledTableCell align="right"></StyledTableCell>
-                            </StyledTableRow>
-                            {
-                                quotationDetails.map((quotationDetail, i)=>(
-                                    <StyledTableRow>
-                                        <StyledTableCell align="left">{i+1}</StyledTableCell>
-                                        <StyledTableCell sx={{ minWidth: 400 }}>{quotationDetail.description}</StyledTableCell>
-                                        <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
-                                        <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                        <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                    </StyledTableRow>
-                                ))
-                            }
-                        </TableBody>
-                       {
-                        quotation.vat_percentage !== null ? (
-                          <TableFooter>
-                            <StyledTableRow>
-                            <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
-                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
-                            </StyledTableRow>
-                            <StyledTableRow>
-                            <StyledTableCell colSpan={4} align="right">VAT {quotation.vat_percentage}%:</StyledTableCell>
-                            <StyledTableCell align="right">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
-                            </StyledTableRow>
-                            <StyledTableRow>
-                            <StyledTableCell colSpan={4} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
-                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_with_vat}</StyledTableCell>
-                            </StyledTableRow>
-                          </TableFooter>
-                        ) : (
-                          <TableFooter>
-                            <StyledTableRow>
-                            <StyledTableCell colSpan={4} align="right" >TOTAL AMOUNT COST:</StyledTableCell>
-                            <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
-                            </StyledTableRow>
-                          </TableFooter>
-                        )
-                       }
-                        
-                    </Table>
-                </TableContainer>
-                </Grid>
-                <Grid item>
-                <TableContainer>
-                  <Table size="small">
-                    <TableBody>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount" sx={{fontSize: 16}} colSpan={2}><strong>Please transfer the amount to the below UAE bank account details:</strong></TableCell>
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
-                        
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.name}</TableCell>
-                        <TableCell id="bankAccount" sx={{width: 230, fontSize: 16}}><strong>Client Approval:</strong></TableCell>
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.address}</TableCell>
-                        <TableCell id="bankAccount">Name:</TableCell>
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.account_number}</TableCell>
-                       
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
-                        <TableCell id="bankAccount">Signature:</TableCell>
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.swift_code}</TableCell>
-                       
-                      </StyledTableRow>
-                      <StyledTableRow>
-                        <TableCell id="bankAccount"><strong>ROUTING CODE:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.routing_code}</TableCell>
-                      </StyledTableRow>
-                    </TableBody>    
-                  </Table>
-                </TableContainer>
-                </Grid>
+                        paddingLeft: 4}} >
+            <Grid container direction="column" spacing={3}>
+                <div style={{overflow: 'hidden', height: 0}}>
+                  <PrintComponent quotation={quotation} quotationDetails={quotationDetails} bankAccount={bankAccount} ref={contentToPrint} />
+                </div>
+                <Data quotation={quotation} quotationDetails={quotationDetails} bankAccount={bankAccount} />
                 <Grid item>
                   <Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
                   <List sx={{ bgcolor: 'background.paper' }} dense={true}>
@@ -563,12 +603,11 @@ export default function Details(){
                 }
 
                 {
-                    user.email_address === quotation.created_by && quotation.status === "VERIFIED" ?
+                    user.email_address === quotation.created_by ?
                        (
                         <React.Fragment>
-                          <Grid item>
-                            
-                            <FormControl
+                          { quotation.status === "VERIFIED" ? <React.Fragment><Grid item>
+                          <FormControl
                               fullWidth
                               size="small"
                               error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
@@ -586,7 +625,7 @@ export default function Details(){
                                 <MenuItem value="RETURNED FOR REVISION">
                                     RETURN FOR REVISION
                                 </MenuItem>
-                                <MenuItem value="NO RESPONSE BY CLIENT">
+                                <MenuItem value="NO RESPONSE FROM CLIENT">
                                     NO RESPONSE
                                 </MenuItem>
                                 <MenuItem value="REJECTED BY CLIENT">
@@ -631,33 +670,59 @@ export default function Details(){
                             {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
                             </FormHelperText>
                             </Stack>
-                          </Grid>
+                          </Grid></React.Fragment> : null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <LoadingButton loading={loading} variant="text" color="primary"
+                            { quotation.status === "VERIFIED" ? <React.Fragment><LoadingButton loading={loading} variant="text" color="primary"
                                 onClick={()=>{
                                   formik_update_quotation_status.setFieldValue("status", "VOIDED")
                                   formik_update_quotation_status.handleSubmit()
                                 }}
                                 >Void</LoadingButton>
-                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="secondary" onClick={()=>{
+                               
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Submit</LoadingButton>
+                              }}>Submit</LoadingButton></React.Fragment> : null }
+                               { quotation.status === "VERIFIED" || quotation.status === 'APPROVED BY CLIENT' ? <ReactToPrint
+                                  trigger={() => (
+                                      <Grid item>
+                                      <Stack direction="row" spacing={2} justifyContent="center">
+                                        <Button variant='contained' color="secondary">Print</Button>
+                                      </Stack>
+                                    </Grid>
+                                  )}
+                                  content={() => contentToPrint.current}
+                                  documentTitle={'Bright Spark Q#'+paramValue.replace(/\//g, "-")+' - '+quotation.project_name}
+                                /> : null }
                             </Stack>
                           </Grid>
                         </React.Fragment>
                       ) : null
                     }
                       
-                    
+{/*                     
+                    {
+                      quotation.status === 'VERIFIED' || quotation.status === 'APPROVED BY CLIENT' ? 
+                      (
+                        <ReactToPrint
+                            trigger={() => (
+                                <Grid item>
+                                <Stack direction="row" spacing={2} justifyContent="center">
+                                  <Button variant='contained' color="secondary">Print</Button>
+                                </Stack>
+                              </Grid>
+                            )}
+                            content={() => contentToPrint.current}
+                            documentTitle={'Bright Spark Q#'+paramValue.replace(/\//g, "-")+' - '+quotation.project_name}
+                          />
+                      )
+                       : null
+                    }
+                     */}
 
                 
                 
-                <Grid item>
-                    <Stack direction="row" spacing={2} justifyContent="center">
-                     <Typography variant="subtitle1">{quotation.company_address}</Typography>
-                    </Stack>  
-                </Grid>
+               
             </Grid>
             </Paper>
             </Grid>

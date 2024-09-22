@@ -33,6 +33,7 @@ import QList from "./Quotations/List";
 import QNew from "./Quotations/New";
 import QEdit from "./Quotations/Edit";
 import InvoiceNew from "./Invoices/New";
+import InvoiceEdit from "./Invoices/Edit";
 import InvoiceList from "./Invoices/List";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
@@ -196,10 +197,14 @@ useEffect(()=>{
                       </Grid>
                   </React.Fragment>
               } />
-              ) :
+              ) : location.state.invoice_edit ? (
+                <InvoiceEdit invoice_number={location.state.invoice_number} quotation_number={location.state.quotation_number} />
+            ) :
             <Dashboard />,
       qlist: location.state.quotation_created ? {...component.qlist, selected: true} : location.state.quotation_edit ? {...component.qlist, selected: false}  : {...component.qlist, selected: false} ,
-      qnew: {...component.qnew, selected: false}      
+      qnew: {...component.qnew, selected: false},
+      invoice_list: location.state.invoice_created ? {...component.invoice_list, selected: true} : location.state.invoice_edit ? {...component.invoice_list, selected: false}  : {...component.invoice_list, selected: false} ,  
+      invoice_new: {...component.invoice_new, selected: false},
     }));
 }
 

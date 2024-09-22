@@ -22,6 +22,7 @@ import {Typography,
         ListItemAvatar,
         ListItemText,
         Divider,
+        Skeleton,
         List,
         Button} from '@mui/material';
         
@@ -34,25 +35,38 @@ import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { ToWords } from 'to-words';
+import ReactToPrint from 'react-to-print';
+
+import "../../Assets/print.css";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      fontSize: 11,
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 14,
+      fontSize: 11,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 14,
+      fontSize: 11,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap'
     }
 
   }));
+
+  
+  const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.body}`]: {
+      fontSize: 10,
+      color: theme.palette.primary.dark
+    },
+  }));
+  
   
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
     // hide last border
@@ -75,6 +89,187 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     whiteSpace: 'nowrap',
     width: 1,
   });
+
+
+  const PrintComponent = React.forwardRef((props, ref)=>{
+    const invoice = props.invoice;
+    const invoiceDetails = props.invoiceDetails;
+    const bankAccount = props.bankAccount;
+    const words = props.words;
+    return(
+      <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh', // Full viewport height
+      }}
+      ref={ref}
+    >
+      <Box
+      sx={{padding: 2}}
+      >
+      <Grid container direction="column" spacing={3}>
+      <Grid item>
+          <Stack direction="column" spacing={2}>
+            <img src={bsLogo} width={220} alt="logo" />
+            <Stack direction="row" justifyContent="flex-end">
+            <Typography variant="body2">TRN #: {invoice.company_trn}</Typography>
+            </Stack>
+        </Stack>
+      </Grid>
+      <Grid item>
+          <Stack direction="row" justifyContent="center">
+              <Typography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE #: {invoice.invoice_number}</strong></Typography>
+          </Stack>
+      </Grid>
+    
+      <Grid item>
+          <Stack direction="column">
+            <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2">Client Name: {invoice.client_name}</Typography>
+                <Typography variant="body2">Date: {invoice.invoice_date}</Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2">Address: {invoice.address}</Typography>
+              <Typography variant="body2">Ref Quotation #: {invoice.quotation_number}</Typography>
+            </Stack>
+            <Typography variant="body2">TRN #: {invoice.client_trn}</Typography>
+            <Typography variant="body2">Attention To: {invoice.attention_to}</Typography>
+            <Typography variant="body2">Project Name: {invoice.project_name}</Typography>
+          </Stack>
+      </Grid>
+      <Grid item>
+      <TableContainer>
+          <Table size="small">
+              <TableHead>
+              <StyledTableRow>
+                  <StyledTableCell align="left">SN</StyledTableCell>
+                  <StyledTableCell align="center" sx={{ minWidth: 300 }}>TOPICS</StyledTableCell>
+                  <StyledTableCell align="center">AMOUNT {invoice.currency}</StyledTableCell>
+                  {
+                      invoice.vat_percentage !== null ? (
+                      <React.Fragment>
+                        <StyledTableCell align="center">VAT {invoice.vat_percentage}%</StyledTableCell>
+                        <StyledTableCell align="center">TOTAL {invoice.currency}</StyledTableCell>
+                      </React.Fragment>
+                    ): (
+                      <React.Fragment>
+                      <StyledTableCell align="center">TOTAL {invoice.currency}</StyledTableCell>
+                      </React.Fragment>
+                    )
+                  }
+              </StyledTableRow>
+              </TableHead>
+              <TableBody>
+                  {
+                      invoiceDetails.map((invoiceDetail, i)=>(
+                        <StyledTableRow
+                        key={i}
+                        >
+                        <StyledTableCell align="left">{i+1}</StyledTableCell>
+                        <StyledTableCell component="th" scope="row">
+                            {invoiceDetail.topics}
+                        </StyledTableCell>
+                        {
+                          invoice.vat_percentage !== null ? (
+                            <React.Fragment>
+                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoiceDetail.vat_amount}</StyledTableCell>
+                            <StyledTableCell align="center">{invoiceDetail.amount_with_vat}</StyledTableCell>
+                            </React.Fragment>
+                          ) : (
+                            <React.Fragment>
+                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                            </React.Fragment>
+                          )
+                        }
+                        </StyledTableRow>
+                      ))
+                  }
+              </TableBody>
+              {
+              invoice.vat_percentage !== null ? (
+                <TableFooter>
+                  <StyledTableRow>
+                  <StyledTableCell></StyledTableCell>
+                  <StyledTableCell align="left" >GRAND TOTAL:</StyledTableCell>
+                  <StyledTableCell align="center">{invoice.currency+' '+invoice.amount_without_vat}</StyledTableCell  >
+                  <StyledTableCell align="center">{invoice.currency+' '+invoice.vat_amount}</StyledTableCell>
+                  <StyledTableCell align="center">{invoice.currency+' '+invoice.amount_with_vat}</StyledTableCell>
+                  </StyledTableRow>
+                  <StyledTableRow sx={{backgroundColor: '#EEEEEE'}}>
+                    <StyledTableCell colSpan={5}>Amount in words: {words}</StyledTableCell>
+                  </StyledTableRow>
+                </TableFooter>
+              ) : (
+                <TableFooter>
+                  <StyledTableRow>
+                  <StyledTableCell></StyledTableCell>
+                  <StyledTableCell align="left" >GRAND TOTAL:</StyledTableCell>
+                  <StyledTableCell align="center">{invoice.currency+' '+invoice.amount_with_vat}</StyledTableCell  >
+                  <StyledTableCell align="center">{invoice.currency+' '+invoice.amount_with_vat}</StyledTableCell  >
+                  </StyledTableRow>
+                  <StyledTableRow sx={{backgroundColor: '#EEEEEE'}}>
+                    <StyledTableCell colSpan={4}>Amount in words: {words}</StyledTableCell>
+                  </StyledTableRow>
+                </TableFooter>
+              )
+              }
+              
+          </Table>
+      </TableContainer>
+      </Grid>
+      <Grid item>
+      <TableContainer>
+        <Table size="small">
+          <TableBody>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount" colSpan={2} sx={{fontSize: 11}}><strong>Please transfer the amount to the below UAE bank account details:</strong></StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BENIFICIARY:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.benificiary}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.name}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>BANK ADDRESS:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.address}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.account_number}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>IBAN:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.iban}</StyledPrintTableCell>
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>SWIFT CODE:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.swift_code}</StyledPrintTableCell>
+              
+            </StyledTableRow>
+            <StyledTableRow>
+              <StyledPrintTableCell id="bankAccount"><strong>ROUTING CODE:</strong></StyledPrintTableCell>
+              <StyledPrintTableCell id="bankAccount">{bankAccount.routing_code}</StyledPrintTableCell>
+            </StyledTableRow>
+          </TableBody>    
+        </Table>
+      </TableContainer>
+      </Grid>
+      </Grid>
+      
+      </Box>
+      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption"><strong>Note: </strong>This is a computer generated invoice, hence no signature is required.</Typography>
+      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{invoice.company_address}<br/><u>www.spark-communications.net</u></Typography>
+      </Box>
+    )
+  })
 
 
 
@@ -101,6 +296,7 @@ export default function Details(){
         project_description: "",
     });
     const [bankAccount, setBankAccount] = useState([]);
+    const [bankLoading, setBankLoading] = useState(false);
     const [invoiceDetails, setInvoiceDetails] = useState([]);
 
     const [user, setUser] = useState({
@@ -109,11 +305,12 @@ export default function Details(){
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
     const fileRef = useRef(null);
+    const contentToPrint = useRef(null);
     const toWords = new ToWords({localeCode: 'en-AE'});
     const [words, setWords] = useState('')
-
     useEffect(()=>{
 
+      setBankLoading(true);
        window.addEventListener("beforeunload", function(event){
         window.opener.postMessage({
           childClosed: true,
@@ -161,7 +358,7 @@ export default function Details(){
                   ]);
 
                  
-                  setWords(toWords.convert(result.data.invoice[0].amount_with_vat, {currency: true}));
+                  setWords(toWords.convert(parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, '')), {currency: true}));
                   
                   
                   formik_update_quotation_status.setFieldValue("invoice_number", result.data.invoice[0].invoice_number)
@@ -185,8 +382,8 @@ export default function Details(){
             iban: result.data.iban,
             swift_code: result.data.swift_code,
             routing_code: result.data.routing_code,
-            
           });
+          setBankLoading(false)
         })
         .catch(function(error){
           console.log(error)
@@ -194,8 +391,6 @@ export default function Details(){
 
         AxiosInstance.get("/user/info")
         .then((result) => {
-          // assign the message in our result to the message we initialized above
-  
           setUser({
             ...user,
             email_address: result.data[0].email_address
@@ -242,20 +437,27 @@ export default function Details(){
       },
       validateOnChange: false,
       validationSchema: user.email_address === invoice.created_by && invoice.status === "VERIFIED" ? Yup.object({
-        status: Yup.string().required("This field is required!"),
-        file: Yup.mixed()
-          .required('Supporting document is required!')
-          .test(
-            'fileSize',
-            'File too large',
-            value => value && value.size <= 16 * 1024 * 1024 // 16MB
-          )
-          .test(
-            'fileFormat',
-            'Unsupported file format!',
-            value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
-          ),
-      }): null,
+          status: Yup.string().required("This field is required!"),
+          file: Yup.mixed()
+            //.required('Supporting document is required!')
+            .test('is-required-if-voided', 'Supporting document is required!', function (value) {
+              const { status } = this.parent;
+              if (status === 'VOIDED') {
+                return true;
+              }
+              return false;
+            })
+            .test(
+              'fileSize',
+              'File too large',
+              value => value && value.size <= 16 * 1024 * 1024 // 16MB
+            )
+            .test(
+              'fileFormat',
+              'Unsupported file format!',
+              value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
+            ),
+        }) : null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
 
@@ -321,47 +523,54 @@ export default function Details(){
             justifyContent="center"
             alignItems="center"
             >
+              
             <Grid container justifyContent="center">
-            <Grid item xl={6} lg={8} md={10} sm={10} xs={12}>
+          
+            <Grid item xl={7} lg={8} md={10} sm={10} xs={12}>
+           
             <Paper sx={{paddingTop: 4, 
                         paddingRight: 4, 
                         paddingBottom: 1, 
                         paddingLeft: 4}}>
-            <Grid container direction="column" spacing={4}>
+            <Grid container direction="column" spacing={3}>
+                <div style={{overflow: 'hidden', height: 0}}>
+                  <PrintComponent invoice={invoice} invoiceDetails={invoiceDetails} words={words} bankAccount={bankAccount} ref={contentToPrint} />
+                </div>
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
                         <img src={bsLogo} width={220} alt="logo" />
-                        <Typography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></Typography>
+                        {invoice.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       <Stack direction="row" justifyContent="flex-end">
-                      <Typography variant="subtitle1">TRN #: {invoice.company_trn}</Typography>
+                      {invoice.company_trn ? <Typography variant="subtitle1">TRN #: {invoice.company_trn}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                  </Stack>
                 </Grid>
                 <Grid item>
                     <Stack direction="row" justifyContent="center">
-                        <Typography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE #: {invoice.invoice_number}</strong></Typography>
+                    {invoice.invoice_number ? <Typography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE #: {invoice.invoice_number}</strong></Typography> : <Skeleton variant="rounded" width={410} height={50} /> }
+                        
                     </Stack>
                 </Grid>
              
                 <Grid item>
-                    <Stack direction="column">
+                    <Stack direction="column" spacing={1}>
                       <Stack direction="row" justifyContent="space-between">
-                          <Typography variant="subtitle1">Client Name: {invoice.client_name}</Typography>
-                          <Typography variant="subtitle1">Date: {invoice.invoice_date}</Typography>
+                          {invoice.client_name ? <Typography variant="subtitle1">Client Name: {invoice.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          {invoice.invoice_date ? <Typography variant="subtitle1">Date: {invoice.invoice_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="subtitle1">Address: {invoice.address}</Typography>
-                        <Typography variant="subtitle1">Ref Quotation #: {invoice.quotation_number}</Typography>
+                        { invoice.address ? <Typography variant="subtitle1">Address: {invoice.address}</Typography> : <Skeleton variant="rounded" width={210} height={15} />}
+                        { invoice.quotation_number ? <Typography variant="subtitle1">Ref Quotation #: {invoice.quotation_number}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
-                      <Typography variant="subtitle1">TRN #: {invoice.client_trn}</Typography>
-                      <Typography variant="subtitle1">Attention To: {invoice.attention_to}</Typography>
-                      <Typography variant="subtitle1">Project Name: {invoice.project_name}</Typography>
+                      { invoice.client_trn ? <Typography variant="subtitle1">TRN #: {invoice.client_trn}</Typography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
+                      { invoice.attention_to ? <Typography variant="subtitle1">Attention To: {invoice.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      { invoice.project_name ? <Typography variant="subtitle1">Project Name: {invoice.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} />}
                     </Stack>
                 </Grid> 
                 <Grid item>
-                <TableContainer>
+                { invoiceDetails.length > 0 ? <TableContainer>
                     <Table size="small">
                         <TableHead>
                         <StyledTableRow>
@@ -395,14 +604,14 @@ export default function Details(){
                                   {
                                     invoice.vat_percentage !== null ? (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.vat_amount}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_with_vat}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.vat_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_with_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     ) : (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     )
                                   }
@@ -440,10 +649,10 @@ export default function Details(){
                        }
                         
                     </Table>
-                </TableContainer>
+                </TableContainer> : <Skeleton variant="rounded" width="100%" height={200} /> } 
                 </Grid>
                 <Grid item>
-                <TableContainer>
+                {!bankLoading ? (<TableContainer>
                   <Table size="small">
                     <TableBody>
                       <StyledTableRow>
@@ -451,8 +660,7 @@ export default function Details(){
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
-                        <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
-                        
+                        <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell> 
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
@@ -482,10 +690,10 @@ export default function Details(){
                       </StyledTableRow>
                     </TableBody>    
                   </Table>
-                </TableContainer>
+                </TableContainer>) : <Skeleton variant="rounded" width="100%" height={300} />  }
                 </Grid>
                 <Grid item>
-                  <Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
+                  {approvalHistory.length > 0 ? (<React.Fragment><Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
                   <List sx={{ bgcolor: 'background.paper' }} dense={true}>
                   {
                    approvalHistory.map((approval ,key)=>(
@@ -525,6 +733,7 @@ export default function Details(){
                       ))
                     }
                   </List>
+                  </React.Fragment>) : <Skeleton variant="rounded" width="100%" height={250} />}
         
                 </Grid>
                 {
@@ -558,51 +767,13 @@ export default function Details(){
                           </Grid>
                         </React.Fragment>
                       );
-                    }
-                    return null;
-                  })
-                }
-
-                {
-       
-                     user.email_address === invoice.created_by && invoice.status === "RETURNED FOR REVISION" ? 
-                       (
-                        <React.Fragment>
-                          <Grid item>
-                          <Stack direction="row" spacing={2} justifyContent="center">
-                            <LoadingButton loading={loading} variant="text" color="primary"
-                            onClick={()=>{
-                              formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                              formik_update_quotation_status.handleSubmit()
-                            }}
-                            >Void</LoadingButton>
-                            <Button variant="contained" color="success" onClick={()=>{
-       
-
-                              if(window.opener)
-                              {
-                                window.opener.postMessage({
-                                  childClosed: false,
-                                  childSubmit: false,
-                                  childEdit: true
-                                }, window.location.origin);
-                                window.close();
-                              }
-                             
-                       
-                            }}>Edit</Button>
-                          </Stack>
-                          </Grid>
-                        </React.Fragment>
-                      ) : null
-                }
-
-                {
-                    user.email_address === invoice.created_by && invoice.status === "VERIFIED" ?
-                       (
-                        <React.Fragment>
-                          <Grid item>
-                            
+                    }else if(email === user.email_address)
+                    {
+                      return(
+                        <React.Fragment key={email}>
+                          { invoice.status === "VERIFIED" ? 
+                            <React.Fragment>
+                            <Grid item>
                             <FormControl
                               fullWidth
                               size="small"
@@ -615,17 +786,11 @@ export default function Details(){
                               label="Client's Feedback"
                               onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
                               >
-                                <MenuItem value="APPROVED BY CLIENT">
-                                    APPROVED
+                                <MenuItem value="PAYMENT RECEIVED FROM CLIENT">
+                                    PAYMENT RECEIVED
                                 </MenuItem>
-                                <MenuItem value="RETURNED FOR REVISION">
-                                    RETURN FOR REVISION
-                                </MenuItem>
-                                <MenuItem value="NO RESPONSE BY CLIENT">
-                                    NO RESPONSE
-                                </MenuItem>
-                                <MenuItem value="REJECTED BY CLIENT">
-                                    REJECTED
+                                <MenuItem value="VOIDED">
+                                    VOID
                                 </MenuItem>
                               </Select>
                               <FormHelperText>
@@ -666,33 +831,79 @@ export default function Details(){
                             {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
                             </FormHelperText>
                             </Stack>
-                          </Grid>
+                          </Grid></React.Fragment>: null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <LoadingButton loading={loading} variant="text" color="primary"
-                                onClick={()=>{
-                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                                  formik_update_quotation_status.handleSubmit()
-                                }}
-                                >Void</LoadingButton>
-                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="secondary" onClick={()=>{
+                            { invoice.status === "VERIFIED" ? <React.Fragment>
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Submit</LoadingButton>
+                              }}>Submit</LoadingButton></React.Fragment> : null }
+                                { invoice.status === "VERIFIED" || invoice.status === "PAYMENT RECEIVED FROM CLIENT" ? <ReactToPrint
+                                trigger={() => <Button variant='contained' color="secondary">Print</Button>}
+                                content={() => contentToPrint.current}
+                                documentTitle={'BSMM '+ (invoice.is_vat ? 'Tax ' : '') +'Inv.#'+paramValue.replace(/\//g, "-")+' - '+invoice.project_name}
+                              /> : null }
                             </Stack>
                           </Grid>
                         </React.Fragment>
-                      ) : null
+                      )
                     }
-                      
-                    
+                    return null;
+                  })
+                }
 
-                
-                
-                <Grid item>
-                    <Stack direction="row" spacing={2} justifyContent="center">
-                     <Typography variant="subtitle1">{invoice.company_address}</Typography>
-                    </Stack>  
-                </Grid>
+                {
+       
+                     user.email_address === invoice.created_by && invoice.status === "RETURNED FOR REVISION" ? 
+                       (
+                        <React.Fragment>
+                          <Grid item>
+                          <Stack direction="row" spacing={2} justifyContent="center">
+                            <LoadingButton loading={loading} variant="text" color="primary"
+                            onClick={()=>{
+                              formik_update_quotation_status.setFieldValue("status", "VOIDED")
+                              formik_update_quotation_status.handleSubmit()
+                            }}
+                            >Void</LoadingButton>
+                            <Button variant="contained" color="success" onClick={()=>{
+       
+
+                              if(window.opener)
+                              {
+                                window.opener.postMessage({
+                                  childClosed: false,
+                                  childSubmit: false,
+                                  childEdit: true
+                                }, window.location.origin);
+                                window.close();
+                              }
+                             
+                       
+                            }}>Edit</Button>
+                          </Stack>
+                          </Grid>
+                        </React.Fragment>
+                      ) : null
+                }
+
+                {/* {
+                    invoice.status === 'VERIFIED' || invoice.status === 'PAYMENT RECEIVED FROM CLIENT' ? 
+                    (
+                      <ReactToPrint
+                          trigger={() => (
+                              <Grid item>
+                              <Stack direction="row" spacing={2} justifyContent="center">
+                                <Button variant='contained' color="secondary">Print</Button>
+                              </Stack>
+                            </Grid>
+                          )}
+                          content={() => contentToPrint.current}
+                        />
+                    )
+                      : null
+                  }
+                     */}
+
             </Grid>
             </Paper>
             </Grid>

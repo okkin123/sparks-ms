@@ -666,7 +666,7 @@ export default function New(){
                                   vat !== null ? (
                                     <TableFooter>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST W/OUT VAT:</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL COST w/o VAT:</StyledTableCell>
                                       <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
@@ -674,14 +674,14 @@ export default function New(){
                                       <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right">TOTAL COST INCLUDING VAT:</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
                                       <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   ) : (
                                     <TableFooter>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST:</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL COST:</StyledTableCell>
                                       <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
@@ -694,7 +694,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Submit for Approval</LoadingButton>
+                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_quotation.handleSubmit} loading={loading}>Submit for Verification</LoadingButton>
                  </Grid>
             </Grid>
             </Paper>

@@ -92,8 +92,10 @@ const InvoiceDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     
   });
-export default function New(){
+export default function Edit(props){
 
+    const invoiceNumber = props.invoice_number;
+    const quotationNumber = props.quotation_number; 
     const [modal, setModal] = useState({
       add: {
         open: false
@@ -101,7 +103,6 @@ export default function New(){
     })
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const [invoiceNumber, setInvoiceNumber] = useState("");
     const [quotationNumbers, setQuotationNumbers] = useState([]);
     const [invoiceDetails, setInvoiceDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
@@ -243,7 +244,6 @@ export default function New(){
         }
         else
         {
-
           if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
           {
             setError({
@@ -255,7 +255,7 @@ export default function New(){
               ...error,
               open: false
             })
-            AxiosInstance.post("/invoice/insert", {
+            AxiosInstance.post("/invoice/update", {
               invoice_number: invoiceNumber,
               values: values,
               details: invoiceDetails,
@@ -285,51 +285,100 @@ export default function New(){
       }
     })
 
-    const handleRefQuotationNumberChange = (quotation_number)=>{
-      AxiosInstance.post("/invoice/selected_ref_quotation", {quotation_number: quotation_number})
-      .then(function(result){
-        if(result.data.status === "SUCCESS"){
-  
-          formik_invoice.setFieldValue('ref_quotation_number', result.data.quotation[0].quotation_number);
-          formik_invoice.setFieldValue('is_vat', !!result.data.quotation[0].is_vat ? 'Yes' : 'No');
-          formik_invoice.setFieldValue('client_name', result.data.quotation[0].client_name);
-          formik_invoice.setFieldValue('attention_to', result.data.quotation[0].attention_to);
-          formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
-          formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
-          formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
-          formik_invoice.setFieldValue('amount_with_vat', result.data.quotation[0].amount_with_vat);
-          formik_invoice.setFieldValue('currency', result.data.quotation[0].currency);
-          formik_invoice.setFieldValue('total_invoice_amount_with_vat', result.data.quotation[0].total_invoice_amount_with_vat);
-          formik_invoice.setFieldValue('remaining_quotation_balance', result.data.quotation[0].remaining_quotation_balance);
 
-          const updateInvoiceDetails = invoiceDetails.map(invoiceDetail => ({
-            ...invoiceDetail,
-            vat_amount: (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage) / 100)).toFixed(2),
-            amount_with_vat: (parseFloat(invoiceDetail.amount_without_vat) + (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage)  / 100))).toFixed(2)
-          }));
-          
-          setInvoiceDetails(updateInvoiceDetails);
-          
-        }else{
+    const fetchInvoiceDetails = (invoice_number)=>{
+      AxiosInstance.post("/invoice/details", {invoice_number : invoice_number})
+      .then((result) => {
+        if (result.data.status === "SUCCESS") {
+          formik_invoice.setValues({
+              is_vat: !!result.data.invoice[0].is_vat ? 'Yes' : 'No',
+              date: dayjs(new Date(result.data.invoice[0].invoice_date)).format('YYYY-MM-DD'),
+              ref_quotation_number: result.data.invoice[0].quotation_number,
+              client_name: result.data.invoice[0].client_name,
+              attention_to: result.data.invoice[0].attention_to,
+              project_name: result.data.invoice[0].project_name,
+              project_description: result.data.invoice[0].project_description,
+              client_trn: result.data.invoice[0].client_trn,
+              address: result.data.invoice[0].address,
+              vat_percentage: result.data.invoice[0].vat_percentage,
+              amount_with_vat: result.data.invoice[0].quotation_cost,
+              currency: result.data.invoice[0].currency,
+              total_invoice_amount_with_vat: (parseFloat(result.data.invoice[0].quotation_cost) - parseFloat(result.data.invoice[0].amount_with_vat)).toFixed(2),
+              remaining_quotation_balance: result.data.invoice[0].amount_with_vat
+
+          });
+
+       
+          setInvoiceDetails((invoiceDetails) => [
+            ...result.data.details.map((element) => ({
+              edit_open: false,
+              topics: element.topics,
+              amount_without_vat: parseFloat(element.amount_without_vat).toFixed(2),
+              vat_amount: result.data.invoice[0].vat_percentage !== null ? (parseFloat(element.amount_without_vat) * (parseFloat(result.data.invoice[0].vat_percentage) / 100)).toFixed(2) : "",
+              amount_with_vat: result.data.invoice[0].vat_percentage !== null ? (parseFloat(element.amount_without_vat) + (parseFloat(element.amount_without_vat) * (parseFloat(result.data.invoice[0].vat_percentage)  / 100))).toFixed(2) : ""
+            })),
+          ]);
+                
+        } else {
           console.log(result.data.message);
         }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    }
 
-      })
-      .catch(function(error){
-        console.log(error)
-      })
+    const handleRefQuotationNumberChange = (quotation_number)=>{
+      if(quotation_number === quotationNumber){
+          fetchInvoiceDetails(invoiceNumber)
+      }else{
+
+        AxiosInstance.post("/invoice/selected_ref_quotation", {quotation_number: quotation_number})
+        .then(function(result){
+          if(result.data.status === "SUCCESS"){
+
+            formik_invoice.setFieldValue('ref_quotation_number', result.data.quotation[0].quotation_number);
+            formik_invoice.setFieldValue('is_vat', !!result.data.quotation[0].is_vat ? 'Yes' : 'No');
+            formik_invoice.setFieldValue('client_name', result.data.quotation[0].client_name);
+            formik_invoice.setFieldValue('attention_to', result.data.quotation[0].attention_to);
+            formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
+            formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
+            formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
+            formik_invoice.setFieldValue('amount_with_vat', result.data.quotation[0].amount_with_vat);
+            formik_invoice.setFieldValue('currency', result.data.quotation[0].currency);
+            formik_invoice.setFieldValue('total_invoice_amount_with_vat', result.data.quotation[0].total_invoice_amount_with_vat);
+            formik_invoice.setFieldValue('remaining_quotation_balance', result.data.quotation[0].remaining_quotation_balance);
+  
+            const updateInvoiceDetails = invoiceDetails.map(invoiceDetail => ({
+              ...invoiceDetail,
+              vat_amount: (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage) / 100)).toFixed(2),
+              amount_with_vat: (parseFloat(invoiceDetail.amount_without_vat) + (parseFloat(invoiceDetail.amount_without_vat) * (parseFloat(result.data.quotation[0].vat_percentage)  / 100))).toFixed(2)
+            }));
+            
+            setInvoiceDetails(updateInvoiceDetails);
+            
+          }else{
+            console.log(result.data.message);
+          }
+  
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+        
+      }
     }
 
     useEffect(()=>{
 
-      const total_cost_without_vat = invoiceDetails.reduce((accumulator, currentItem) => {
+      const total_amount_without_vat = invoiceDetails.reduce((accumulator, currentItem) => {
         return accumulator + parseFloat(currentItem.amount_without_vat);
       }, 0);
 
       setQuotationBreakdown({
-        total_cost_without_vat: total_cost_without_vat,
-        vat_amount: total_cost_without_vat * (formik_invoice.values.vat_percentage / 100),
-        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * (formik_invoice.values.vat_percentage / 100))
+        total_cost_without_vat: total_amount_without_vat,
+        vat_amount: total_amount_without_vat * (formik_invoice.values.vat_percentage / 100),
+        total_cost_with_vat: total_amount_without_vat + (total_amount_without_vat * (formik_invoice.values.vat_percentage / 100))
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,32 +386,17 @@ export default function New(){
 
    useEffect(()=>{
 
-    AxiosInstance.get("/invoice/generateInvoiceNumber")
-    .then(function(result){
-        if(result.data.status === "SUCCESS")
-        {
-          setInvoiceNumber(result.data.invoice_number);
-        }
-        else
-        {
-          console.log(result.data)
-        }
-    }) 
-    .catch(function(error){
-      console.log(error)
-    })
-
-
       AxiosInstance.get("/invoice/ref_quotation_numbers")
       .then(function(result){
-         
+          const filteredQuotationNumbers = result.data.quotations.filter((quotation)=>quotation.quotation_number !== quotationNumber);
+
           if(result.data.status === "SUCCESS")
           {
             const fetchQuotationNumbers = [
                 ...quotationNumbers,
-                ...result.data.quotations.map(quotation => quotation.quotation_number)
+                quotationNumber,
+                ...filteredQuotationNumbers.map(quotation => quotation.quotation_number)
             ];
-    
             setQuotationNumbers(fetchQuotationNumbers)
           }
           else
@@ -374,6 +408,8 @@ export default function New(){
         console.log(error)
       })
 
+     fetchInvoiceDetails(invoiceNumber)
+
       // eslint-disable-next-line
    }, [])
 
@@ -384,7 +420,7 @@ export default function New(){
             <Paper>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
                 <Stack direction="row" justifyContent="space-between" sx={{paddingLeft: 2, paddingRight: 2}}>
-                  <Typography variant="h6">NEW INVOICE</Typography>
+                  <Typography variant="h6">EDIT INVOICE</Typography>
                  
                 </Stack>
               <Grid item>
@@ -444,6 +480,7 @@ export default function New(){
                             </MenuItem>
                             );
                         }) }
+
                         </Select>
                         <FormHelperText>
                         {formik_invoice.touched.ref_quotation_number && formik_invoice.errors.ref_quotation_number}
@@ -806,7 +843,7 @@ export default function New(){
                                   formik_invoice.values.vat_percentage !== null ? (
                                     <TableFooter>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT COST w/o VAT:</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right"  >TOTAL AMOUNT w/o VAT:</StyledTableCell>
                                       <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
@@ -814,7 +851,7 @@ export default function New(){
                                       <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right">TOTAL AMOUNT w/ VAT:</StyledTableCell>
                                       <StyledTableCell align="center">{formik_invoice.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
@@ -834,7 +871,7 @@ export default function New(){
                  <Divider />
                  </Grid>
                  <Grid item>
-                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_invoice.handleSubmit} loading={loading}>Submit for Verification</LoadingButton>
+                     <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_invoice.handleSubmit} loading={loading}>Update for Verification</LoadingButton>
                  </Grid>
             </Grid>
             </Paper>
