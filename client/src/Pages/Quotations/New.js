@@ -46,14 +46,17 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
+    whiteSpace: 'nowrap'
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
+    whiteSpace: 'nowrap'
   },
   [`&.${tableCellClasses.footer}`]: {
     fontSize: 14,
     color: theme.palette.common.black,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    whiteSpace: 'nowrap'
   }
 }));
 
@@ -218,7 +221,8 @@ export default function New(){
         client_name: "",
         attention_to: "",
         project_name: "",
-        project_description: ""
+        project_description: "",
+        notes: ""
       },
       validateOnChange: false,
       validationSchema: QuotationSchema,
@@ -689,6 +693,19 @@ export default function New(){
                                 }
                             </Table>
                         </TableContainer>
+                </Grid>
+                <Grid item>
+                <TextField 
+                  label="Notes"
+                  variant="outlined"
+                  name="notes"
+                  value={formik_quotation.values.notes}
+                  size="small"
+                  onChange={formik_quotation.handleChange}
+                  multiline
+                  rows={3}
+                  fullWidth
+                  />
                 </Grid>
                 <Grid item>
                  <Divider />

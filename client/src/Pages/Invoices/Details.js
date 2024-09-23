@@ -439,14 +439,7 @@ export default function Details(){
       validationSchema: user.email_address === invoice.created_by && invoice.status === "VERIFIED" ? Yup.object({
           status: Yup.string().required("This field is required!"),
           file: Yup.mixed()
-            //.required('Supporting document is required!')
-            .test('is-required-if-voided', 'Supporting document is required!', function (value) {
-              const { status } = this.parent;
-              if (status === 'VOIDED') {
-                return true;
-              }
-              return false;
-            })
+            .required('Supporting document is required!')
             .test(
               'fileSize',
               'File too large',
@@ -457,12 +450,15 @@ export default function Details(){
               'Unsupported file format!',
               value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
             ),
-        }) : null,
+        }) : user.email_address === invoice.created_by && invoice.status === "WAITING FOR VERIFICATION" ? 
+        Yup.object({
+          status: Yup.string().required("This field is required!")
+       }) : null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
 
         const formData = new FormData();
-        formData.append('file', values.file);
+        formData.append('file', values.file); 
         formData.append('values', JSON.stringify(values))
         AxiosFileInstance.post("/invoice/update_invoice_status", formData)
         .then(function(response){
@@ -536,13 +532,29 @@ export default function Details(){
                 <div style={{overflow: 'hidden', height: 0}}>
                   <PrintComponent invoice={invoice} invoiceDetails={invoiceDetails} words={words} bankAccount={bankAccount} ref={contentToPrint} />
                 </div>
+                r
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
                         <img src={bsLogo} width={220} alt="logo" />
-                        {invoice.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                        { invoice.status === "VERIFIED" || invoice.status === "PAYMENT RECEIVED FROM CLIENT" ? 
+                                <ReactToPrint
+                                trigger={() => (
+                                  <Grid item> 
+                                <Stack direction="row" spacing={2} justifyContent="center">
+                                <Button variant='contained' color="secondary">Print</Button>
+                                </Stack>
+                                </Grid>)}
+                                content={() => contentToPrint.current}
+                                documentTitle={'BSMM '+ (invoice.is_vat ? 'Tax ' : '') +'Inv.#'+paramValue.replace(/\//g, "-")+' - '+invoice.project_name}
+                              /> : null }
+                      
                       </Stack>
                       <Stack direction="row" justifyContent="flex-end">
+                      {invoice.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      </Stack>
+                      <Stack direction="row" justifyContent="flex-end">
+                      
                       {invoice.company_trn ? <Typography variant="subtitle1">TRN #: {invoice.company_trn}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                  </Stack>
@@ -742,28 +754,43 @@ export default function Details(){
                       return (
                         <React.Fragment key={email}>
                           <Grid item>
+                            <FormControl
+                              fullWidth
+                              size="small"
+                              error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
+                              >
+                              <InputLabel>Approval's Feedback</InputLabel>
+                              <Select
+                              name="status"
+                              value={formik_update_quotation_status.values.status}
+                              label="Approval's Feedback"
+                              onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
+                              >
+                                <MenuItem value="VERIFIED">
+                                    VERIFY
+                                </MenuItem>
+                                <MenuItem value="RETURNED FOR REVISION">
+                                    RETURN FOR REVISION
+                                </MenuItem>
+                                <MenuItem value="VOIDED">
+                                    VOID
+                                </MenuItem>
+                              </Select>
+                              <FormHelperText>
+                              {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
+                              </FormHelperText>
+                          </FormControl>
+
+                          </Grid>
+                          <Grid item>
                             <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
                             name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
                           </Grid>
                           <Grid item>
-                            <Stack direction="row" spacing={2} justifyContent="center">
-                                <LoadingButton loading={loading} variant="text" color="primary"
-                                onClick={()=>{
-                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                                  formik_update_quotation_status.handleSubmit()
-                                }}
-                                >Void</LoadingButton>
-                              <LoadingButton loading={loading} variant="contained" color="primary"
-                              onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "RETURNED FOR REVISION")
-                                formik_update_quotation_status.handleSubmit()
-                              }}
-                              >Return</LoadingButton>
-                              <LoadingButton loading={loading} loadingIndicator="Verifying..." variant="contained" color="secondary" onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "VERIFIED")
-                                formik_update_quotation_status.handleSubmit()
-                              }}>Verify</LoadingButton>
-                            </Stack>
+                             <Stack direction="row" justifyContent="center">
+                              <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>formik_update_quotation_status.handleSubmit()
+                                }>Submit</LoadingButton>
+                              </Stack>
                           </Grid>
                         </React.Fragment>
                       );
@@ -788,6 +815,9 @@ export default function Details(){
                               >
                                 <MenuItem value="PAYMENT RECEIVED FROM CLIENT">
                                     PAYMENT RECEIVED
+                                </MenuItem>
+                                <MenuItem value="RETURNED FOR REVISION">
+                                    RETURN FOR REVISION
                                 </MenuItem>
                                 <MenuItem value="VOIDED">
                                     VOID
@@ -838,11 +868,7 @@ export default function Details(){
                               <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
                               }}>Submit</LoadingButton></React.Fragment> : null }
-                                { invoice.status === "VERIFIED" || invoice.status === "PAYMENT RECEIVED FROM CLIENT" ? <ReactToPrint
-                                trigger={() => <Button variant='contained' color="secondary">Print</Button>}
-                                content={() => contentToPrint.current}
-                                documentTitle={'BSMM '+ (invoice.is_vat ? 'Tax ' : '') +'Inv.#'+paramValue.replace(/\//g, "-")+' - '+invoice.project_name}
-                              /> : null }
+                            
                             </Stack>
                           </Grid>
                         </React.Fragment>

@@ -57,8 +57,8 @@ module.exports = {
                     }else{
                         assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
                     }
-                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, is_vat, vat_percentage, currency, company_trn, company_address, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
+                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, is_vat, vat_percentage, currency, company_trn, company_address, created_by, assigned_to, status, notes) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.values.notes],
                         function(err, data, fields)
                         {
                             if(err)
@@ -179,8 +179,8 @@ module.exports = {
         }else{
             assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
         }
-        dbConnection.query("UPDATE tbl_quotations SET quotation_date=?, client_name=?, attention_to=?, project_name=?, project_description=?, amount_without_vat=?, is_vat=?, vat_percentage=?, currency=?, company_trn=?, company_address=?, created_by=?, assigned_to=?, status=? WHERE quotation_number=?",
-            [req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.quotation_number],
+        dbConnection.query("UPDATE tbl_quotations SET quotation_date=?, client_name=?, attention_to=?, project_name=?, project_description=?, amount_without_vat=?, is_vat=?, vat_percentage=?, currency=?, company_trn=?, company_address=?, created_by=?, assigned_to=?, status=?, notes=? WHERE quotation_number=?",
+            [req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.is_vat, req.body.vat_percentage, req.body.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.quotation_number, req.body.values.notes],
             function(err, data, fields)
             {
                 if(err)

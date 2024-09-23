@@ -63,7 +63,7 @@ export default function ChangePassword() {
         .then(function (response) {
           if (response.data.status === "SUCCESS") {
             cookies.remove("TOKEN", { path: "/" });
-            navigate("/", {
+            navigate("/login", {
               state: {
                 status: response.data.status,
                 message: response.data.message,
