@@ -108,25 +108,24 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
         sx={{padding: 2}}
       >
       <Grid container direction="column" spacing={3}>
-
         <Grid item>
           <Stack direction="column" spacing={2}>
           <img src={bsLogo} width={220} alt="logo" />
           <Typography variant="body2">TRN NUMBER: {quotation.company_trn}</Typography>
           </Stack>
-      </Grid>
-      <Grid item>
-          <Stack direction="column" spacing={1}>
-              <Typography variant="body2"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
-              <Typography variant="body2">DATE: {quotation.quotation_date}</Typography>
-          </Stack>
-      </Grid>
-      <Grid item>
-          <Stack direction="column" spacing={1}>
-              <Typography variant="body2">Client Name: {quotation.client_name}</Typography>
-              <Typography variant="body2">Attention To: {quotation.attention_to}</Typography>
-          </Stack>
-      </Grid>
+        </Grid>
+        <Grid item>
+            <Stack direction="column" spacing={1}>
+                <Typography variant="body2"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
+                <Typography variant="body2">DATE: {quotation.quotation_date}</Typography>
+            </Stack>
+        </Grid>
+        <Grid item>
+            <Stack direction="column" spacing={1}>
+                <Typography variant="body2">Client Name: {quotation.client_name}</Typography>
+                <Typography variant="body2">Attention To: {quotation.attention_to}</Typography>
+            </Stack>
+        </Grid>
       <Grid item>
           <Typography variant="body2">Project Name: {quotation.project_name}</Typography>
       </Grid>
@@ -161,6 +160,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                           </StyledTableRow>
                       ))
                   }
+                  { quotation.notes !== '' ? <StyledTableRow>
+                                <StyledTableCell align="left"></StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
+                                <StyledTableCell align="center"></StyledTableCell>
+                                <StyledTableCell align="right"></StyledTableCell>
+                                <StyledTableCell align="right"></StyledTableCell>
+                            </StyledTableRow> : null }
               </TableBody>
               {
               quotation.vat_percentage !== null ? (
@@ -269,7 +275,7 @@ export default function Details(){
     });
     const [bankAccount, setBankAccount] = useState([]);
     const [quotationDetails, setQuotationDetails] = useState([]);
-
+    const [invoices, setInvoices] = useState([]);
     const [user, setUser] = useState({
       email_address: ""
     })
@@ -387,7 +393,25 @@ export default function Details(){
           console.log(error)
         })
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        AxiosInstance.post("/quotation/invoices_issued", {quotation_number : paramValue})
+        .then(function(result){
+          if(result.data.status==='SUCCESS'){
+            setInvoices((invoices) => [
+              ...result.data.invoices.map((element) => ({
+              invoice_number: element.invoice_number,
+              amount_with_vat: element.amount_with_vat
+              })),
+            ]);
+          }else{
+            console.log(result.data.message)
+          }
+          
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+
+        // eslint-disable-next-line
     },[])
 
     const formik_update_quotation_status = useFormik({
@@ -400,21 +424,24 @@ export default function Details(){
         file_name: ""
       },
       validateOnChange: false,
-      validationSchema: user.email_address === quotation.created_by && (quotation.status === "VERIFIED" || quotation.status === "APPROVED BY CLIENT") ? Yup.object({
+      validationSchema: quotation.status === "VERIFIED" || quotation.status === "APPROVED BY CLIENT" ? Yup.object().shape({
         status: Yup.string().required("This field is required!"),
         file: Yup.mixed()
-          .required('Supporting document is required!')
+          //.required('Supporting document is required!')
+          .nullable()
           .test(
             'fileSize',
             'File too large',
-            value => value && value.size <= 16 * 1024 * 1024 // 16MB
+            value => !value || (value && value.size <= 16 * 1024 * 1024) // 16MB
           )
           .test(
             'fileFormat',
             'Unsupported file format!',
-            value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
+            value => !value || (value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type))
           ),
-      }): null,
+      }): quotation.status === "WAITING FOR VERIFICATION" ? Yup.object({
+        status: Yup.string().required("This field is required!")
+      }) : null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
 
@@ -514,21 +541,24 @@ export default function Details(){
                 </Stack>
                 </Grid>
                 <Grid item>
+                   <Stack direction="row" justifyContent="space-between">
+                      <Stack direction="column" spacing={1}>
+                          { quotation.quotation_number ? <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.quotation_date ? <Typography variant="subtitle1">DATE: {quotation.quotation_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.client_name ? <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.attention_to ? <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.project_name ? <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      </Stack>
+                      <Stack direction="column" spacing={1}>
+                      {invoices.length > 0 ? <Typography variant='subtitle1'><strong>INVOICES ISSUED:</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} />}
+                      {invoices.length > 0 ? null : <Skeleton variant="rounded" width={210} height={30} />}
+                          {invoices.map((invoice, key) => (
+                            <React.Fragment key={key}>
+                              <Typography variant="subtitle2">#{invoice.invoice_number} - {invoice.amount_with_vat}</Typography>
+                            </React.Fragment>
+                          ))}
                     
-                    <Stack direction="column" spacing={1}>
-                        { quotation.quotation_number ? <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                        { quotation.quotation_date ? <Typography variant="subtitle1">DATE: {quotation.quotation_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                    </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={1}>
-                        { quotation.client_name ? <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                        { quotation.attention_to ? <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                    </Stack>
-                </Grid>
-                <Grid item>
-                    <Stack direction="column" spacing={1}>
-                        { quotation.project_name ? <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      </Stack>
                     </Stack>
                 </Grid>
                 <Grid item>
@@ -562,13 +592,13 @@ export default function Details(){
                                     </StyledTableRow>
                                 ))
                             }
-                             <StyledTableRow>
+                             { quotation.notes !== '' ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 400 }}><strong>Notes: </strong>{quotation.notes}</StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
-                            </StyledTableRow>
+                            </StyledTableRow> : null }
                         </TableBody>
                         {
                         quotation.vat_percentage !== null ? (
@@ -689,80 +719,50 @@ export default function Details(){
                     if (email === user.email_address && quotation.status === "WAITING FOR VERIFICATION") {
                       return (
                         <React.Fragment key={email}>
+                           <Grid item>
+                            <FormControl
+                              fullWidth
+                              size="small"
+                              error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
+                              >
+                              <InputLabel>Approval's Feedback</InputLabel>
+                              <Select
+                              name="status"
+                              value={formik_update_quotation_status.values.status}
+                              label="Approval's Feedback"
+                              onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
+                              >
+                                <MenuItem value="VERIFIED">
+                                    VERIFY
+                                </MenuItem>
+                                <MenuItem value="RETURNED FOR REVISION">
+                                    RETURN FOR REVISION
+                                </MenuItem>
+                                <MenuItem value="VOIDED">
+                                    VOID
+                                </MenuItem>
+                              </Select>
+                              <FormHelperText>
+                              {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
+                              </FormHelperText>
+                          </FormControl>
+
+                          </Grid>
                           <Grid item>
                             <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
                             name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
                           </Grid>
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <LoadingButton loading={loading} variant="text" color="primary"
-                                onClick={()=>{
-                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                                  formik_update_quotation_status.handleSubmit()
-                                }}
-                                >Void</LoadingButton>
-                              <LoadingButton loading={loading} variant="contained" color="primary"
-                              onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "RETURNED FOR REVISION")
-                                formik_update_quotation_status.handleSubmit()
-                              }}
-                              >Return</LoadingButton>
-                              <LoadingButton loading={loading} variant="contained" color="secondary" onClick={()=>{
-                                formik_update_quotation_status.setFieldValue("status", "VERIFIED")
-                                formik_update_quotation_status.handleSubmit()
-                              }}>Verify</LoadingButton>
+                                <LoadingButton loading={loading} variant="contained" color="success"
+                                onClick={()=>formik_update_quotation_status.handleSubmit()}
+                                >Submit</LoadingButton>
                             </Stack>
                           </Grid>
                         </React.Fragment>
                       );
                     }          
-                    // else if(user.email_address === quotation.created_by && quotation.status === "APPROVED BY CLIENT"){
-                    //   return(
-                    //     <React.Fragment key={email}>
-                    //       {parseFloat(quotation.total_invoice_amount_with_vat) === 0 ? 
-                    //       <React.Fragment>
-                    //       <Grid item>
-                    //         <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
-                    //         name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
-                    //       </Grid> 
-                    //       <Grid item>
-                    //       <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
-                    //       <Button
-                    //           component="label"
-                    //           role={undefined}
-                    //           variant="contained"
-                    //           color="info"
-                    //           tabIndex={-1}
-                    //           size="small"
-                    //         >
-                    //           Upload File
-                    //           <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
-                    //               name="file"
-                    //               style={{ display: 'none' }}
-                    //               onChange={(event) => {
-                    //                 const file = event.currentTarget.files[0];
-                    //                 formik_update_quotation_status.setFieldValue('file', file);
-                    //                 formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
-                    //               }} />
-                    //         </Button>
-                    //         <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
-                    //         </Stack>  
-                    //       </Grid>
-                    //       </React.Fragment> : null }
-                    //       <Grid item>
-                    //         <Stack direction="row" spacing={2} justifyContent="center">
-                    //         {parseFloat(quotation.total_invoice_amount_with_vat) === 0 ? <LoadingButton loading={loading} variant="text" color="primary"
-                    //             onClick={()=>{
-                    //               formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                    //               formik_update_quotation_status.handleSubmit()
-                    //             }}
-                    //             >Void</LoadingButton> : null }
-                    //         </Stack>
-                    //       </Grid>
-
-                    //     </React.Fragment>
-                    //   )
-                    // }
+                    
                     return null;
                   })
                 }
@@ -885,6 +885,75 @@ export default function Details(){
                               }}>Submit</LoadingButton></React.Fragment> : null }
                             </Stack>
                           </Grid>
+                        </React.Fragment>
+                      ) : null
+                    }
+
+                {user.email_address === quotation.created_by && quotation.status === "APPROVED BY CLIENT" && parseFloat(quotation.total_invoice_amount_with_vat) === 0 ?
+                      (
+                        <React.Fragment>
+                          <Grid item>
+                          <FormControl
+                              fullWidth
+                              size="small"
+                              error={formik_update_quotation_status.touched.status && Boolean(formik_update_quotation_status.errors.status)}
+                              >
+                              <InputLabel>Client's Feedback Update</InputLabel>
+                              <Select
+                              name="status"
+                              value={formik_update_quotation_status.values.status}
+                              label="Client's Feedback Update"
+                              onChange={(event)=>formik_update_quotation_status.setFieldValue('status', event.target.value)}
+                              >
+                                <MenuItem value="RETURNED FOR REVISION">
+                                    RETURN FOR REVISION
+                                </MenuItem>
+                                <MenuItem value="VOIDED">
+                                    VOID
+                                </MenuItem>
+                              </Select>
+                              <FormHelperText>
+                              {formik_update_quotation_status.touched.status && formik_update_quotation_status.errors.status}
+                              </FormHelperText>
+                          </FormControl>
+
+                          </Grid>
+                          <Grid item>
+                            <TextField label="Comments" variant="outlined" multiline rows={3} fullWidth 
+                            name="comments" value={formik_update_quotation_status.values.comments} onChange={formik_update_quotation_status.handleChange} />
+                          </Grid> 
+                          <Grid item>
+                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
+                          <Button
+                              component="label"
+                              role={undefined}
+                              variant="contained"
+                              color="info"
+                              tabIndex={-1}
+                              size="small"
+                            >
+                              Upload File
+                              <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
+                                  name="file"
+                                  style={{ display: 'none' }}
+                                  onChange={(event) => {
+                                    const file = event.currentTarget.files[0];
+                                    formik_update_quotation_status.setFieldValue('file', file);
+                                    formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
+                                  }} />
+                            </Button>
+                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            </Stack>  
+                          </Grid>
+                          <Grid item>
+                            <Stack direction="row" spacing={2} justifyContent="center">
+                              <LoadingButton loading={loading} variant="contained" color="success"
+                                onClick={()=>formik_update_quotation_status.handleSubmit()}
+                                >Submit</LoadingButton> 
+                              
+                            </Stack>
+                          </Grid>
+
                         </React.Fragment>
                       ) : null
                     }

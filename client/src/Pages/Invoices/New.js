@@ -185,7 +185,8 @@ export default function New(){
     const formik_invoice_detail = useFormik({
       initialValues: {
         topics: "",
-        amount_without_vat: ""
+        amount_without_vat: "",
+        amount_with_vat: ""
       },
       validationSchema: InvoiceDetailSchema,
       validateOnChange: false,
@@ -660,6 +661,46 @@ export default function New(){
                        fullWidth
                       />
                     </Grid>
+                    {formik_invoice.values.vat_percentage !== null ? <React.Fragment>
+                    <Grid item>
+                      <TextField 
+                       label="Amount w/ VAT"
+                       variant="outlined"
+                       name="amount_with_vat"
+                       value={formik_invoice_detail.values.amount_with_vat}
+                       size="small"
+                       onChange={(event)=>{
+                        const amount_without_vat = (parseFloat(event.target.value) / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
+                        formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
+                        formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat.toFixed(2))
+                       }}
+                       error={
+                        formik_invoice_detail.touched.amount_with_vat && Boolean(formik_invoice_detail.errors.amount_with_vat)
+                        }
+                        helperText={
+                          formik_invoice_detail.touched.amount_with_vat && formik_invoice_detail.errors.amount_with_vat
+                        }
+                       fullWidth
+                      />
+                    </Grid>
+                    <Grid item>
+                      <TextField 
+                       label="Amount w/o VAT"
+                       variant="outlined"
+                       name="amount_without_vat"
+                       value={formik_invoice_detail.values.amount_without_vat}
+                       size="small"
+                       error={
+                        formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
+                        }
+                        helperText={
+                          formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
+                        }
+                       readOnly
+                       fullWidth
+                      
+                      />
+                    </Grid></React.Fragment> : 
                     <Grid item>
                       <TextField 
                        label="Amount"
@@ -675,8 +716,9 @@ export default function New(){
                           formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
                         }
                        fullWidth
+                      
                       />
-                    </Grid>
+                    </Grid>}
                     <Grid item container justifyContent="flex-end">
                         <Grid item>
                             <Button variant="text" color="primary" onClick={()=>setModal((modal) => ({
