@@ -184,7 +184,7 @@ export default function Login() {
               </FormControl>
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
 
-              {location.state !== null ? (
+              {location.state ? (
                 <Collapse in={open}>
                   <Alert
                     action={

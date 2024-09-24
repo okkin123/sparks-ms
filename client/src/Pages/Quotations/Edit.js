@@ -221,8 +221,8 @@ export default function Edit(props){
         client_name: "",
         attention_to: "",
         project_name: "",
-        project_description: ""
-
+        project_description: "",
+        notes: ""
       },
       validateOnChange: false,
       validationSchema: QuotationSchema,
@@ -717,6 +717,19 @@ export default function Edit(props){
 
                             </Table>
                         </TableContainer>
+                </Grid>
+                <Grid item>
+                <TextField 
+                  label="Notes"
+                  variant="outlined"
+                  name="notes"
+                  value={formik_quotation.values.notes}
+                  size="small"
+                  onChange={formik_quotation.handleChange}
+                  multiline
+                  rows={3}
+                  fullWidth
+                  />
                 </Grid>
                 <Grid item>
                  <Divider />
