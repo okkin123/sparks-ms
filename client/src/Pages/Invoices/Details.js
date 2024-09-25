@@ -532,7 +532,6 @@ export default function Details(){
                 <div style={{overflow: 'hidden', height: 0}}>
                   <PrintComponent invoice={invoice} invoiceDetails={invoiceDetails} words={words} bankAccount={bankAccount} ref={contentToPrint} />
                 </div>
-                r
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">

@@ -27,6 +27,7 @@ import { Toolbar,
          FormHelperText,
          IconButton} from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
+import Autocomplete from '@mui/material/Autocomplete';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -104,6 +105,7 @@ export default function New(){
     const [invoiceNumber, setInvoiceNumber] = useState("");
     const [quotationNumbers, setQuotationNumbers] = useState([]);
     const [invoiceDetails, setInvoiceDetails] = useState([]);
+    const [clientDetails, setClientDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
       total_cost_without_vat: "",
       vat_amount: "",
@@ -122,7 +124,8 @@ export default function New(){
            i === index ? 
            formik_invoice_detail.setValues({
             topics:invoiceDetail.topics,
-            amount_without_vat: invoiceDetail.amount_without_vat
+            amount_without_vat: invoiceDetail.amount_without_vat,
+            amount_with_vat: invoiceDetail.amount_with_vat
            })
            : null
       );
@@ -320,6 +323,28 @@ export default function New(){
         console.log(error)
       })
     }
+
+    function handleGetClientDetails(client_name){
+      AxiosInstance.post("/invoice/get_invoice_client_details", {client_name: client_name})
+      .then(function(result){
+          if(result.data.status === 'SUCCESS'){
+  
+            setClientDetails((clientDetails)=>[
+              ...result.data.client_details.map(element => ({
+                address: element.address,
+                client_trn: element.client_trn
+              }))
+            ])
+  
+          }else{
+            console.log(result.data.message)
+          }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+     }
+  
 
     useEffect(()=>{
 
@@ -533,29 +558,62 @@ export default function New(){
                </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2}>
-                      <TextField variant='outlined' label="Address"
-                      name="address"
-                      value={formik_invoice.values.address}
-                      onChange={formik_invoice.handleChange}
-                      size="small"
-                      error={
-                        formik_invoice.touched.address && Boolean(formik_invoice.errors.address)
-                        }
-                      helperText={
-                        formik_invoice.touched.address && formik_invoice.errors.address
-                        }
-                      fullWidth />
-                        <TextField variant='outlined' label="Client TRN #"
-                        name="client_trn"
+                       <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
+                        options={clientDetails.map((option) => option.address)}
+                        value={formik_invoice.values.address}
+                        onChange={(event, value)=>formik_invoice.setFieldValue('address', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Address"
+                            name="address"
+                            fullWidth
+                            size="small"
+                            value={formik_invoice.values.address}
+                            onChange={formik_invoice.handleChange}
+                            error={
+                            formik_invoice.touched.address && Boolean(formik_invoice.errors.address)
+                            }
+                          helperText={
+                            formik_invoice.touched.address && formik_invoice.errors.address
+                            }
+                          />
+                        )}
+                        fullWidth
+                      />
+                        <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
+                        options={clientDetails.map((option) => option.client_trn)}
                         value={formik_invoice.values.client_trn}
-                        onChange={formik_invoice.handleChange}
-                        size="small"
-                        error={
-                          formik_invoice.touched.client_trn && Boolean(formik_invoice.errors.client_trn)
-                          }
-                        helperText={
-                          formik_invoice.touched.client_trn && formik_invoice.errors.client_trn
-                          } fullWidth/>
+                        onChange={(event, value)=>formik_invoice.setFieldValue('client_trn', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Client TRN #"
+                            name="client_trn"
+                            fullWidth
+                            size="small"
+                            value={formik_invoice.values.client_trn}
+                            onChange={formik_invoice.handleChange}
+                            error={
+                            formik_invoice.touched.client_trn && Boolean(formik_invoice.errors.client_trn)
+                            }
+                          helperText={
+                            formik_invoice.touched.client_trn && formik_invoice.errors.client_trn
+                            }
+                          />
+                        )}
+                        fullWidth
+                      />
                   </Stack>
                 </Grid>
                 <Grid item>
@@ -670,7 +728,8 @@ export default function New(){
                        value={formik_invoice_detail.values.amount_with_vat}
                        size="small"
                        onChange={(event)=>{
-                        const amount_without_vat = (parseFloat(event.target.value) / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
+                        const value = +event.target.value || 0;
+                        const amount_without_vat = (value / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
                         formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
                         formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat.toFixed(2))
                        }}
@@ -810,23 +869,65 @@ export default function New(){
                                           fullWidth
                                           />
                                         </Grid>
-                                        <Grid item>
-                                          <TextField 
-                                          label="Amount"
-                                          variant="outlined"
-                                          name="amount_without_vat"
-                                          value={formik_invoice_detail.values.amount_without_vat}
-                                          size="small"
-                                          onChange={formik_invoice_detail.handleChange}
-                                          error={
-                                            formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
-                                            }
-                                            helperText={
-                                              formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
-                                            }
-                                          fullWidth
-                                          />
-                                        </Grid>
+                                        {formik_invoice.values.vat_percentage !== null ? <React.Fragment>
+                                          <Grid item>
+                                            <TextField 
+                                            label="Amount w/ VAT"
+                                            variant="outlined"
+                                            name="amount_with_vat"
+                                            value={formik_invoice_detail.values.amount_with_vat}
+                                            size="small"
+                                            onChange={(event)=>{
+                                              const value = +event.target.value || 0;
+                                              const amount_without_vat = (value / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
+                                              formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
+                                              formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat.toFixed(2))
+                                            }}
+                                            error={
+                                              formik_invoice_detail.touched.amount_with_vat && Boolean(formik_invoice_detail.errors.amount_with_vat)
+                                              }
+                                              helperText={
+                                                formik_invoice_detail.touched.amount_with_vat && formik_invoice_detail.errors.amount_with_vat
+                                              }
+                                            fullWidth
+                                            />
+                                          </Grid>
+                                          <Grid item>
+                                            <TextField 
+                                            label="Amount w/o VAT"
+                                            variant="outlined"
+                                            name="amount_without_vat"
+                                            value={formik_invoice_detail.values.amount_without_vat}
+                                            size="small"
+                                            error={
+                                              formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
+                                              }
+                                              helperText={
+                                                formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
+                                              }
+                                            readOnly
+                                            fullWidth
+                                            
+                                            />
+                                          </Grid></React.Fragment> : 
+                                          <Grid item>
+                                            <TextField 
+                                            label="Amount"
+                                            variant="outlined"
+                                            name="amount_without_vat"
+                                            value={formik_invoice_detail.values.amount_without_vat}
+                                            size="small"
+                                            onChange={formik_invoice_detail.handleChange}
+                                            error={
+                                              formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
+                                              }
+                                              helperText={
+                                                formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
+                                              }
+                                            fullWidth
+                                            
+                                            />
+                                          </Grid>}
                                         <Grid item container justifyContent="flex-end">
                                             <Grid item>
                                                 <Button variant="text" color="primary" onClick={()=>handleEditCancel(i)}>Cancel</Button>

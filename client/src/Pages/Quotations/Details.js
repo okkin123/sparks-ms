@@ -160,7 +160,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                           </StyledTableRow>
                       ))
                   }
-                  { quotation.notes !== '' ? <StyledTableRow>
+                  { quotation.notes !== '' && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
                                 <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
@@ -592,7 +592,7 @@ export default function Details(){
                                     </StyledTableRow>
                                 ))
                             }
-                             { quotation.notes !== '' ? <StyledTableRow>
+                             { quotation.notes !== ''  && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
                                 <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>

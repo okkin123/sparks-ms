@@ -344,6 +344,26 @@ module.exports = {
                     });
             }
         )
+    },
+    get_quotation_client_details: (req, res)=>{
+        dbConnection.query(
+            "SELECT * FROM vw_quotations WHERE status <> 'VOIDED' AND status <> 'NO RESPONSE FROM CLIENT' AND status <> 'REJECTED BY CLIENT' GROUP BY ??", 
+            [req.body.field_name], 
+            function(err, data, fields) {
+              if (err) {
+                res.send({
+                  status: "ERROR",
+                  message: err.sqlMessage
+                });
+              } else {
+                res.send({
+                  status: "SUCCESS",
+                  client_details: data
+                });
+              }
+            }
+          )
+          
     }
     
 }
