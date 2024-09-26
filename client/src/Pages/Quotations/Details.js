@@ -35,7 +35,7 @@ import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import ReactToPrint from 'react-to-print';
-
+import FileUpload from '../../Components/FileUpload';
 import "../../Assets/print.css";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -144,7 +144,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               <TableBody>
                   <StyledTableRow>
                       <StyledTableCell align="left"></StyledTableCell>
-                      <StyledTableCell sx={{ minWidth: 300 }}>{quotation.project_description}</StyledTableCell>
+                      <StyledTableCell sx={{ minWidth: 300 }}><pre>{quotation.project_description}</pre></StyledTableCell>
                       <StyledTableCell align="center"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
@@ -162,7 +162,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                   }
                   { quotation.notes !== '' && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 300}}><strong>NOTES:</strong> <pre>{quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -396,10 +396,12 @@ export default function Details(){
         AxiosInstance.post("/quotation/invoices_issued", {quotation_number : paramValue})
         .then(function(result){
           if(result.data.status==='SUCCESS'){
+            console.log(result.data.invoices)
             setInvoices((invoices) => [
               ...result.data.invoices.map((element) => ({
               invoice_number: element.invoice_number,
-              amount_with_vat: element.amount_with_vat
+              amount_with_vat: element.amount_with_vat,
+              status: element.STATUS
               })),
             ]);
           }else{
@@ -414,6 +416,10 @@ export default function Details(){
         // eslint-disable-next-line
     },[])
 
+    const handleFileUpload = (file) => {
+      formik_update_quotation_status.setFieldValue('file', file);
+     };
+
     const formik_update_quotation_status = useFormik({
       initialValues: {
         quotation_number: "",
@@ -424,23 +430,21 @@ export default function Details(){
         file_name: ""
       },
       validateOnChange: false,
-      validationSchema: quotation.status === "VERIFIED" || quotation.status === "APPROVED BY CLIENT" ? Yup.object().shape({
+      validationSchema: quotation.status === "WAITING FOR VERIFICATION" || quotation.status === "VERIFIED" || quotation.status === "APPROVED BY CLIENT" ? Yup.object().shape({
         status: Yup.string().required("This field is required!"),
-        file: Yup.mixed()
-          //.required('Supporting document is required!')
-          .nullable()
-          .test(
-            'fileSize',
-            'File too large',
-            value => !value || (value && value.size <= 16 * 1024 * 1024) // 16MB
-          )
-          .test(
-            'fileFormat',
-            'Unsupported file format!',
-            value => !value || (value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type))
-          ),
-      }): quotation.status === "WAITING FOR VERIFICATION" ? Yup.object({
-        status: Yup.string().required("This field is required!")
+        // file: Yup.mixed()
+        //   .required('Supporting document is required!')
+        //   .nullable()
+        //   .test(
+        //     'fileSize',
+        //     'File too large',
+        //     value => !value || (value && value.size <= 16 * 1024 * 1024) // 16MB
+        //   )
+        //   .test(
+        //     'fileFormat',
+        //     'Unsupported file format!',
+        //     value => !value || (value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type))
+        //   ),
       }) : null,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
@@ -536,7 +540,7 @@ export default function Details(){
                       </Stack>
                       <Stack direction="row" justifyContent="space-between">
                       { quotation.company_trn ? <Typography variant="subtitle1">TRN NUMBER: {quotation.company_trn}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                      { quotation.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      
                       </Stack>
                 </Stack>
                 </Grid>
@@ -550,11 +554,12 @@ export default function Details(){
                           { quotation.project_name ? <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       <Stack direction="column" spacing={1}>
+                      { quotation.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       {invoices.length > 0 ? <Typography variant='subtitle1'><strong>INVOICES ISSUED:</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} />}
                       {invoices.length > 0 ? null : <Skeleton variant="rounded" width={210} height={30} />}
                           {invoices.map((invoice, key) => (
                             <React.Fragment key={key}>
-                              <Typography variant="subtitle2">#{invoice.invoice_number} - {invoice.amount_with_vat}</Typography>
+                              <Typography variant="subtitle2">#{invoice.invoice_number} - {invoice.amount_with_vat} ({invoice.status})</Typography>
                             </React.Fragment>
                           ))}
                     
@@ -567,7 +572,7 @@ export default function Details(){
                         <TableHead>
                         <StyledTableRow>
                             <StyledTableCell align="left">SN</StyledTableCell>
-                            <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
+                            <StyledTableCell sx={{ minWidth: 350 }}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">QUANTITY</StyledTableCell>
                             <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
                             <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
@@ -576,7 +581,7 @@ export default function Details(){
                         <TableBody>
                             <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 400 }}>{quotation.project_description}</StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 350 }}><pre>{quotation.project_description}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -585,7 +590,7 @@ export default function Details(){
                                 quotationDetails.map((quotationDetail, i)=>(
                                     <StyledTableRow>
                                         <StyledTableCell align="left">{i+1}</StyledTableCell>
-                                        <StyledTableCell sx={{ minWidth: 400 }}>{quotationDetail.description}</StyledTableCell>
+                                        <StyledTableCell sx={{ minWidth: 350 }}>{quotationDetail.description}</StyledTableCell>
                                         <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
                                         <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                         <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
@@ -594,7 +599,7 @@ export default function Details(){
                             }
                              { quotation.notes !== ''  && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 400}}><pre><strong>NOTES:</strong> {quotation.notes}</pre></StyledTableCell>
+                                <StyledTableCell sx={{ minWidth: 350}}><strong>NOTES:</strong><pre>{quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -845,7 +850,8 @@ export default function Details(){
                           <Grid item>
                           <Stack direction="column" spacing={2}>
                           <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
-                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
+                          <FileUpload onFileUpload={handleFileUpload} />
+                          {/* <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
                           <Button
                               component="label"
                               role={undefined}
@@ -868,21 +874,15 @@ export default function Details(){
                             </Stack>
                             <FormHelperText sx={{color: "red"}}>
                             {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
-                            </FormHelperText>
+                            </FormHelperText> */}
                             </Stack>
                           </Grid></React.Fragment> : null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">
-                            { quotation.status === "VERIFIED"  ? <React.Fragment><LoadingButton loading={loading} variant="text" color="primary"
-                                onClick={()=>{
-                                  formik_update_quotation_status.setFieldValue("status", "VOIDED")
-                                  formik_update_quotation_status.handleSubmit()
-                                }}
-                                >Void</LoadingButton>
-                               
+                            { quotation.status === "VERIFIED"  ?
                               <LoadingButton loading={loading} loadingIndicator="Submitting..." variant="contained" color="success" onClick={()=>{
                                 formik_update_quotation_status.handleSubmit()
-                              }}>Submit</LoadingButton></React.Fragment> : null }
+                              }}>Submit</LoadingButton> : null }
                             </Stack>
                           </Grid>
                         </React.Fragment>

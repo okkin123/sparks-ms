@@ -343,5 +343,15 @@ module.exports = {
             }
           )
           
-    }
+    },
+    download_supporting_doc: (req, res)=>{
+        const filename = req.params.filename;
+        const filePath = `uploads/${filename}`;
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error(err);
+            res.status(500).send('File not found.');
+          }
+        });
+    },
 }
