@@ -26,6 +26,7 @@ import { Toolbar,
          InputLabel,
          IconButton} from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
+import Autocomplete from '@mui/material/Autocomplete';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -105,6 +106,10 @@ export default function Edit(props){
       total_cost_without_vat: "",
       vat_amount: "",
       total_cost_with_vat: ""
+    })
+    const [clientDetails, setClientDetails] = useState({
+      client_name: [],
+      attention_to: []
     })
     const [currency, setCurrency] = useState("");
     const [vat, setVat] = useState("");
@@ -349,6 +354,25 @@ export default function Edit(props){
 
    }
 
+   function handleGetClientDetails(field_name){
+    AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name})
+    .then(function(result){
+        if(result.data.status === 'SUCCESS'){
+
+          setClientDetails({
+            ...clientDetails,
+            [field_name]: result.data.client_details.map(element => element[field_name])
+          })
+
+        }else{
+          console.log(result.data.message)
+        }
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+   }
+
     return(
         <React.Fragment>
             <Toolbar />
@@ -408,29 +432,63 @@ export default function Edit(props){
                <Grid item>
                 
                  <Stack direction="row" spacing={2}>
-                    <TextField variant='outlined' label="Client Name"
-                      name="client_name"
-                      value={formik_quotation.values.client_name}
-                      onChange={formik_quotation.handleChange}
-                      size="small"
-                      error={
-                        formik_quotation.touched.client_name && Boolean(formik_quotation.errors.client_name)
-                        }
-                      helperText={
-                        formik_quotation.touched.client_name && formik_quotation.errors.client_name
-                        }
-                    fullWidth />
-                    <TextField variant='outlined' label="Attention to"
-                      name="attention_to"
-                      value={formik_quotation.values.attention_to}
-                      onChange={formik_quotation.handleChange}
-                      size="small"
-                      error={
-                        formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
-                        }
-                      helperText={
-                        formik_quotation.touched.attention_to && formik_quotation.errors.attention_to
-                        } fullWidth/>
+                    <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails('client_name')}
+                        options={clientDetails.client_name.map((option) => option)}
+                        value={formik_quotation.values.client_name}
+                        onChange={(event, value)=>formik_quotation.setFieldValue('client_name', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Client Name"
+                            name="client_name"
+                            fullWidth
+                            size="small"
+                            value={formik_quotation.values.client_name}
+                            onChange={formik_quotation.handleChange}
+                            error={
+                            formik_quotation.touched.client_name && Boolean(formik_quotation.errors.client_name)
+                            }
+                            helperText={
+                            formik_quotation.touched.client_name && formik_quotation.errors.client_name
+                            }
+                          />
+                        )}
+                        fullWidth
+                          />
+                       <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails('attention_to')}
+                        options={clientDetails.attention_to.map((option) => option)}
+                        value={formik_quotation.values.attention_to}
+                        onChange={(event, value)=>formik_quotation.setFieldValue('attention_to', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Attention to "
+                            name="attention_to"
+                            value={formik_quotation.values.attention_to}
+                            onChange={formik_quotation.handleChange}
+                            fullWidth
+                            size="small"
+                            error={
+                            formik_quotation.touched.attention_to && Boolean(formik_quotation.errors.attention_to)
+                            }
+                            helperText={
+                            formik_quotation.touched.attention_to && formik_quotation.errors.attention_to
+                            }
+                          />
+                        )}
+                        fullWidth
+                      />
+  
                  </Stack>
                </Grid>
                <Grid item>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import { styled } from '@mui/material/styles';
 import {Typography, 
         Box,
@@ -36,7 +36,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { ToWords } from 'to-words';
 import ReactToPrint from 'react-to-print';
-
+import FileUpload from '../../Components/FileUpload';
 import "../../Assets/print.css";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -77,18 +77,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: 0
     }
   }));
-
-  const VisuallyHiddenInput = styled('input')({
-    clip: 'rect(0 0 0 0)',
-    clipPath: 'inset(50%)',
-    height: 1,
-    overflow: 'hidden',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    whiteSpace: 'nowrap',
-    width: 1,
-  });
 
 
   const PrintComponent = React.forwardRef((props, ref)=>{
@@ -304,7 +292,6 @@ export default function Details(){
     })
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
-    const fileRef = useRef(null);
     const contentToPrint = useRef(null);
     const toWords = new ToWords({localeCode: 'en-AE'});
     const [words, setWords] = useState('')
@@ -426,6 +413,11 @@ export default function Details(){
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
+
+    const handleFileUpload = (file) => {
+     formik_update_quotation_status.setFieldValue('file', file);
+    };
+
     const formik_update_quotation_status = useFormik({
       initialValues: {
         invoice_number: "",
@@ -438,18 +430,18 @@ export default function Details(){
       validateOnChange: false,
       validationSchema: user.email_address === invoice.created_by && invoice.status === "VERIFIED" ? Yup.object({
           status: Yup.string().required("This field is required!"),
-          file: Yup.mixed()
-            .required('Supporting document is required!')
-            .test(
-              'fileSize',
-              'File too large',
-              value => value && value.size <= 16 * 1024 * 1024 // 16MB
-            )
-            .test(
-              'fileFormat',
-              'Unsupported file format!',
-              value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
-            ),
+          // file: Yup.mixed()
+          //   .required('Supporting document is required!')
+          //   .test(
+          //     'fileSize',
+          //     'File too large',
+          //     value => value && value.size <= 16 * 1024 * 1024 // 16MB
+          //   )
+          //   .test(
+          //     'fileFormat',
+          //     'Unsupported file format!',
+          //     value => value && ['image/jpeg', 'image/png', 'application/pdf'].includes(value.type)
+          //   ),
         }) : user.email_address === invoice.created_by && invoice.status === "WAITING FOR VERIFICATION" ? 
         Yup.object({
           status: Yup.string().required("This field is required!")
@@ -532,7 +524,6 @@ export default function Details(){
                 <div style={{overflow: 'hidden', height: 0}}>
                   <PrintComponent invoice={invoice} invoiceDetails={invoiceDetails} words={words} bankAccount={bankAccount} ref={contentToPrint} />
                 </div>
-                r
                 <Grid item>
                     <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
@@ -836,31 +827,8 @@ export default function Details(){
                           <Grid item>
                           <Stack direction="column" spacing={2}>
                           <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
-                          <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
-                          <Button
-                              component="label"
-                              role={undefined}
-                              variant="contained"
-                              color="info"
-                              tabIndex={-1}
-                              size="small"
-                            >
-                              Upload File
-                              <VisuallyHiddenInput type="file" ref={fileRef} accept=".jpg, .jpeg, .png, .pdf"
-                                  name="file"
-                                  style={{ display: 'none' }}
-                                  onChange={(event) => {
-                                    const file = event.currentTarget.files[0];
-                                    formik_update_quotation_status.setFieldValue('file', file);
-                                    formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
-                                  }} />
-                            </Button>
-                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
-                            </Stack>
-                            <FormHelperText sx={{color: "red"}}>
-                            {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
-                            </FormHelperText>
-                            </Stack>
+                          <FileUpload onFileUpload={handleFileUpload} />
+                          </Stack>
                           </Grid></React.Fragment>: null }
                           <Grid item>
                             <Stack direction="row" spacing={2} justifyContent="center">

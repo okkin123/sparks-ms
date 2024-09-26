@@ -324,4 +324,34 @@ module.exports = {
             }
         )
     },
+    get_invoice_client_details: (req, res)=>{
+        dbConnection.query(
+            "SELECT * FROM vw_invoices WHERE client_name=? AND (status <> 'VOIDED' AND status <> 'NO RESPONSE FROM CLIENT' AND status <> 'REJECTED BY CLIENT') GROUP BY address", 
+            [req.body.client_name], 
+            function(err, data, fields) {
+              if (err) {
+                res.send({
+                  status: "ERROR",
+                  message: err.sqlMessage
+                });
+              } else {
+                res.send({
+                  status: "SUCCESS",
+                  client_details: data
+                });
+              }
+            }
+          )
+          
+    },
+    download_supporting_doc: (req, res)=>{
+        const filename = req.params.filename;
+        const filePath = `uploads/${filename}`;
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error(err);
+            res.status(500).send('File not found.');
+          }
+        });
+    },
 }

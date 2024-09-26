@@ -38,6 +38,7 @@ import InvoiceList from "./Invoices/List";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
 
+import PENew from "./Expenses/Project/New";
 
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
@@ -77,6 +78,9 @@ export default function SideMenu() {
     invoice_list: {
       selected: false,
     },
+    penew: {
+      selected: false
+    },
     manage_users: {
       selected: false
     },
@@ -102,7 +106,9 @@ export default function SideMenu() {
 
   const [dropdownMenu, setDropdownMenu] = useState({
     quotation: !location.state ? false : true,
-    invoice: !location.state ? false : true
+    invoice: !location.state ? false : true,
+    expense: !location.state ? false : true,
+    project_expense: !location.state ? false : true,
   });
 
 
@@ -297,11 +303,8 @@ useEffect(()=>{
                 <ListItemText primary="Dashboard" />
               </ListItemButton>
             </ListItem>
-          </List>
-          <List>
             <ListItem
               disablePadding
-              
               onClick={()=>setDropdownMenu({...dropdownMenu, quotation: !dropdownMenu.quotation})}
             >
               <ListItemButton>
@@ -340,11 +343,8 @@ useEffect(()=>{
                 </ListItemButton>
               </List>
             </Collapse>
-          </List>
-          <List>
           <ListItem
               disablePadding
-              
               onClick={()=>setDropdownMenu({...dropdownMenu, invoice: !dropdownMenu.invoice})}
             >
               <ListItemButton>
@@ -383,7 +383,51 @@ useEffect(()=>{
                 </ListItemButton>
               </List>
             </Collapse>
-          </List>
+      <ListItem
+        disablePadding
+        onClick={() => setDropdownMenu({ ...dropdownMenu, expense: !dropdownMenu.expense })}
+      >
+        <ListItemButton>
+          <ListItemIcon>
+            <Receipt />
+          </ListItemIcon>
+          <ListItemText primary="Expenses" />
+          {dropdownMenu.expense ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+      </ListItem>
+      <Collapse in={dropdownMenu.expense} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          <ListItem
+            disablePadding
+            onClick={() => setDropdownMenu({ ...dropdownMenu, project_expense: !dropdownMenu.project_expense })}
+          >
+            <ListItemButton sx={{pl: 4}}>
+              <ListItemIcon>
+                <Receipt />
+              </ListItemIcon>
+              <ListItemText primary="Project" />
+              {dropdownMenu.project_expense ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={dropdownMenu.project_expense} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton
+                selected={component.penew.selected}
+                onClick={() => {
+                  handleSelect('penew', <PENew />);
+                }}
+                sx={{ pl: 8 }}
+              >
+                <ListItemIcon>
+                  <Add />
+                </ListItemIcon>
+                <ListItemText primary="New" />
+              </ListItemButton>
+            </List>
+          </Collapse>
+        </List>
+      </Collapse>
+    </List>
           <Divider />
           { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
           <ListItem
