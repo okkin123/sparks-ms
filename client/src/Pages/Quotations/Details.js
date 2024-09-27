@@ -850,7 +850,7 @@ export default function Details(){
                           <Grid item>
                           <Stack direction="column" spacing={2}>
                           <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
-                          <FileUpload onFileUpload={handleFileUpload} />
+                          <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} />
                           {/* <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
                           <Button
                               component="label"
