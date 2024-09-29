@@ -10,6 +10,7 @@ import ChangePassword from "./Pages/ChangePassword";
 import QDetails from "./Pages/Quotations/Details";
 import QEdit from "./Pages/Quotations/Edit";
 import InvoiceDetails from "./Pages/Invoices/Details";
+import ProjectExpenseDetails from "./Pages/Expenses/Project/Details";
 import ProtectedRoutes from "./ProtectedRoutes";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
             <Route path="/quotation/details" Component={QDetails} />
             <Route path="/quotation/edit" Component={QEdit} />
             <Route path="/invoice/details" Component={InvoiceDetails} />
+            <Route path="/project_expense/details" Component={ProjectExpenseDetails} />
           </Routes>
         </BrowserRouter>
       </div>

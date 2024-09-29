@@ -20,7 +20,7 @@ import {
   Alert,
   IconButton
 } from "@mui/material";
-import { BarChart, ManageAccounts, SettingsSuggest, Description, ExpandMore, ExpandLess, Add, ViewList, Receipt} from "@mui/icons-material";
+import { BarChart, ManageAccounts, SettingsSuggest, ExpandMore, ExpandLess, Add, ViewList, Folder} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -38,6 +38,7 @@ import InvoiceList from "./Invoices/List";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
 
+import PEList from "./Expenses/Project/List";
 import PENew from "./Expenses/Project/New";
 
 import Cookies from "universal-cookie";
@@ -79,6 +80,9 @@ export default function SideMenu() {
       selected: false,
     },
     penew: {
+      selected: false
+    },
+    pelist: {
       selected: false
     },
     manage_users: {
@@ -309,7 +313,7 @@ useEffect(()=>{
             >
               <ListItemButton>
                 <ListItemIcon>
-                  <Description />
+                  <Folder />
                 </ListItemIcon>
                 <ListItemText primary="Quotations" />
                 {dropdownMenu.quotation ? <ExpandLess /> : <ExpandMore />}
@@ -349,7 +353,7 @@ useEffect(()=>{
             >
               <ListItemButton>
                 <ListItemIcon>
-                  <Receipt />
+                  <Folder />
                 </ListItemIcon>
                 <ListItemText primary="Invoices" />
                 {dropdownMenu.invoice ? <ExpandLess /> : <ExpandMore />}
@@ -389,7 +393,7 @@ useEffect(()=>{
       >
         <ListItemButton>
           <ListItemIcon>
-            <Receipt />
+            <Folder />
           </ListItemIcon>
           <ListItemText primary="Expenses" />
           {dropdownMenu.expense ? <ExpandLess /> : <ExpandMore />}
@@ -403,7 +407,7 @@ useEffect(()=>{
           >
             <ListItemButton sx={{pl: 4}}>
               <ListItemIcon>
-                <Receipt />
+                <Folder />
               </ListItemIcon>
               <ListItemText primary="Project" />
               {dropdownMenu.project_expense ? <ExpandLess /> : <ExpandMore />}
@@ -422,6 +426,18 @@ useEffect(()=>{
                   <Add />
                 </ListItemIcon>
                 <ListItemText primary="New" />
+              </ListItemButton>
+              <ListItemButton
+                selected={component.pelist.selected}
+                onClick={() => {
+                  handleSelect('pelist', <PEList />);
+                }}
+                sx={{ pl: 8 }}
+              >
+                <ListItemIcon>
+                  <ViewList />
+                </ListItemIcon>
+                <ListItemText primary="View List" />
               </ListItemButton>
             </List>
           </Collapse>
