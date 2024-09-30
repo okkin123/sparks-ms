@@ -2,9 +2,10 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button, Typography, Alert, Stack } from '@mui/material';
-const FileUpload = ({ onFileUpload, fileTypes, mainError}) => {
+const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
     const [fileName, setFileName] = useState('');
     const [error, setError] = useState('');
+
     const onDrop = useCallback((acceptedFiles, fileRejections) => {
         setError(''); // Clear previous errors
         setFileName('');
@@ -58,9 +59,9 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError}) => {
         Upload File
       </Button>
       </Stack>
-      {fileName && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
-      {error && <Alert severity='error'><strong>Error! </strong>{error}</Alert>}
-      {mainError && <Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
+      {fileName && alertOpen && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
+      {error && alertOpen && <Alert severity='error'><strong>Error! </strong>{error}</Alert>}
+      {mainError && alertOpen && <Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
       </Stack>
     </div>
   );

@@ -1,4 +1,4 @@
-import {Autocomplete, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography} from '@mui/material';
+import {Autocomplete, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../Components/PdfViewer';
 import FileUpload from '../../../Components/FileUpload';
@@ -12,6 +12,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import LoadingButton from '@mui/lab/LoadingButton';
 
+import CloseIcon from "@mui/icons-material/Close";
 
 const ProjectExpenseSchema = Yup.object().shape({
   ref_invoice_number: Yup.string()
@@ -29,15 +30,30 @@ const ProjectExpenseSchema = Yup.object().shape({
     .required('This field is required!')
 });
 
+
+
+
 export default function New(){
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [supplierDetails, setSupplierDetails] = useState([]);
+    const [invoiceDetails, setInvoiceDetails] = useState([])
+
+    const [response, setResponse] = useState({
+      open: false,
+      severity: "",
+      message: ""
+    })
+
+    const [fileAlert, setFileAlert] = useState(false)
 
     const handleFileUpload = (file) => {
-        const fileUrl = URL.createObjectURL(file);
-        setFile(fileUrl);
-        formik_project_expense.setFieldValue('file', file)
-    };
+      const fileUrl = URL.createObjectURL(file);
+      setFile(fileUrl);
+      formik_project_expense.setFieldValue('file', file)
+      setFileAlert(true)
+      setResponse({...response, open: false})
+      };
 
     useEffect(()=>{
       AxiosInstance.get("/preferences/currency")
@@ -70,12 +86,26 @@ export default function New(){
       validationSchema: ProjectExpenseSchema,
       onSubmit: (values, {validateForm})=>{
         setLoading(true)
-        AxiosFileInstance.post("", values)
+        const formData = new FormData();
+        formData.append('file', values.file);
+        formData.append('values', JSON.stringify(values))
+        
+        AxiosFileInstance.post("/project_expense/insert", formData)
         .then(function(response){
           if(response.data.status === 'SUCCESS'){
             setLoading(false)
+            setResponse({
+              open: true,
+              severity: "success",
+              message: response.data.message
+            })
+            handleClearValues()
           }else{
-
+            setResponse({
+              open: true,
+              severity: "error",
+              message: response.data.message
+            })
           }
         })
         .catch(function(error){
@@ -98,8 +128,70 @@ export default function New(){
       }
 
       formik_project_expense.setFieldValue('is_vat', is_vat)
-  
+              
      }
+
+     function handleGetSupplierDetails(){
+      AxiosInstance.get("/project_expense/get_supplier_details")
+      .then(function(result){
+          if(result.data.status === 'SUCCESS'){
+            setSupplierDetails((supplierDetails)=>[
+              ...result.data.supplier_details.map(element => ({
+                supplier_name: element.supplier_name
+              }))
+            ])
+  
+          }else{
+            console.log(result.data.message)
+          }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+     }
+
+     function handleGetInvoiceDetails(){
+      AxiosInstance.get("/project_expense/get_invoice_details")
+      .then(function(result){
+          if(result.data.status === 'SUCCESS'){
+            setInvoiceDetails((invoiceDetails)=>[
+              ...result.data.invoice_details.map(element => ({
+                invoice_number: element.invoice_number,
+                project_name: element.project_name
+              }))
+            ])
+  
+          }else{
+            console.log(result.data.message)
+          }
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+     }
+
+     function handleClearValues(){
+
+      formik_project_expense.setValues({
+        file: null,
+        date_issued: null,
+        is_vat: false,
+        ref_invoice_number: "",
+        project_name: "",
+        supplier_name: "",
+        supplier_invoice_number: "",
+        amount_without_vat: "",
+        vat_amount: "",
+        amount_with_vat: "",
+        vat_percentage: "",
+        currency: ""
+      })
+      setFile(null);
+      setFileAlert(false)
+      
+     }
+
+
 
     return(
         <React.Fragment>
@@ -112,14 +204,87 @@ export default function New(){
               <Grid item>
                  <Divider />
               </Grid>
-              
-              <Grid item container direction="row" spacing={2}>
-                <Grid item xl={4}>
+              <Grid item>
+                <Collapse in={response.open}>
+                  <Alert
+                    action={
+                      <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={() => {
+                          setResponse({...response, open: false});
+                        }}
+                      >
+                        <CloseIcon fontSize="inherit" />
+                      </IconButton>
+                    }
+                    //sx={{ mb: 2 }}
+                    //icon={<CheckIcon fontSize="inherit" />}
+                    severity={response.severity}
+                  >
+                    {response.message}
+                  </Alert>
+                </Collapse>
+              </Grid>
+              <Grid item container direction="row" spacing={1}>
+                <Grid item xl={4} lg={4} md={5} sm={12}>
                     <Stack direction="column" spacing={2}>
-
                       <Typography variant="body1">Attached Supplier Invoice:</Typography>
-                      <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={formik_project_expense.touched.file && formik_project_expense.errors.file}/>
+                      <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={formik_project_expense.touched.file && formik_project_expense.errors.file} alertOpen={fileAlert}/>
                       {formik_project_expense.values.file !== null ? <React.Fragment>
+                      <Autocomplete
+                            freeSolo
+                            selectOnFocus 
+                            clearOnBlur
+                            handleHomeEndKeys
+                            onFocus={() => handleGetInvoiceDetails()}
+                            options={invoiceDetails.map((option) => ({
+                              label: `${option.invoice_number} - ${option.project_name}`,
+                              value: option.invoice_number,
+                              projectName: option.project_name
+                            }))}
+                            value={
+                              formik_project_expense.values.ref_invoice_number
+                                ? {
+                                    label: `${formik_project_expense.values.ref_invoice_number} - ${formik_project_expense.values.project_name}`,
+                                    value: formik_project_expense.values.ref_invoice_number,
+                                    projectName: formik_project_expense.values.project_name
+                                  }
+                                : null
+                            }
+                            onChange={(event, newValue) => {
+                              if (newValue) {
+                                formik_project_expense.setFieldValue('ref_invoice_number', newValue.value);
+                                formik_project_expense.setFieldValue('project_name', newValue.projectName);
+                              } else {
+                                formik_project_expense.setFieldValue('ref_invoice_number', '');
+                                formik_project_expense.setFieldValue('project_name', '');
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label="Reference Invoice"
+                                name="ref_invoice_number"
+                                value={formik_project_expense.values.ref_invoice_number}
+                                fullWidth
+                                size="small"
+                                error={
+                                  formik_project_expense.touched.ref_invoice_number && Boolean(formik_project_expense.errors.ref_invoice_number)
+                                }
+                                helperText={
+                                  formik_project_expense.touched.ref_invoice_number && formik_project_expense.errors.ref_invoice_number
+                                }
+                                InputProps={{
+                                  ...params.InputProps,
+                                  readOnly: true,
+                                }}
+                              />
+                            )}
+                            fullWidth
+                          />
+
                       <FormControl
                           fullWidth
                           size="small"
@@ -145,7 +310,7 @@ export default function New(){
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker 
                         value={dayjs(formik_project_expense.values.date_issued)}
-                        onChange={(value)=>formik_project_expense.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                        onChange={(value)=>formik_project_expense.setFieldValue('date_issued', dayjs(new Date(value)).format('YYYY-MM-DD'))}
                         slotProps={{
                             textField: {
                               label: 'Date Issued',
@@ -163,8 +328,8 @@ export default function New(){
                         selectOnFocus
                         clearOnBlur
                         handleHomeEndKeys
-                        //onFocus={()=>handleGetClientDetails('attention_to')}
-                        //options={clientDetails.attention_to.map((option) => option)}
+                        onFocus={()=>handleGetSupplierDetails()}
+                        options={supplierDetails.map((option) => option.supplier_name)}
                         value={formik_project_expense.values.supplier_name}
                         onChange={(event, value)=>formik_project_expense.setFieldValue('supplier_name', value)}
                         renderInput={(params) => (
@@ -197,7 +362,8 @@ export default function New(){
                       helperText={
                         formik_project_expense.touched.supplier_invoice_number && formik_project_expense.errors.supplier_invoice_number
                         }
-                      fullWidth />
+                      fullWidth
+                      autoComplete="off" />
                       <TextField variant='outlined' label="Amount"
                       name="amount_without_vat"
                       value={formik_project_expense.values.amount_without_vat}
@@ -205,8 +371,8 @@ export default function New(){
                         const value = +evt.target.value || 0;
                         const vat = formik_project_expense.values.vat_percentage;
                         formik_project_expense.setFieldValue('amount_without_vat', value)
-                        formik_project_expense.setFieldValue('vat_amount', (value / (100+parseInt(vat))).toFixed(2))
-                        formik_project_expense.setFieldValue('amount_with_vat', (value + (value / (100+parseInt(vat)))).toFixed(2) )
+                        formik_project_expense.setFieldValue('vat_amount', (value * (parseInt(vat) / 100)).toFixed(2))
+                        formik_project_expense.setFieldValue('amount_with_vat', (value + (value * (parseInt(vat) / 100))).toFixed(2) )
                       }}
                       size="small"
                       error={
@@ -215,7 +381,8 @@ export default function New(){
                       helperText={
                         formik_project_expense.touched.amount_without_vat && formik_project_expense.errors.amount_without_vat
                         }
-                      fullWidth />
+                      fullWidth
+                      autoComplete="off" />
 
                       { formik_project_expense.values.is_vat ? 
                           (
@@ -225,13 +392,15 @@ export default function New(){
                               name="vat_amount"
                               value={formik_project_expense.values.vat_amount}
                               readOnly
-                              fullWidth />
+                              fullWidth
+                              autoComplete="off" />
                               <TextField variant='outlined' label="Amount w/ Vat"
                               size="small"
                               name="amount_with_vat"
                               value={formik_project_expense.values.amount_with_vat}
                               readOnly
-                              fullWidth />
+                              fullWidth
+                              autoComplete="off" />
                             </React.Fragment>
                           ) : null } 
 
@@ -240,7 +409,7 @@ export default function New(){
                       </React.Fragment>: null }
                     </Stack>
                 </Grid>
-                <Grid item xl={8}>
+                <Grid item xl={8} lg={8} md={7} sm={12}>
                     {file && <PdfViewer file={file} />}
                 </Grid>
               </Grid>

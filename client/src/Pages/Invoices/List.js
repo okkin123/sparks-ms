@@ -7,7 +7,7 @@ import {
 import AxiosInstance from '../../AxiosInstance';
 import { theme } from '../../Theme';
 import LockIcon from '@mui/icons-material/Lock';
-
+import dayjs from 'dayjs';
 
 
 const parentHeight = window.innerHeight;
@@ -137,6 +137,10 @@ const columns = [
       )
     },
     {
+      accessorKey: 'invoice_date',
+      header: 'INVOICE DATE.'
+    },
+    {
       accessorKey: 'client_name',
       header: 'CLIENT NAME'
     },
@@ -212,6 +216,7 @@ export default function List(props){
             quotation_number: element.quotation_number,
             status: element.STATUS,
             created_by: element.created_by_email,
+            invoice_date: dayjs(new Date(element.invoice_date)).format('DD-MMM-YYYY'),
             client_name: element.client_name,
             attention_to: element.attention_to,
             project_name: element.project_name,
