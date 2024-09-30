@@ -2,6 +2,7 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const path = require('path')
 const cors = require("cors");
 require("dotenv").config();
 
@@ -32,6 +33,8 @@ app.use("/quotation", quotationRoutes);
 app.use("/invoice", invoiceRoutes);
 app.use("/project_expense", projectExpenseRoutes);
 app.use("/preferences", preferencesRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/supplier_invoices', express.static(path.join(__dirname, 'uploads/supplier_invoices')));
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
