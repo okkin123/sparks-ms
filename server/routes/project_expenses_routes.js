@@ -21,5 +21,6 @@ router.route("/get_invoice_details").get(controller.get_invoice_details)
 router.route("/insert").post(middleware.authentication, upload.single('file'), controller.insert)
 router.route("/list").get(controller.list)
 router.route("/details").post(controller.details)
+router.route("/get_payment_details").post(controller.get_payment_details)
 
 module.exports = router;

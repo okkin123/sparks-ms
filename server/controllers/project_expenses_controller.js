@@ -104,12 +104,32 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              file_url: `${envFilePath}/${'uploads/supplier_invoices/'+data[0].invoice_file_name}`,
+              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
               project_expense_details: data
             });
           }
         }
       )
+    },
+  get_payment_details: (req, res)=>{
       
-},
+      dbConnection.query(
+          "SELECT * FROM tbl_project_expense_payments WHERE name=? GROUP BY name",
+          [req.body.name],
+          function(err, data, fields) {
+            if (err) {
+              res.send({
+                status: "ERROR",
+                message: err.sqlMessage
+              });
+            } else {
+              res.send({
+                status: "SUCCESS",
+                payment_details: data
+              });
+            }
+          }
+        )
+        
+  },
 }

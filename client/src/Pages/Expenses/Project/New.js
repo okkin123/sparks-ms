@@ -1,4 +1,4 @@
-import {Autocomplete, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
+import {Autocomplete, Box, AppBar, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../Components/PdfViewer';
 import FileUpload from '../../../Components/FileUpload';
@@ -227,7 +227,7 @@ export default function New(){
                   </Alert>
                 </Collapse>
               </Grid>
-              <Grid item container direction="row" spacing={1}>
+              <Grid item container direction="row" spacing={2}>
                 <Grid item xl={4} lg={4} md={5} sm={12}>
                     <Stack direction="column" spacing={2}>
                       <Typography variant="body1">Attached Supplier Invoice:</Typography>
@@ -410,7 +410,16 @@ export default function New(){
                     </Stack>
                 </Grid>
                 <Grid item xl={8} lg={8} md={7} sm={12}>
-                    {file && <PdfViewer file={file} />}
+                {file && <React.Fragment><Box sx={{ flexGrow: 1}}>
+                    <AppBar position="static">
+                      <Toolbar variant='dense'>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                          Supplier Invoice
+                        </Typography>
+                      </Toolbar>
+                    </AppBar>
+                  </Box>
+                  <PdfViewer file={file} /></React.Fragment>}
                 </Grid>
               </Grid>
             </Grid>

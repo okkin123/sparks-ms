@@ -8,7 +8,7 @@ import worker from 'pdfjs-dist/build/pdf.worker.entry';
 //GlobalWorkerOptions.workerSrc = 'https://unpkg.com/browse/pdfjs-dist@4.6.82/build/pdf.worker.mjs';
 
 const PdfViewer = ({ file }) => {
-
+  //const fileUrl = `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/1727509179703-5059_page-0001.pdf`;
   return (
     <div style={{ height: '750px' }}>
       <Worker workerUrl={worker}>
