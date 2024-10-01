@@ -216,8 +216,7 @@ export default function List(){
     return(
         <React.Fragment>
             <Toolbar />
-            <Paper>
-            <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
+            <Grid container direction="column" spacing={2}>
               <Grid item>
                 <Typography variant="h6">LIST OF PROJECT EXPENSE</Typography>
               </Grid>
@@ -268,7 +267,6 @@ export default function List(){
                  </Paper>
               </Grid>
             </Grid>
-            </Paper>
         </React.Fragment>
     )
 }

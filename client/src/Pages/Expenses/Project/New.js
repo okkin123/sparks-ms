@@ -1,4 +1,4 @@
-import {Autocomplete, Box, AppBar, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
+import {Autocomplete, Box, AppBar, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton, Checkbox, FormControlLabel} from '@mui/material';
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../Components/PdfViewer';
 import FileUpload from '../../../Components/FileUpload';
@@ -27,7 +27,14 @@ const ProjectExpenseSchema = Yup.object().shape({
   .required('This field is required!'),
   amount_without_vat: Yup.string()
     .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
-    .required('This field is required!')
+    .required('This field is required!'),
+  bank_name: Yup.string()
+  .required('This field is required!'),
+  account_number: Yup.string()
+    .matches(/^\d+$/, 'Only whole numbers are allowed!')
+    .required('This field is required!'),
+  iban: Yup.string()
+  .required('This field is required!')
 });
 
 
@@ -80,7 +87,11 @@ export default function New(){
         vat_amount: "",
         amount_with_vat: "",
         vat_percentage: "",
-        currency: ""
+        currency: "",
+        bank_name: "",
+        account_number: "",
+        iban: "",
+        save_bank_details: false
       },
       validateOnChange: false,
       validationSchema: ProjectExpenseSchema,
@@ -136,8 +147,11 @@ export default function New(){
       .then(function(result){
           if(result.data.status === 'SUCCESS'){
             setSupplierDetails((supplierDetails)=>[
-              ...result.data.supplier_details.map(element => ({
-                supplier_name: element.supplier_name
+              ...result.data.suppliers.map(element => ({
+                supplier_name: element.supplier_name,
+                bank_name: element.bank_name,
+                account_number: element.account_number,
+                iban: element.iban
               }))
             ])
   
@@ -170,6 +184,11 @@ export default function New(){
       })
      }
 
+     const supplierExists = (name) => {
+
+      return supplierDetails.some(option => option.supplier_name === name);
+    };
+
      function handleClearValues(){
 
       formik_project_expense.setValues({
@@ -184,7 +203,11 @@ export default function New(){
         vat_amount: "",
         amount_with_vat: "",
         vat_percentage: "",
-        currency: ""
+        currency: "",
+        bank_name: "",
+        account_number: "",
+        iban: "",
+        save_bank_details: false
       })
       setFile(null);
       setFileAlert(false)
@@ -230,9 +253,10 @@ export default function New(){
               <Grid item container direction="row" spacing={2}>
                 <Grid item xl={4} lg={4} md={5} sm={12}>
                     <Stack direction="column" spacing={2}>
-                      <Typography variant="body1">Attached Supplier Invoice:</Typography>
+                      <Typography variant="body2">Attached Supplier Invoice:</Typography>
                       <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={formik_project_expense.touched.file && formik_project_expense.errors.file} alertOpen={fileAlert}/>
-                      {formik_project_expense.values.file !== null ? <React.Fragment>
+                      {formik_project_expense.values.file !== null ? 
+                      <React.Fragment>
                       <Autocomplete
                             freeSolo
                             selectOnFocus 
@@ -307,6 +331,8 @@ export default function New(){
                           {formik_project_expense.touched.is_vat && formik_project_expense.errors.is_vat}
                           </FormHelperText>
                       </FormControl>
+                      
+                      <Stack direction="row" spacing={2}>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker 
                         value={dayjs(formik_project_expense.values.date_issued)}
@@ -323,34 +349,6 @@ export default function New(){
                             },
                           }} />
                       </LocalizationProvider>
-                      <Autocomplete
-                        freeSolo
-                        selectOnFocus
-                        clearOnBlur
-                        handleHomeEndKeys
-                        onFocus={()=>handleGetSupplierDetails()}
-                        options={supplierDetails.map((option) => option.supplier_name)}
-                        value={formik_project_expense.values.supplier_name}
-                        onChange={(event, value)=>formik_project_expense.setFieldValue('supplier_name', value)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Supplier Name"
-                            name="supplier_name"
-                            value={formik_project_expense.values.supplier_name}
-                            onChange={formik_project_expense.handleChange}
-                            fullWidth
-                            size="small"
-                            error={
-                              formik_project_expense.touched.supplier_name && Boolean(formik_project_expense.errors.supplier_name)
-                            }
-                            helperText={
-                              formik_project_expense.touched.supplier_name && formik_project_expense.errors.supplier_name
-                            }
-                          />
-                        )}
-                        fullWidth
-                      />
                       <TextField variant='outlined' label="Invoice Number"
                       name="supplier_invoice_number"
                       value={formik_project_expense.values.supplier_invoice_number}
@@ -364,6 +362,7 @@ export default function New(){
                         }
                       fullWidth
                       autoComplete="off" />
+                      </Stack>
                       <TextField variant='outlined' label="Amount"
                       name="amount_without_vat"
                       value={formik_project_expense.values.amount_without_vat}
@@ -383,10 +382,10 @@ export default function New(){
                         }
                       fullWidth
                       autoComplete="off" />
-
                       { formik_project_expense.values.is_vat ? 
                           (
-                            <React.Fragment>
+                            <Stack direction="row" spacing={2}>
+
                               <TextField variant='outlined' label="Vat Amount"
                               size="small"
                               name="vat_amount"
@@ -401,9 +400,100 @@ export default function New(){
                               readOnly
                               fullWidth
                               autoComplete="off" />
-                            </React.Fragment>
+                            </Stack>
                           ) : null } 
 
+                        <Autocomplete
+                          freeSolo
+                          selectOnFocus
+                          clearOnBlur
+                          handleHomeEndKeys
+                          onFocus={() => handleGetSupplierDetails()}
+                          options={supplierDetails.map((option) => ({
+                            label: option.supplier_name,
+                            value: option.supplier_name,
+                            bank_name: option.bank_name,
+                            account_number: option.account_number,
+                            iban: option.iban,
+                          }))}
+                          value={formik_project_expense.values.supplier_name}
+                          onChange={(event, newValue) => {
+                            if (newValue) {
+                              formik_project_expense.setFieldValue('supplier_name', newValue.value);
+                              formik_project_expense.setFieldValue('bank_name', newValue.bank_name);
+                              formik_project_expense.setFieldValue('account_number', newValue.account_number);
+                              formik_project_expense.setFieldValue('iban', newValue.iban);
+                              formik_project_expense.setFieldValue('save_bank_details', true);
+                            } else {
+                              formik_project_expense.setFieldValue('supplier_name', '');
+                              formik_project_expense.setFieldValue('bank_name', '');
+                              formik_project_expense.setFieldValue('account_number', '');
+                              formik_project_expense.setFieldValue('iban', '');
+                              formik_project_expense.setFieldValue('save_bank_details', false);
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Supplier Name"
+                              name="supplier_name"
+                              value={formik_project_expense.values.supplier_name}
+                              onChange={formik_project_expense.handleChange}
+                              fullWidth
+                              size="small"
+                              error={
+                                formik_project_expense.touched.supplier_name && Boolean(formik_project_expense.errors.supplier_name)
+                              }
+                              helperText={
+                                formik_project_expense.touched.supplier_name && formik_project_expense.errors.supplier_name
+                              }
+                            />
+                          )}
+                          fullWidth
+                        />
+ 
+                      <Typography variant="body2">Bank Details:</Typography>
+                      <TextField label="Bank Name" size="small" variant="outlined" name="bank_name" fullWidth 
+                      onChange={formik_project_expense.handleChange} value={formik_project_expense.values.bank_name} 
+                      error={
+                        formik_project_expense.touched.bank_name && Boolean(formik_project_expense.errors.bank_name)
+                      }
+                      helperText={
+                        formik_project_expense.touched.bank_name && formik_project_expense.errors.bank_name
+                      } 
+                      InputProps={{
+                        readOnly: supplierExists(formik_project_expense.values.supplier_name),
+                      }}
+                      />  
+                       <TextField label="Account No." size="small" variant="outlined" name="account_number" fullWidth 
+                      onChange={formik_project_expense.handleChange} value={formik_project_expense.values.account_number} 
+                      error={
+                        formik_project_expense.touched.account_number && Boolean(formik_project_expense.errors.account_number)
+                      }
+                      helperText={
+                        formik_project_expense.touched.account_number && formik_project_expense.errors.account_number
+                      }
+                      InputProps={{
+                        readOnly: supplierExists(formik_project_expense.values.supplier_name),
+                      }}
+                      />  
+                       <TextField label="IBAN" size="small" variant="outlined" name="iban" fullWidth 
+                      onChange={formik_project_expense.handleChange} value={formik_project_expense.values.iban} 
+                      error={
+                        formik_project_expense.touched.iban && Boolean(formik_project_expense.errors.iban)
+                      }
+                      helperText={
+                        formik_project_expense.touched.iban && formik_project_expense.errors.iban
+                      }
+                      InputProps={{
+                        readOnly: supplierExists(formik_project_expense.values.supplier_name),
+                      }}  
+                      />  
+                      <FormControlLabel label="Save Details" control={<Checkbox name="save_bank_details" 
+                      checked={formik_project_expense.values.save_bank_details}
+                      onClick={()=>formik_project_expense.setFieldValue('save_bank_details', !formik_project_expense.values.save_bank_details)} 
+                      disabled={supplierExists(formik_project_expense.values.supplier_name)} />} 
+                      />
                       
                       <LoadingButton variant='contained' color='success' onClick={formik_project_expense.handleSubmit} loading={loading}>Submit</LoadingButton>
                       </React.Fragment>: null }

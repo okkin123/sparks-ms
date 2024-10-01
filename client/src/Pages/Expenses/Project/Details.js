@@ -1,5 +1,6 @@
-import React, {useEffect, useState} from 'react';
-import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Autocomplete, Button} from '@mui/material';
+import React, {useEffect, useState, useRef} from 'react';
+import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Autocomplete, Button, Chip, Tabs, Tab} from '@mui/material';
+import PropTypes from 'prop-types';
 import AxiosInstance from '../../../AxiosInstance';
 import AxiosFileInstance from '../../../AxiosFileInstance';
 import dayjs from 'dayjs';
@@ -11,6 +12,8 @@ import NumberFormatCustom from '../../../Components/NumberFormatCustom';
 import FileUpload from '../../../Components/FileUpload';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 const MakePaymentSchema = Yup.object().shape({
     mode_of_payment: Yup.string()
@@ -20,10 +23,10 @@ const MakePaymentSchema = Yup.object().shape({
     .matches(/^\d+$/, 'Only whole numbers are allowed!')
     .test('is-required-if', 'This field is required!', function (value) {
         const { mode_of_payment } = this.parent;
-        if (mode_of_payment === 'Cheque Deposit') {
-          return false;
+        if (mode_of_payment === 'Cheque Deposit') { 
+          return true;
         }
-        return true;
+        return false;
     }),
     name: Yup.string()
     .required('This field is required!'),
@@ -32,6 +35,7 @@ const MakePaymentSchema = Yup.object().shape({
     account_number: Yup.string()
     .matches(/^\d+$/, 'Only whole numbers are allowed!')
     .required('This field is required!'),
+    date: Yup.date().required('Date is required'),
     amount: Yup.string()
       .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
       .required('This field is required!'),
@@ -62,7 +66,21 @@ export default function Details(){
         currency: "",
     })
     const [file, setFile] = useState(null)
+    const [fileAlert, setFileAlert] = useState(false)
     const [paymentDetails, setPaymentDetails] = useState([])
+
+    const [tabValue, setTabValue] = useState(0);
+
+    const handleTabChange = (event, newValue) => {
+      setTabValue(newValue);
+    };
+
+    const inputRefs = useRef({
+        cheque_no: null,
+        amount: null
+    });
+
+
     const formik_make_payment = useFormik({
         initialValues: {
             mode_of_payment: "",
@@ -70,6 +88,7 @@ export default function Details(){
             bank_name: "",
             account_number: "",
             name: "",
+            date: null,
             amount: "",
             file: null
         },
@@ -82,7 +101,21 @@ export default function Details(){
 
     const handleFileUpload = (file) => {
         formik_make_payment.setFieldValue('file', file);
+        setFileAlert(true)
     };
+
+    useEffect(() => {
+        if (inputRefs.current.cheque_no) {
+            inputRefs.current.cheque_no.focus();
+        } 
+      }, [formik_make_payment.values.cheque_no]);
+
+      useEffect(() => {
+        if (inputRefs.current.amount) {
+            inputRefs.current.amount.focus();
+        }
+      }, [formik_make_payment.values.amount]);
+
     
     useEffect(()=>{
         AxiosInstance.post("/project_expense/details", {pe_number: paramValue})
@@ -144,7 +177,30 @@ export default function Details(){
         })
     }
   
+
+    // Tabs Components
   
+    function TabPanel(props) {
+        const { children, value, index, ...other } = props;
+      
+        return (
+          <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`simple-tabpanel-${index}`}
+            aria-labelledby={`simple-tab-${index}`}
+            {...other}
+          >
+            {value === index && (
+              <Box pl={2} pr={2}    >
+                {children}
+              </Box>
+            )}
+          </div>
+        );
+      }
+      
+      
     
     return(
         <Box
@@ -162,7 +218,7 @@ export default function Details(){
                         <Grid container direction="column" spacing={3}>
                             <Grid item>
                                 <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="subtitle1">PE Number: {projectExpenseDetails.pe_number}</Typography>
+                                    <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
                                     <Typography variant="subtitle1">Status: </Typography>
                                 </Stack>
                             </Grid>
@@ -170,9 +226,12 @@ export default function Details(){
                                 <Grid item xl={5}>
                                     <Stack direction="column" spacing={2}>
                                         <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.supplier_name} />
+                                        <Stack direction="row" spacing={2}>
                                         <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
-                                        <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
                                         <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.date_issued} />
+                                        </Stack>
+                                        <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
+                                       
 
                                         {projectExpenseDetails.is_vat ? 
                                             <Stack direction="row" spacing={2}>
@@ -199,124 +258,178 @@ export default function Details(){
                                                     inputComponent: NumberFormatCustom,
                                                   }} />
                                             </Stack>
-                                            <Stack direction="row" justifyContent="space-between">      
-                                                <Typography variant="subtitle1">MAKE PAYMENT:</Typography> 
-                                                <Button variant="contained" color="success" size="small" onClick={formik_make_payment.handleSubmit}>Submit Payment</Button>
-                                            </Stack>
-                                            <FormControl
-                                                fullWidth
-                                                size="small"
-                                                error={formik_make_payment.touched.mode_of_payment && Boolean(formik_make_payment.errors.mode_of_payment)}
-                                                >
-                                                <InputLabel>Mode of Payment</InputLabel>
-                                                <Select
-                                                name="mode_of_payment"
-                                                value={formik_make_payment.values.mode_of_payment}
-                                                label="Mode of Payment"
-                                                onChange={(event)=>formik_make_payment.setFieldValue('mode_of_payment',event.target.value)}
-                                                >
-                                                    <MenuItem value={'Cheque Deposit'}>
-                                                        Cheque Deposit
-                                                    </MenuItem>
-                                                    <MenuItem value={'Account Deposit'}>
-                                                        Account Deposit
-                                                    </MenuItem>
-                                                </Select>
-                                                <FormHelperText>
-                                                {formik_make_payment.touched.mode_of_payment && formik_make_payment.errors.mode_of_payment}
-                                                </FormHelperText>
-                                            </FormControl> 
-                                            {formik_make_payment.values.mode_of_payment === 'Cheque Deposit' && <TextField label="Cheque No." size="small" variant="outlined" name="cheque_no" readOnly fullWidth 
-                                            onChange={formik_make_payment.handleChange} value={formik_make_payment.values.cheque_no} /> }
-                                            <Autocomplete
-                                                freeSolo
-                                                selectOnFocus
-                                                clearOnBlur
-                                                handleHomeEndKeys
-                                                onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
-                                                options={paymentDetails.map((option) => option.name)}
-                                                value={formik_make_payment.values.name}
-                                                onChange={(event, value)=>formik_make_payment.setFieldValue('name', value)}
-                                                renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Name"
-                                                    name="name"
+
+
+                                            {/* Tabs         */}
+                                            {/* <Box sx={{width: '100%' }}> */}
+                                                {/* <AppBar position="static" color="transparent">
+                                                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                                                    <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth"  indicatorColor="primary" textColor='inherit'>
+                                                        <Tab label="Payments" />
+                                                        <Tab label="Make Payment" />
+                                                    </Tabs>
+                                                </AppBar>
+
+                                                <TabPanel value={tabValue} index={0}>
+                                                <TextField label="Sample" size="small" variant="outlined" fullWidth />
+                                                </TabPanel>
+                                                <TabPanel value={tabValue} index={1}>
+                                                <Stack direction="column" spacing={2}> */}
+                                                <FormControl
+                                                    fullWidth
+                                                    size="small"
+                                                    error={formik_make_payment.touched.mode_of_payment && Boolean(formik_make_payment.errors.mode_of_payment)}
+                                                    >
+                                                    <InputLabel>Mode of Payment</InputLabel>
+                                                    <Select
+                                                    name="mode_of_payment"
+                                                    value={formik_make_payment.values.mode_of_payment}
+                                                    label="Mode of Payment"
+                                                    onChange={(event)=>formik_make_payment.setFieldValue('mode_of_payment',event.target.value)}
+                                                    >
+                                                        <MenuItem value={'Cheque Deposit'}>
+                                                            Cheque Deposit
+                                                        </MenuItem>
+                                                        <MenuItem value={'Account Deposit'}>
+                                                            Account Deposit
+                                                        </MenuItem>
+                                                    </Select>
+                                                    <FormHelperText>
+                                                    {formik_make_payment.touched.mode_of_payment && formik_make_payment.errors.mode_of_payment}
+                                                    </FormHelperText>
+                                                </FormControl> 
+                                                {formik_make_payment.values.mode_of_payment === 'Cheque Deposit' && <TextField label="Cheque No." size="small" variant="outlined" name="cheque_no" fullWidth 
+                                                onChange={formik_make_payment.handleChange} value={formik_make_payment.values.cheque_no} 
+                                                error={
+                                                    formik_make_payment.touched.cheque_no && Boolean(formik_make_payment.errors.cheque_no)
+                                                }
+                                                helperText={
+                                                    formik_make_payment.touched.cheque_no && formik_make_payment.errors.cheque_no
+                                                } inputRef={(el) => (inputRefs.current.cheque_no = el)} />  }
+                                                <Autocomplete
+                                                    freeSolo
+                                                    selectOnFocus
+                                                    clearOnBlur
+                                                    handleHomeEndKeys
+                                                    onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
+                                                    options={paymentDetails.map((option) => option.name)}
                                                     value={formik_make_payment.values.name}
-                                                    onChange={formik_make_payment.handleChange}
+                                                    onChange={(event, value)=>formik_make_payment.setFieldValue('name', value)}
+                                                    renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Name"
+                                                        name="name"
+                                                        value={formik_make_payment.values.name}
+                                                        onChange={formik_make_payment.handleChange}
+                                                        fullWidth
+                                                        size="small"
+                                                        error={
+                                                            formik_make_payment.touched.name && Boolean(formik_make_payment.errors.name)
+                                                        }
+                                                        helperText={
+                                                            formik_make_payment.touched.name && formik_make_payment.errors.name
+                                                        }
+                                                    />
+                                                    )}
                                                     fullWidth
-                                                    size="small"
-                                                    error={
-                                                        formik_make_payment.touched.name && Boolean(formik_make_payment.errors.name)
-                                                    }
-                                                    helperText={
-                                                        formik_make_payment.touched.name && formik_make_payment.errors.name
-                                                    }
                                                 />
-                                                )}
-                                                fullWidth
-                                            />
-                                            <Autocomplete
-                                                freeSolo
-                                                selectOnFocus
-                                                clearOnBlur
-                                                handleHomeEndKeys
-                                                onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
-                                                options={paymentDetails.map((option) => option.account_number)}
-                                                value={formik_make_payment.values.account_number}
-                                                onChange={(event, value)=>formik_make_payment.setFieldValue('account_number', value)}
-                                                renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Account Number"
-                                                    name="account_number"
+                                                <Autocomplete
+                                                    freeSolo
+                                                    selectOnFocus
+                                                    clearOnBlur
+                                                    handleHomeEndKeys
+                                                    onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
+                                                    options={paymentDetails.map((option) => option.account_number)}
                                                     value={formik_make_payment.values.account_number}
-                                                    onChange={formik_make_payment.handleChange}
+                                                    onChange={(event, value)=>formik_make_payment.setFieldValue('account_number', value)}
+                                                    renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Account Number"
+                                                        name="account_number"
+                                                        value={formik_make_payment.values.account_number}
+                                                        onChange={(event)=>{
+                                                            console.log('hello  ')
+                                                            formik_make_payment.setFieldValue('account_number', event.target.value)
+                                                        }}
+                                                        fullWidth
+                                                        size="small"
+                                                        error={
+                                                            formik_make_payment.touched.account_number && Boolean(formik_make_payment.errors.account_number)
+                                                        }
+                                                        helperText={
+                                                            formik_make_payment.touched.account_number && formik_make_payment.errors.account_number
+                                                        }
+                                                    />
+                                                    )}
                                                     fullWidth
-                                                    size="small"
-                                                    error={
-                                                        formik_make_payment.touched.account_number && Boolean(formik_make_payment.errors.account_number)
-                                                    }
-                                                    helperText={
-                                                        formik_make_payment.touched.account_number && formik_make_payment.errors.account_number
-                                                    }
                                                 />
-                                                )}
-                                                fullWidth
-                                            />
-                                            <Autocomplete
-                                                freeSolo
-                                                selectOnFocus
-                                                clearOnBlur
-                                                handleHomeEndKeys
-                                                onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
-                                                options={paymentDetails.map((option) => option.bank_name)}
-                                                value={formik_make_payment.values.bank_name}
-                                                onChange={(event, value)=>formik_make_payment.setFieldValue('bank_name', value)}
-                                                renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Bank Name"
-                                                    name="bank_name"
+                                                <Autocomplete
+                                                    freeSolo
+                                                    selectOnFocus
+                                                    clearOnBlur
+                                                    handleHomeEndKeys
+                                                    onFocus={()=>handleGetPaymentDetails(formik_make_payment.values.name)}
+                                                    options={paymentDetails.map((option) => option.bank_name)}
                                                     value={formik_make_payment.values.bank_name}
-                                                    onChange={formik_make_payment.handleChange}
+                                                    onChange={(event, value)=>formik_make_payment.setFieldValue('bank_name', value)}
+                                                    renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Bank Name"
+                                                        name="bank_name"
+                                                        value={formik_make_payment.values.bank_name}
+                                                        onChange={formik_make_payment.handleChange}
+                                                        fullWidth
+                                                        size="small"
+                                                        error={
+                                                            formik_make_payment.touched.bank_name && Boolean(formik_make_payment.errors.bank_name)
+                                                        }
+                                                        helperText={
+                                                            formik_make_payment.touched.bank_name && formik_make_payment.errors.bank_name
+                                                        }
+                                                      
+                                                    />
+                                                    )}
                                                     fullWidth
-                                                    size="small"
+                                                 
+                                                />
+                                                <Stack direction="row" spacing={2}>
+                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                        <DatePicker 
+                                                        value={dayjs(formik_make_payment.values.date)}
+                                                        onChange={(value)=>formik_make_payment.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                                                        slotProps={{
+                                                            textField: {
+                                                            label: 'Date',
+                                                            variant: 'outlined',
+                                                            name: 'date',
+                                                            size: 'small', 
+                                                            fullWidth: true,
+                                                            error: Boolean(formik_make_payment.errors.date),
+                                                            helperText:formik_make_payment.touched.date && formik_make_payment.errors.date
+                                                            },
+                                                        }} />
+                                                    </LocalizationProvider>
+                                                    <TextField label="Amount" name="amount" onChange={formik_make_payment.handleChange} size="small" variant="outlined" 
+                                                    fullWidth value={formik_make_payment.values.amount}
                                                     error={
-                                                        formik_make_payment.touched.bank_name && Boolean(formik_make_payment.errors.bank_name)
+                                                        formik_make_payment.touched.amount && Boolean(formik_make_payment.errors.amount)
                                                     }
                                                     helperText={
-                                                        formik_make_payment.touched.bank_name && formik_make_payment.errors.bank_name
-                                                    }
-                                                />
-                                                )}
-                                                fullWidth
-                                            />
-                                            <TextField label="Amount" name="amount" onChange={formik_make_payment.handleChange} size="small" variant="outlined" readOnly 
-                                            fullWidth value={formik_make_payment.values.amount} />
-                                            <Typography variant="subtitle1">Supporting Doc:</Typography>
-                                            <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} />
-                                    </Stack>
+                                                        formik_make_payment.touched.amount && formik_make_payment.errors.amount
+                                                    } inputRef={(el) => (inputRefs.current.amount = el)} />
+                                                </Stack>
+                                            
+                                                <Typography variant="subtitle1">Supporting Doc:</Typography>
+                                                <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} mainError={formik_make_payment.touched.file && Boolean(formik_make_payment.errors.file)} alertOpen={fileAlert} />
+                                                <Stack direction="row" justifyContent="flex-end">
+                                                 <Button variant="contained" color="success" onClick={formik_make_payment.handleSubmit}>Submit Payment</Button>
+                                                </Stack>
+                                                </Stack>
+                                                {/* </TabPanel>
+                                    </Stack> */}
                                 </Grid>
                                 <Grid item xl={7}>
                                    <Box sx={{ flexGrow: 1}}>
