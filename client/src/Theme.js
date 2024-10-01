@@ -23,6 +23,9 @@ export const theme = createTheme({
     },
     success: {
       main: '#10893E',
+    },
+    common: {
+      white: '#fff'
     }
   },
 });
