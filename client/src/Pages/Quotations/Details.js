@@ -43,24 +43,32 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
-      fontSize: 11
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
+      padding: 4,
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 11,
-      color: theme.palette.primary.dark
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
+      color: theme.palette.primary.dark,
+      padding: 4,
+     
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 11,
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
+      padding: 4,
     }
 
   }));
 
   const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 10,
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
       color: theme.palette.primary.dark
     },
   }));
@@ -72,7 +80,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: '1px solid '+theme.palette.primary.light,
     },
     [`& #bankAccount`]: {
-      border: 0
+      border: 0,
+      padding: 4,
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
     }
   }));
 
@@ -107,7 +118,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       <Box
         sx={{padding: 2}}
       >
-      <Grid container direction="column" spacing={3}>
+      <Grid container direction="column" spacing={2}>
         <Grid item>
           <Stack direction="column" spacing={2}>
           <img src={bsLogo} width={220} alt="logo" />
@@ -116,8 +127,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
         </Grid>
         <Grid item>
             <Stack direction="column" spacing={1}>
-                <Typography variant="body2"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography>
-                <Typography variant="body2">DATE: {quotation.quotation_date}</Typography>
+                <Typography variant="body2"><strong>Quotation No.: {quotation.quotation_number}</strong></Typography>
+                <Typography variant="body2">Date: {quotation.quotation_date}</Typography>
             </Stack>
         </Grid>
         <Grid item>
@@ -547,8 +558,8 @@ export default function Details(){
                 <Grid item>
                    <Stack direction="row" justifyContent="space-between">
                       <Stack direction="column" spacing={1}>
-                          { quotation.quotation_number ? <Typography variant="subtitle1"><strong>QUOTATION #: {quotation.quotation_number}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.quotation_date ? <Typography variant="subtitle1">DATE: {quotation.quotation_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.quotation_number ? <Typography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.quotation_date ? <Typography variant="subtitle1">Date: {quotation.quotation_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.client_name ? <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.attention_to ? <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.project_name ? <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }

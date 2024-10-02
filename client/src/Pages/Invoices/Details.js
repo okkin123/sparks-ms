@@ -44,14 +44,14 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
-      fontSize: 11,
+      fontSize: 10.5,
     },
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 11,
+      fontSize: 10.5,
       color: theme.palette.primary.dark
     },
     [`&.${tableCellClasses.footer}`]: {
-      fontSize: 11,
+      fontSize: 10.5,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap'
@@ -62,7 +62,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   
   const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
-      fontSize: 10,
+      fontSize: 10.5,
       color: theme.palette.primary.dark
     },
   }));
@@ -74,7 +74,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: '1px solid '+theme.palette.primary.light,
     },
     [`& #bankAccount`]: {
-      border: 0
+      border: 0,
+      padding: 4
     }
   }));
 
@@ -107,7 +108,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </Grid>
       <Grid item>
           <Stack direction="row" justifyContent="center">
-              <Typography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE #: {invoice.invoice_number}</strong></Typography>
+              <Typography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></Typography>
           </Stack>
       </Grid>
     
@@ -218,7 +219,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BENIFICIARY:</strong></StyledPrintTableCell>
               <StyledPrintTableCell id="bankAccount">{bankAccount.benificiary}</StyledPrintTableCell>
-              
             </StyledTableRow>
             <StyledTableRow>
               <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
@@ -552,7 +552,7 @@ export default function Details(){
                 </Grid>
                 <Grid item>
                     <Stack direction="row" justifyContent="center">
-                    {invoice.invoice_number ? <Typography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE #: {invoice.invoice_number}</strong></Typography> : <Skeleton variant="rounded" width={410} height={50} /> }
+                    {invoice.invoice_number ? <Typography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></Typography> : <Skeleton variant="rounded" width={410} height={50} /> }
                         
                     </Stack>
                 </Grid>
@@ -565,7 +565,7 @@ export default function Details(){
                       </Stack>
                       <Stack direction="row" justifyContent="space-between">
                         { invoice.address ? <Typography variant="subtitle1">Address: {invoice.address}</Typography> : <Skeleton variant="rounded" width={210} height={15} />}
-                        { invoice.quotation_number ? <Typography variant="subtitle1">Ref Quotation #: {invoice.quotation_number}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                        { invoice.quotation_number ? <Typography variant="subtitle1">Ref Quotation No.: {invoice.quotation_number}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       { invoice.client_trn ? <Typography variant="subtitle1">TRN #: {invoice.client_trn}</Typography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
                       { invoice.attention_to ? <Typography variant="subtitle1">Attention To: {invoice.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
@@ -696,7 +696,7 @@ export default function Details(){
                 </TableContainer>) : <Skeleton variant="rounded" width="100%" height={300} />  }
                 </Grid>
                 <Grid item>
-                  {approvalHistory.length > 0 ? (<React.Fragment><Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
+                  {approvalHistory.length > 0 ? (<React.Fragment><Typography variant="body2"><strong>APPROVAL HISTORY</strong></Typography>
                   <List sx={{ bgcolor: 'background.paper' }} dense={true}>
                   {
                    approvalHistory.map((approval ,key)=>(
@@ -708,7 +708,7 @@ export default function Details(){
                       <ListItemText
                         primary={
                           <Stack direction="row" justifyContent="space-between">
-                            <Typography variant="body1">{approval.status}</Typography>
+                            <Typography variant="body2">{approval.status}</Typography>
                             <Typography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</Typography>
                           </Stack>
                         } 
