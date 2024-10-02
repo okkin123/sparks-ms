@@ -9,6 +9,7 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
     const onDrop = useCallback((acceptedFiles, fileRejections) => {
         setError(''); // Clear previous errors
         setFileName('');
+      
         if (fileRejections.length > 0) {
             const rejection = fileRejections;
             if (rejection[0].errors.length > 0) {
@@ -26,6 +27,7 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
             // } else {
             //     setError('Unsupported File Format!');
             // }
+            
             if (file[0].type === element) {
                 setFileName(file[0].name);
                 onFileUpload(file[0]);
@@ -60,8 +62,8 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
       </Button>
       </Stack>
       {fileName && alertOpen && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
-      {error && alertOpen && <Alert severity='error'><strong>Error! </strong>{error}</Alert>}
-      {mainError && alertOpen && <Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
+      {error && alertOpen &&<Alert severity='error'><strong>Error! </strong>{error}</Alert>}
+      {mainError && alertOpen &&<Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
       </Stack>
     </div>
   );
