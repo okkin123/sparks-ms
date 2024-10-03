@@ -126,7 +126,7 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
+              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
               project_expense_details: data
             });
           }
@@ -165,6 +165,34 @@ module.exports = {
           res.send({
             status: "SUCCESS",
             payments: data
+          });
+        }
+      }
+    )
+  },
+  download_supporting_doc: (req, res)=>{
+    const filename = req.params.filename;
+    const filePath = `uploads/payment_receipts/${filename}`;
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send('File not found.');
+      }
+    });
+  },
+  void_payment: (req, res)=>{
+    dbConnection.query("UPDATE tbl_project_expense_payments SET voided_by=? WHERE project_expense_payment_id=?",
+      [req.user.user_id, req.body.project_expense_payment_id],
+      function(err, data, fields){
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            message: "Thes selected payment has been voided!"
           });
         }
       }
