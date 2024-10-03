@@ -63,16 +63,18 @@ module.exports = {
                   message: err.sqlMessage
                 });
               } else {
-                  dbConnection.query("SELECT supplier_id FROM tbl_suppliers WHERE supplier_name=?",
+                  dbConnection.query("SELECT * FROM tbl_suppliers WHERE supplier_name=?",
                     [values.supplier_name],
                     function(err3, data3, fields3){
+          
                       if(data3.length === 0){
                         dbConnection.query("INSERT INTO tbl_suppliers(supplier_name, bank_name, account_number, iban) VALUES(?,?,?,?)",
                           [values.supplier_name, values.bank_name, values.account_number, values.iban],
                           function(err2, data2, fields2){})
                       }else{
+                        
                         dbConnection.query("UPDATE tbl_suppliers SET bank_name=?, account_number=?, iban=? WHERE supplier_id=?",
-                          [values.bank_name, values.account_number, values.iban, data3[0]],
+                          [values.bank_name, values.account_number, values.iban, data3[0].supplier_id],
                           function(err4, data4, fields4){
                             if(err4)
                               console.log(err4)
@@ -92,7 +94,7 @@ module.exports = {
     },
     list: (req, res)=>{
       dbConnection.query(
-          "SELECT * FROM vw_project_expenses",
+          "SELECT * FROM vw_project_expenses ORDER BY pe_number DESC",
           function(err, data, fields) {
             if (err) {
               res.send({
@@ -134,11 +136,10 @@ module.exports = {
   insert_payment: (req, res)=>{
     const values = JSON.parse(req.body.values);
 
-    dbConnection.query("INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date_paid, cheque_no, bank_name, account_number, iban, amount, user_id, supporting_doc_name) VALUES(?,?,?,?,?,?,?,?,?,?)")
-    [values.project_expense_id, values.mode_of_payment, values.date, parseInt(values.cheque_no), values.bank_name, values.account_number, values.iban, values.amount, req.user.user_id, req.file.filename],
+    dbConnection.query("INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date_paid, cheque_no, bank_name, account_number, iban, amount, user_id, supporting_doc_name) VALUES(?,?,?,?,?,?,?,?,?,?)",
+    [values.project_expense_id, values.mode_of_payment, values.date, isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no, values.bank_name, values.account_number, values.iban, values.amount, req.user.user_id, req.file.filename],
     function(err, data, fields) {
       if (err) {
-        console.log(err)
         res.send({
           status: "ERROR",
           message: err.sqlMessage
@@ -149,7 +150,25 @@ module.exports = {
           message: "New payment has been added!"
         });
       }
-    }
+    })
+  },
+  payments: (req, res) =>{
+    dbConnection.query("SELECT * FROM vw_project_expense_payments WHERE project_expense_id=?",
+      [req.body.project_expense_id],
+      function(err, data, fields){
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            payments: data
+          });
+        }
+      }
+    )
   }
 
 }

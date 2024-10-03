@@ -95,6 +95,17 @@ const columns=[
         )
     },
     {
+        accessorKey: 'status',
+        header: 'STATUS',
+        Cell: ({ renderedCellValue }) => (
+        <Chip 
+            label={renderedCellValue} 
+            size="small"
+            color={renderedCellValue === 'PAID' ? 'success' : renderedCellValue === 'PARTIALLY PAID' ? 'warning' : 'error'}
+        />
+        )
+    },
+    {
         accessorKey: 'project_name',
         header: 'PROJECT NAME'
     },
@@ -189,6 +200,7 @@ export default function List(){
             if(result.data.status === 'SUCCESS'){
                 const fetchedProjectExpenses = result.data.project_expenses.map((element) => ({
                     pe_number: element.pe_number,
+                    status: element.STATUS,
                     project_name: element.project_name,
                     supplier_name: element.supplier_name,
                     invoice_number: element.invoice_number,
@@ -239,7 +251,7 @@ export default function List(){
                  initialState={{
                   density: 'compact',
                   isLoading: loading,
-                  columnPinning: { left: ['pe_number', 'supplier_name', 'invoice_number'] },
+                  columnPinning: { left: ['pe_number', 'status', 'supplier_name', 'invoice_number'] },
                   showGlobalFilter: true,
                  }}
                  state={{
