@@ -251,7 +251,7 @@ export default function List(){
                  initialState={{
                   density: 'compact',
                   isLoading: loading,
-                  columnPinning: { left: ['pe_number', 'status', 'supplier_name', 'invoice_number'] },
+                  columnPinning: { left: ['pe_number', 'status', 'supplier_name'] },
                   showGlobalFilter: true,
                  }}
                  state={{

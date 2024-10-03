@@ -17,7 +17,7 @@ const storageA = multer.diskStorage({
 
 const storageB = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/supplier_invoices/');
+    cb(null, 'uploads/payment_receipts/');
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -34,5 +34,7 @@ router.route("/list").get(controller.list)
 router.route("/details").post(controller.details)
 router.route("/insert_payment").post(middleware.authentication, destB.single('file'), controller.insert_payment)
 router.route("/payments").post(controller.payments)
+router.route("/download_supporting_doc/:filename").get(controller.download_supporting_doc);
+router.route("/void_payment").post(middleware.authentication, controller.void_payment)
 
 module.exports = router;

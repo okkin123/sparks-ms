@@ -1,23 +1,24 @@
 import React, {useEffect, useState} from 'react';
-import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, Tabs, Tab, List, ListItem, ListItemAvatar, ListItemText, Divider} from '@mui/material';
+import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, Tabs, Tab, List, ListItem, ListItemAvatar, ListItemText, Divider, Alert, Button} from '@mui/material';
 import AxiosInstance from '../../../AxiosInstance';
 import AxiosFileInstance from '../../../AxiosFileInstance';
 import dayjs from 'dayjs';
 
 import PdfViewer from '../../../Components/PdfViewer';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import PrintIcon from '@mui/icons-material/Print';
 import NumberFormatCustom from '../../../Components/NumberFormatCustom';
 import FileUpload from '../../../Components/FileUpload';
+import Dialog from '../../../Components/Dialog';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import LoadingButton from '@mui/lab/LoadingButton';
 
+import CloseIcon from '@mui/icons-material/Close';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import ReceiptIcon from '@mui/icons-material/Receipt';
 import Check from '@mui/icons-material/Check';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { NumericFormat } from 'react-number-format';
 
@@ -91,9 +92,16 @@ export default function Details(){
     const [file, setFile] = useState(null)
     const [fileAlert, setFileAlert] = useState(false)
     const [fileError, setFileError] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [amountAlert, setAmountAlert] = useState('');
+    const [loading, setLoading] = useState({
+        make_payment: false,
+        void_payment: false
+    })
     const [tabValue, setTabValue] = useState(0);
-
+    const [dialogVoid, setDialogVoid] = useState({
+        project_expense_payment_id: 0,
+        content: null
+    });
     const handleTabChange = (event, newValue) => {
       setTabValue(newValue);
     };
@@ -113,8 +121,15 @@ export default function Details(){
         validateOnChange: false,
         validationSchema: MakePaymentSchema,
         onSubmit: (values, {validateForm})=>{
-                if(values.file !== null){
-                    setLoading(true)
+                if(values.file === null){
+                    setFileError('Supporting Document is required!')
+                    setFileAlert(true)
+                }else if(parseFloat(values.amount) > projectExpenseDetails.remaining_balance)
+                {
+                    setAmountAlert('The amount is invalid! The remaining balance for this invoice is greater than the payment amount. Please check and try again!')
+                }
+                else{
+                    setLoading({...loading, make_payment: true})
                     const formData = new FormData();
                     formData.append('file', values.file);
                     formData.append('values', JSON.stringify(values))
@@ -128,14 +143,11 @@ export default function Details(){
                       }else{
                         console.log(response.data.message)
                       }
-                      setLoading(false)
+                      setLoading({...loading, make_payment: false})
                     })
                     .catch(function(error){
                       console.log(error)
                     })
-                }else{
-                    setFileError('Supporting Document is required!')
-                    setFileAlert(true)
                 }
         
         }
@@ -204,6 +216,8 @@ export default function Details(){
             if(result.data.status === 'SUCCESS')
             {
                 setPayments(result.data.payments.map((element)=>({
+                    void_open: false,
+                    project_expense_payment_id: element.project_expense_payment_id,
                     mode_of_payment: element.mode_of_payment,
                     amount: element.amount,
                     cheque_no: element.cheque_no,
@@ -213,7 +227,9 @@ export default function Details(){
                     account_number: element.account_number,
                     iban: element.iban,
                     user: element.fullname,
-                    status: element.status
+                    status: element.status,
+                    supporting_doc_name: element.supporting_doc_name,
+                    voided_by: element.voided_by
                     })
                 ))
             }       
@@ -225,6 +241,65 @@ export default function Details(){
             console.log(error)
         })
     }
+
+    function handleVoidPaymentDialog(index){
+            setPayments(payments.map((payment, i) =>
+              i === index ? { ...payment, void_open: true } : payment
+            ));
+    }
+
+    const handleVoidPaymentDialogCancel = (index)=>{
+        setPayments(payments.map((payment, i) =>
+            i === index ? { ...payment, void_open: false } : payment
+          ));
+      }
+
+    function voidPayment(project_expense_payment_id){
+     
+        setLoading({...loading, void_payment: true})
+        AxiosInstance.post("/project_expense/void_payment", {project_expense_payment_id : project_expense_payment_id})
+        .then(function(response){
+            if(response.data.status === 'SUCCESS')
+            {
+                setDialogVoid({
+                    open: false,
+                    project_expense_payment_id: 0,
+                    content: null
+                })
+                alert(response.data.message)
+                window.location.reload()
+            }       
+            else{
+                console.log(response.data.message)
+            }
+            setLoading({...loading, void_payment: false})
+        })
+        .catch(function(error){
+            console.log(error)
+        })
+    }
+
+    const downloadSupportingDoc = async (filename) => {
+        try {
+          const response = await AxiosInstance.get(`/project_expense/download_supporting_doc/${filename}`, {
+            responseType: 'blob',
+          });
+      
+          if (response.status === 200) {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          } else {
+            console.error('Error: File not found or server error');
+          }
+        } catch (error) {
+          console.error('Error downloading the file:', error);
+        }
+      };
   
 
      
@@ -236,7 +311,7 @@ export default function Details(){
         alignItems="center"
         >
             <Grid container justifyContent="center">
-            <Grid item xl={10} lg={10} md={10} sm={12} xs={12}>
+            <Grid item xl={12} lg={12} md={12} sm={12} xs={12}>
             <Paper sx={{paddingTop: 4, 
                         paddingRight: 4, 
                         paddingBottom: 1, 
@@ -253,12 +328,12 @@ export default function Details(){
                         </Stack>
                     </Grid>
                     <Grid item container direction="row" spacing={2}>
-                        <Grid item xl={5}>
+                        <Grid item xl={5} lg={5}>
                             <Stack direction="column" spacing={2}>
                                 <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.supplier_name} />
                                 <Stack direction="row" spacing={2}>
-                                <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
                                 <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.date_issued} />
+                                <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
                                 </Stack>
                                 <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
                                 
@@ -312,18 +387,60 @@ export default function Details(){
                                                     <ListItem
                                                     secondaryAction={
                                                         <Stack direction="row" spacing={1}>
-                                                            <IconButton edge="end" size="small" color="primary">
-                                                            <ReceiptIcon />
-                                                            </IconButton>
-                                                            { element.status === 'PAID' ? <IconButton edge="end" size="small" color="error">
+                                                            { !element.voided_by && <IconButton edge="end" size="small" color="error" onClick={()=>{
+                                                            handleVoidPaymentDialog(key)
+                                                            setDialogVoid({...dialogVoid, open: true, project_expense_payment_id: parseInt(element.project_expense_payment_id),
+                                                            content:
+                                                            <ListItemText
+                                                                primary={
+                                                                <Stack direction="row" justifyContent="center" spacing={1}>
+                                                                        <NumericFormat 
+                                                                        value={element.amount} 
+                                                                        displayType={'text'}
+                                                                        thousandSeparator={true}
+                                                                        decimalScale={2}
+                                                                        fixedDecimalScale={true}
+                                                                        style={{ fontSize: '16px', fontWeight: 'bold'}}  />
+                                                                        <Typography variant="body1"><strong>{projectExpenseDetails.currency}</strong></Typography>
+                                                                </Stack>}
+                                                                secondary={
+                                                                <Stack direction="row" gap={1} justifyContent="center" alignItems="center" flexWrap="wrap">
+                                                                    <Chip color="secondary" label={element.mode_of_payment} size="small" />
+                                                                    {element.cheque_no !== 0 && <Chip color="warning" label={'Cheque No. '+element.cheque_no} size="small" /> }
+                                                                    <Chip color="info" label={'Date Paid: '+element.date} size="small" />
+                                                                    <Chip variant='outlined' color="secondary" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                    <Chip variant='outlined' color="warning" label={'Account No.: '+element.account_number} size="small" />
+                                                                    <Chip variant='outlined' color="info" label={'IBAN: '+element.iban} size="small" />
+                                                                    <Chip label={'Processed By: '+element.user} size="small" />
+                                                                </Stack>
+                                                                }
+                                                            />
+                                                            })
+                                                           }
+
+                                                            }>
                                                             <RemoveCircleIcon />
-                                                            </IconButton> : null }
+                                                            </IconButton> }
+                                                            <Dialog open={element.void_open} content={
+                                                                <Stack direction="column" spacing={2}>
+                                                                        <Typography variant="h6">VOID PAYMENT</Typography>
+                                                                        <Typography variant="body2">Are you sure you want to void this payment?</Typography>
+                                                                        {dialogVoid.content}
+                                                                        <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                                                                            <Button size="small" onClick={()=>handleVoidPaymentDialogCancel(key)}>Cancel</Button>
+                                                                            <LoadingButton loading={loading.void_payment} size="small" variant="contained" color="secondary" onClick={()=>voidPayment(element.project_expense_payment_id)}>Yes</LoadingButton>
+                                                                        </Stack>
+                                                                </Stack>
+                                                            } />
+                                                            <IconButton onClick={()=>downloadSupportingDoc(element.supporting_doc_name)} color="secondary" edge="end" size="small" >
+                                                            <FileDownloadIcon />
+                                                            </IconButton>
                                                         </Stack>
                                                     }
 
                                                     >
                                                     <ListItemAvatar>
-                                                            { element.status === 'PAID' ? <Check color='success' /> : <RemoveCircleIcon color='error' />}
+                                                            { !element.voided_by ? <Check color='success' /> : <CloseIcon color='error' />}
                                                     </ListItemAvatar>
                                                     <ListItemText
                                                         primary={<Stack direction="row" spacing={1}>
@@ -332,15 +449,20 @@ export default function Details(){
                                                                         displayType={'text'}
                                                                         thousandSeparator={true}
                                                                         decimalScale={2}
-                                                                        fixedDecimalScale={true} />
-                                                                        <Typography variant="body2">{projectExpenseDetails.currency}</Typography>
+                                                                        fixedDecimalScale={true}
+                                                                        style={{ fontSize: '16px', fontWeight: 'bold'}}  />
+                                                                        <Typography variant="body1"><strong>{projectExpenseDetails.currency}</strong></Typography>
                                                                  </Stack>}
                                                         secondary={
-                                                            <Stack direction="column" spacing={1} alignItems="flex-start">
+                                                            <Stack direction="row" gap={1} justifyContent="flex-start" alignItems="center" flexWrap="wrap">
                                                                 <Chip color="secondary" label={element.mode_of_payment} size="small" />
                                                                 {element.cheque_no !== 0 && <Chip color="warning" label={'Cheque No. '+element.cheque_no} size="small" /> }
                                                                 <Chip color="info" label={'Date Paid: '+element.date} size="small" />
-                                                                <Chip label={element.user} size="small" />
+                                                                <Chip variant='outlined' color="secondary" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                <Chip variant='outlined' color="warning" label={'Account No.: '+element.account_number} size="small" />
+                                                                <Chip variant='outlined' color="info" label={'IBAN: '+element.iban} size="small" />
+                                                                <Chip label={'Processed By: '+element.user} size="small" />
+                                                                { element.voided_by && <Chip color="error" label={'Voided By: '+element.voided_by} size="small" />}
                                                             </Stack>
                                                         }
                                                     />
@@ -355,6 +477,7 @@ export default function Details(){
 
                                     <TabPanel value={tabValue} index={1}>
                                         <Stack direction="column" spacing={2}>
+                                        {amountAlert && <Alert severity="error">{amountAlert}</Alert> }
                                         <FormControl
                                             fullWidth
                                             size="small"
@@ -424,7 +547,7 @@ export default function Details(){
                                         <Typography variant="subtitle1">Supporting Doc:</Typography>
                                         <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={fileError} alertOpen={fileAlert} />
                                         <Stack direction="row" justifyContent="flex-end">
-                                        <LoadingButton variant='contained' color='secondary' onClick={formik_make_payment.handleSubmit} loading={loading}>Save Payment</LoadingButton>
+                                        <LoadingButton variant='contained' color='secondary' onClick={formik_make_payment.handleSubmit} loading={loading.make_payment}>Save Payment</LoadingButton>
                                         </Stack>  
                                         </React.Fragment> }
                                         
@@ -433,7 +556,7 @@ export default function Details(){
 
                             </Stack>
                         </Grid>
-                        <Grid item xl={7}>
+                        <Grid item xl={7} lg={7}>
                             <Box sx={{ flexGrow: 1}}>
                                 <AppBar position="static">
                                 <Toolbar variant='dense'>
