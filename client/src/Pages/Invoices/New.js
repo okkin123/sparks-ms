@@ -247,7 +247,6 @@ export default function New(){
         }
         else
         {
-
           if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
           {
             setError({
@@ -279,6 +278,7 @@ export default function New(){
               {
                 console.log(response.data.message)
               }
+              setLoading(false)
             })
             .catch(function(error){
               console.log(error)

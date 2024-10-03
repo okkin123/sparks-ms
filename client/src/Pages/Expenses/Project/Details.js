@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, Tabs, Tab} from '@mui/material';
+import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, Tabs, Tab, List, ListItem, ListItemAvatar, ListItemText, Divider} from '@mui/material';
 import AxiosInstance from '../../../AxiosInstance';
 import AxiosFileInstance from '../../../AxiosFileInstance';
 import dayjs from 'dayjs';
@@ -15,31 +15,26 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import LoadingButton from '@mui/lab/LoadingButton';
 
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import Check from '@mui/icons-material/Check';
+
+import { NumericFormat } from 'react-number-format';
+
 const MakePaymentSchema = Yup.object().shape({
-    mode_of_payment: Yup.string()
-    .required('This field is required!'),
-    date_issued: Yup.date().required('Date issued is required'),
+    date: Yup.date().required('Date is required'),
     cheque_no: Yup.string()
     .matches(/^\d+$/, 'Only whole numbers are allowed!')
     .test('is-required-if', 'This field is required!', function (value) {
         const { mode_of_payment } = this.parent;
-        if (mode_of_payment === 'Cheque Deposit') { 
-          return true;
+        if (mode_of_payment === 'Cheque Deposit') {
+            return value !== undefined && value !== null && value !== '';
         }
-        return false;
+        return true;
     }),
-    name: Yup.string()
-    .required('This field is required!'),
-    bank_name: Yup.string()
-    .required('This field is required!'),
-    account_number: Yup.string()
-    .matches(/^\d+$/, 'Only whole numbers are allowed!')
-    .required('This field is required!'),
-    date: Yup.date().required('Date is required'),
     amount: Yup.string()
       .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
-      .required('This field is required!'),
-    file: Yup.mixed().required('Supporting document is required!')
+      .required('This field is required!')
   });
 
   function TabPanel(props) {
@@ -54,7 +49,7 @@ const MakePaymentSchema = Yup.object().shape({
         {...other}
       >
         {value === index && (
-          <Box pl={2} pr={2}>
+          <Box>
             {children}
           </Box>
         )}
@@ -72,6 +67,8 @@ export default function Details(){
 
     // Get the value of the 'param' parameter
     const paramValue = params.get('pe_number');
+
+
     const [projectExpenseDetails, setProjectExpensesDetails] = useState({
         pe_number: "",
         project_name: "",
@@ -84,10 +81,16 @@ export default function Details(){
         vat_percentage: "",
         vat_amount: "",
         amount_with_vat: "",
+        total_payments: "",
+        remaining_balance: "",
         currency: "",
     })
+
+    const [payments, setPayments] = useState([])
+
     const [file, setFile] = useState(null)
     const [fileAlert, setFileAlert] = useState(false)
+    const [fileError, setFileError] = useState('')
     const [loading, setLoading] = useState(false)
     const [tabValue, setTabValue] = useState(0);
 
@@ -97,6 +100,7 @@ export default function Details(){
 
     const formik_make_payment = useFormik({
         initialValues: {
+            project_expense_id: 0,
             mode_of_payment: "",
             cheque_no: "",
             bank_name: "",
@@ -109,24 +113,31 @@ export default function Details(){
         validateOnChange: false,
         validationSchema: MakePaymentSchema,
         onSubmit: (values, {validateForm})=>{
-                console.log(values)
-                setLoading(true)
-                const formData = new FormData();
-                formData.append('file', values.file);
-                formData.append('values', JSON.stringify(values))
-                
-                AxiosFileInstance.post("/project_expense/insert_payment", formData)
-                .then(function(response){
-                  if(response.data.status === 'SUCCESS'){
-                    setLoading(false)
-                    console.log(response.data.message)
-                  }else{
-                    console.log(response.data.message)
-                  }
-                })
-                .catch(function(error){
-                  console.log(error)
-                })
+                if(values.file !== null){
+                    setLoading(true)
+                    const formData = new FormData();
+                    formData.append('file', values.file);
+                    formData.append('values', JSON.stringify(values))
+                    
+                    AxiosFileInstance.post("/project_expense/insert_payment", formData)
+                    .then(function(response){
+                      if(response.data.status === 'SUCCESS'){
+                        
+                        alert(response.data.message)
+                        window.location.reload()
+                      }else{
+                        console.log(response.data.message)
+                      }
+                      setLoading(false)
+                    })
+                    .catch(function(error){
+                      console.log(error)
+                    })
+                }else{
+                    setFileError('Supporting Document is required!')
+                    setFileAlert(true)
+                }
+        
         }
     })
 
@@ -136,6 +147,7 @@ export default function Details(){
     };
     
     useEffect(()=>{
+
         AxiosInstance.post("/project_expense/details", {pe_number: paramValue})
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
@@ -156,11 +168,18 @@ export default function Details(){
                     vat_percentage: !!result.data.project_expense_details[0].is_vat ? result.data.project_expense_details[0].vat_percentage+'%' : '',
                     vat_amount: result.data.project_expense_details[0].vat_amount,
                     amount_with_vat: result.data.project_expense_details[0].amount_with_vat,
-                    currency: result.data.project_expense_details[0].currency
+                    total_payments: result.data.project_expense_details[0].total_payments,
+                    remaining_balance: result.data.project_expense_details[0].remaining_balance,
+                    currency: result.data.project_expense_details[0].currency,
+                    status: result.data.project_expense_details[0].STATUS
                   })
 
                   setFile(result.data.file_url)
-                  
+                  getPayments(result.data.project_expense_details[0].project_expense_id)
+                  formik_make_payment.setFieldValue('project_expense_id', result.data.project_expense_details[0].project_expense_id)
+                  formik_make_payment.setFieldValue('bank_name', result.data.project_expense_details[0].bank_name)
+                  formik_make_payment.setFieldValue('account_number', result.data.project_expense_details[0].account_number)
+                  formik_make_payment.setFieldValue('iban', result.data.project_expense_details[0].iban)
                   
             }else{
                 console.log(result.data.message)
@@ -170,11 +189,42 @@ export default function Details(){
             console.log(error)
         })
 
+
+       
        
 
         // eslint-disable-next-line
     },[])
   
+
+    function getPayments(project_expense_id){
+     
+        AxiosInstance.post("/project_expense/payments", {project_expense_id : project_expense_id})
+        .then(function(result){
+            if(result.data.status === 'SUCCESS')
+            {
+                setPayments(result.data.payments.map((element)=>({
+                    mode_of_payment: element.mode_of_payment,
+                    amount: element.amount,
+                    cheque_no: element.cheque_no,
+                    date: dayjs(new Date(element.date_paid)).format('DD-MMM-YYYY'),
+                    supporting_doc: element.supporting_doc_name,
+                    bank_name: element.bank_name,
+                    account_number: element.account_number,
+                    iban: element.iban,
+                    user: element.fullname,
+                    status: element.status
+                    })
+                ))
+            }       
+            else{
+                console.log(result.data.message)
+            }
+        })
+        .catch(function(error){
+            console.log(error)
+        })
+    }
   
 
      
@@ -186,186 +236,238 @@ export default function Details(){
         alignItems="center"
         >
             <Grid container justifyContent="center">
-        
-                <Grid item xl={10} lg={10} md={10} sm={12} xs={12}>
-                    <Paper sx={{paddingTop: 4, 
-                                paddingRight: 4, 
-                                paddingBottom: 1, 
-                                paddingLeft: 4}}>
-                        <Grid container direction="column" spacing={3}>
-                            <Grid item>
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
-                                    <Typography variant="subtitle1">Status: </Typography>
+            <Grid item xl={10} lg={10} md={10} sm={12} xs={12}>
+            <Paper sx={{paddingTop: 4, 
+                        paddingRight: 4, 
+                        paddingBottom: 1, 
+                        paddingLeft: 4}}>
+                <Grid container direction="column" spacing={3}>
+                    <Grid item>
+                        <Stack direction="row" justifyContent="space-between">
+                            <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
+                            <Chip 
+                                label={"Status: "+projectExpenseDetails.status} 
+                                size="small"
+                                color={projectExpenseDetails.status === 'PAID' ? 'success' : projectExpenseDetails.status === 'PARTIALLY PAID' ? 'warning' : 'error'}
+                            />
+                        </Stack>
+                    </Grid>
+                    <Grid item container direction="row" spacing={2}>
+                        <Grid item xl={5}>
+                            <Stack direction="column" spacing={2}>
+                                <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.supplier_name} />
+                                <Stack direction="row" spacing={2}>
+                                <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
+                                <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.date_issued} />
                                 </Stack>
-                            </Grid>
-                            <Grid item container direction="row" spacing={2}>
-                                <Grid item xl={5}>
-                                    <Stack direction="column" spacing={2}>
-                                        <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.supplier_name} />
-                                        <Stack direction="row" spacing={2}>
-                                        <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
-                                        <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.date_issued} />
-                                        </Stack>
-                                        <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
-                                       
+                                <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
+                                
 
-                                        {projectExpenseDetails.is_vat ? 
-                                            <Stack direction="row" spacing={2}>
-                                                <TextField label="Amount w/o Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat}
-                                                    InputProps={{
-                                                    inputComponent: NumberFormatCustom,
-                                                  }} />
-                                                <TextField label="Vat Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.vat_amount} InputProps={{
-                                                    inputComponent: NumberFormatCustom,
-                                                  }} />
-                                                <TextField label="Amount w/ Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_with_vat} InputProps={{
-                                                    inputComponent: NumberFormatCustom,
-                                                  }} />
-                                            </Stack>
-                                        : <TextField label="Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat} InputProps={{
+                                {projectExpenseDetails.is_vat ? 
+                                    <Stack direction="row" spacing={2}>
+                                        <TextField label="Amount w/o Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat}
+                                            InputProps={{
                                             inputComponent: NumberFormatCustom,
-                                          }} />}
-                                            <Stack direction="row" spacing={2}>
-                                                <TextField label="Total Payments" size="small" variant="outlined" readOnly fullWidth 
-                                                    InputProps={{
-                                                    inputComponent: NumberFormatCustom,
-                                                  }} />
-                                                <TextField label="Remaining Balance" size="small" variant="outlined" readOnly fullWidth InputProps={{
-                                                    inputComponent: NumberFormatCustom,
-                                                  }} />
-                                            </Stack>
-
-
-                                            {/* Tabs         */}
-                                            {/* <Box sx={{width: '100%' }}> */}
-                                            <AppBar position="static" color="transparent">
-                                                <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth"  indicatorColor="primary" textColor='inherit'>
-                                                    <Tab label="Payments" />
-                                                    <Tab label="Make Payment" />
-                                                </Tabs>
-                                            </AppBar>
-
-                                           <TabPanel value={tabValue} index={0}>
-                                            </TabPanel>
-
-                                            <TabPanel value={tabValue} index={1}>
-                                             <Stack direction="column" spacing={2}>
-                                                <FormControl
-                                                    fullWidth
-                                                    size="small"
-                                                    error={formik_make_payment.touched.mode_of_payment && Boolean(formik_make_payment.errors.mode_of_payment)}
-                                                    >
-                                                    <InputLabel>Mode of Payment</InputLabel>
-                                                    <Select
-                                                    name="mode_of_payment"
-                                                    value={formik_make_payment.values.mode_of_payment}
-                                                    label="Mode of Payment"
-                                                    onChange={(event)=>formik_make_payment.setFieldValue('mode_of_payment',event.target.value)}
-                                                    >
-                                                        <MenuItem value={'Cheque Deposit'}>
-                                                            Cheque Deposit
-                                                        </MenuItem>
-                                                        <MenuItem value={'Account Deposit'}>
-                                                            Account Deposit
-                                                        </MenuItem>
-                                                    </Select>
-                                                    <FormHelperText>
-                                                    {formik_make_payment.touched.mode_of_payment && formik_make_payment.errors.mode_of_payment}
-                                                    </FormHelperText>
-                                                </FormControl> 
-                                                {
-                                                formik_make_payment.values.mode_of_payment === 'Cheque Deposit' && <TextField label="Cheque No." size="small" variant="outlined" name="cheque_no" fullWidth 
-                                                onChange={formik_make_payment.handleChange} value={formik_make_payment.values.cheque_no} 
-                                                error={
-                                                    formik_make_payment.touched.cheque_no && Boolean(formik_make_payment.errors.cheque_no)
-                                                }
-                                                helperText={
-                                                    formik_make_payment.touched.cheque_no && formik_make_payment.errors.cheque_no
-                                                } />  }
-                                        
-                                                { (formik_make_payment.values.mode_of_payment === 'Account Deposit' ||
-                                                formik_make_payment.values.mode_of_payment === 'Cheque Deposit') &&
-                                                <React.Fragment>
-                                                 <TextField label="Bank Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.bank_name} />
-                                                 <TextField label="Account No" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.account_number} />
-                                                 <TextField label="IBAN" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.iban} />
-                                                 <Stack direction="row" spacing={2}>
-                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                        <DatePicker 
-                                                        value={dayjs(formik_make_payment.values.date)}
-                                                        onChange={(value)=>formik_make_payment.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
-                                                        slotProps={{
-                                                            textField: {
-                                                            label: 'Date',
-                                                            variant: 'outlined',
-                                                            name: 'date',
-                                                            size: 'small', 
-                                                            fullWidth: true,
-                                                            error: Boolean(formik_make_payment.errors.date),
-                                                            helperText:formik_make_payment.touched.date && formik_make_payment.errors.date
-                                                            },
-                                                        }} />
-                                                    </LocalizationProvider>
-                                                    <TextField label="Amount" name="amount" onChange={formik_make_payment.handleChange} size="small" variant="outlined" 
-                                                    fullWidth value={formik_make_payment.values.amount}
-                                                    error={
-                                                        formik_make_payment.touched.amount && Boolean(formik_make_payment.errors.amount)
-                                                    }
-                                                    helperText={
-                                                        formik_make_payment.touched.amount && formik_make_payment.errors.amount
-                                                    } />
-                                                </Stack>
-                                            
-                                                <Typography variant="subtitle1">Supporting Doc:</Typography>
-                                                <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={formik_make_payment.touched.file && Boolean(formik_make_payment.errors.file)} alertOpen={fileAlert} />
-                                                 <input type="file" name="file" value={formik_make_payment.values.file} />
-                                                 <Typography>{formik_make_payment.touched.file && Boolean(formik_make_payment.errors.file)}</Typography>
-                                                <Stack direction="row" justifyContent="flex-end">
-                                                <LoadingButton variant='contained' color='secondary' onClick={formik_make_payment.handleSubmit} loading={loading}>Save Payment</LoadingButton>
-                                                </Stack>  
-                                                </React.Fragment> }
-                                               
-                                                </Stack> 
-                                            </TabPanel>
-
+                                            }} />
+                                        <TextField label="Vat Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.vat_amount} InputProps={{
+                                            inputComponent: NumberFormatCustom,
+                                            }} />
+                                        <TextField label="Amount w/ Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_with_vat} InputProps={{
+                                            inputComponent: NumberFormatCustom,
+                                            }} />
                                     </Stack>
-                                </Grid>
-                                <Grid item xl={7}>
-                                   <Box sx={{ flexGrow: 1}}>
-                                        <AppBar position="static">
-                                        <Toolbar variant='dense'>
-                                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                            Supplier Invoice
-                                            </Typography>
-                                            <IconButton
-                                                size="large"
-                                                edge="start"
-                                                color="inherit"
-                                                aria-label="menu"
-                                                //sx={{ ml: 2 }}
+                                : <TextField label="Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat} InputProps={{
+                                    inputComponent: NumberFormatCustom,
+                                    }} />}
+                                    <Stack direction="row" spacing={2}>
+                                        <TextField label="Total Payments" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.total_payments}
+                                            InputProps={{
+                                            inputComponent: NumberFormatCustom,
+                                            }} />
+                                        <TextField label="Remaining Balance" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.remaining_balance}
+                                        InputProps={{
+                                            inputComponent: NumberFormatCustom,
+                                            }} />
+                                            <TextField label="Currency" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.currency}
+                                             />
+                                    </Stack>
+
+
+                                    {/* Tabs         */}
+                                    {/* <Box sx={{width: '100%' }}> */}
+                                    <AppBar position="static  " color="primary">
+                                        <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth"  
+                                        textColor='inherit'>
+                                            <Tab label="Payments" />
+                                            <Tab label="Make Payment" />
+                                        </Tabs>
+                                    </AppBar>
+
+                                    <TabPanel value={tabValue} index={0}>
+
+                                        <List dense={true}>
+                                            {
+                                                payments.map((element, key)=>(
+                                                    <React.Fragment key={key}>
+                                                    <ListItem
+                                                    secondaryAction={
+                                                        <Stack direction="row" spacing={1}>
+                                                            <IconButton edge="end" size="small" color="primary">
+                                                            <ReceiptIcon />
+                                                            </IconButton>
+                                                            { element.status === 'PAID' ? <IconButton edge="end" size="small" color="error">
+                                                            <RemoveCircleIcon />
+                                                            </IconButton> : null }
+                                                        </Stack>
+                                                    }
+
+                                                    >
+                                                    <ListItemAvatar>
+                                                            { element.status === 'PAID' ? <Check color='success' /> : <RemoveCircleIcon color='error' />}
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={<Stack direction="row" spacing={1}>
+                                                                        <NumericFormat 
+                                                                        value={element.amount} 
+                                                                        displayType={'text'}
+                                                                        thousandSeparator={true}
+                                                                        decimalScale={2}
+                                                                        fixedDecimalScale={true} />
+                                                                        <Typography variant="body2">{projectExpenseDetails.currency}</Typography>
+                                                                 </Stack>}
+                                                        secondary={
+                                                            <Stack direction="column" spacing={1} alignItems="flex-start">
+                                                                <Chip color="secondary" label={element.mode_of_payment} size="small" />
+                                                                {element.cheque_no !== 0 && <Chip color="warning" label={'Cheque No. '+element.cheque_no} size="small" /> }
+                                                                <Chip color="info" label={'Date Paid: '+element.date} size="small" />
+                                                                <Chip label={element.user} size="small" />
+                                                            </Stack>
+                                                        }
+                                                    />
+                                                    </ListItem>
+                                                    <Divider />
+                                                    </React.Fragment>
+                                                ))
+                                            }
+
+                                        </List>
+                                    </TabPanel>
+
+                                    <TabPanel value={tabValue} index={1}>
+                                        <Stack direction="column" spacing={2}>
+                                        <FormControl
+                                            fullWidth
+                                            size="small"
+                                            error={formik_make_payment.touched.mode_of_payment && Boolean(formik_make_payment.errors.mode_of_payment)}
                                             >
-                                                <PrintIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                size="large"
-                                                edge="start"
-                                                color="inherit"
-                                                aria-label="menu"
-                                                //sx={{ ml: 2 }}
+                                            <InputLabel>Mode of Payment</InputLabel>
+                                            <Select
+                                            name="mode_of_payment"
+                                            value={formik_make_payment.values.mode_of_payment}
+                                            label="Mode of Payment"
+                                            onChange={(event)=>formik_make_payment.setFieldValue('mode_of_payment',event.target.value)}
                                             >
-                                                <FileDownloadIcon />
-                                            </IconButton>
-                                        </Toolbar>
-                                        </AppBar>
-                                    </Box>
-                                    <PdfViewer file={`${file}`} />
-                                </Grid>
-                            </Grid>
+                                                <MenuItem value={'Cheque Deposit'}>
+                                                    Cheque Deposit
+                                                </MenuItem>
+                                                <MenuItem value={'Account Deposit'}>
+                                                    Account Deposit
+                                                </MenuItem>
+                                            </Select>
+                                            <FormHelperText>
+                                            {formik_make_payment.touched.mode_of_payment && formik_make_payment.errors.mode_of_payment}
+                                            </FormHelperText>
+                                        </FormControl> 
+                                        {
+                                        formik_make_payment.values.mode_of_payment === 'Cheque Deposit' && <TextField label="Cheque No." size="small" variant="outlined" name="cheque_no" fullWidth 
+                                        onChange={formik_make_payment.handleChange} value={formik_make_payment.values.cheque_no} 
+                                        error={
+                                            formik_make_payment.touched.cheque_no && Boolean(formik_make_payment.errors.cheque_no)
+                                        }
+                                        helperText={
+                                            formik_make_payment.touched.cheque_no && formik_make_payment.errors.cheque_no
+                                        } />  }
+                                
+                                        { (formik_make_payment.values.mode_of_payment === 'Account Deposit' ||
+                                        formik_make_payment.values.mode_of_payment === 'Cheque Deposit') &&
+                                        <React.Fragment>
+                                            <TextField label="Bank Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.bank_name} />
+                                            <TextField label="Account No" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.account_number} />
+                                            <TextField label="IBAN" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.iban} />
+                                            <Stack direction="row" spacing={2}>
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker 
+                                                value={dayjs(formik_make_payment.values.date)}
+                                                onChange={(value)=>formik_make_payment.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                                                slotProps={{
+                                                    textField: {
+                                                    label: 'Date',
+                                                    variant: 'outlined',
+                                                    name: 'date',
+                                                    size: 'small', 
+                                                    fullWidth: true,
+                                                    error: Boolean(formik_make_payment.errors.date),
+                                                    helperText:formik_make_payment.touched.date && formik_make_payment.errors.date
+                                                    },
+                                                }} />
+                                            </LocalizationProvider>
+                                            <TextField label="Amount" name="amount" onChange={formik_make_payment.handleChange} size="small" variant="outlined" 
+                                            fullWidth value={formik_make_payment.values.amount}
+                                            error={
+                                                formik_make_payment.touched.amount && Boolean(formik_make_payment.errors.amount)
+                                            }
+                                            helperText={
+                                                formik_make_payment.touched.amount && formik_make_payment.errors.amount
+                                            } />
+                                        </Stack>
+                                    
+                                        <Typography variant="subtitle1">Supporting Doc:</Typography>
+                                        <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={fileError} alertOpen={fileAlert} />
+                                        <Stack direction="row" justifyContent="flex-end">
+                                        <LoadingButton variant='contained' color='secondary' onClick={formik_make_payment.handleSubmit} loading={loading}>Save Payment</LoadingButton>
+                                        </Stack>  
+                                        </React.Fragment> }
+                                        
+                                        </Stack> 
+                                    </TabPanel>
+
+                            </Stack>
                         </Grid>
-                    </Paper>
+                        <Grid item xl={7}>
+                            <Box sx={{ flexGrow: 1}}>
+                                <AppBar position="static">
+                                <Toolbar variant='dense'>
+                                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                                    Supplier Invoice
+                                    </Typography>
+                                    <IconButton
+                                        size="large"
+                                        edge="start"
+                                        color="inherit"
+                                        aria-label="menu"
+                                        //sx={{ ml: 2 }}
+                                    >
+                                        <PrintIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        size="large"
+                                        edge="start"
+                                        color="inherit"
+                                        aria-label="menu"
+                                        //sx={{ ml: 2 }}
+                                    >
+                                        <FileDownloadIcon />
+                                    </IconButton>
+                                </Toolbar>
+                                </AppBar>
+                            </Box>
+                            <PdfViewer file={`${file}`} />
+                        </Grid>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Paper>
+        </Grid>
+        </Grid>
         </Box>
     )
 }

@@ -9,7 +9,7 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
     const onDrop = useCallback((acceptedFiles, fileRejections) => {
         setError(''); // Clear previous errors
         setFileName('');
-      
+        
         if (fileRejections.length > 0) {
             const rejection = fileRejections;
             if (rejection[0].errors.length > 0) {
@@ -63,7 +63,7 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
       </Stack>
       {fileName && alertOpen && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
       {error && alertOpen &&<Alert severity='error'><strong>Error! </strong>{error}</Alert>}
-      {mainError && alertOpen &&<Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
+      {mainError && !fileName && alertOpen &&<Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
       </Stack>
     </div>
   );

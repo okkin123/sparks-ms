@@ -104,13 +104,13 @@ export default function New(){
         setLoading(true)
         const formData = new FormData();
         formData.append('file', values.file);
-        formData.append('values', JSON.stringify(values))
-        
+        formData.append('values', JSON.stringify(values));
+
         AxiosFileInstance.post("/project_expense/insert", formData)
         .then(function(response){
           if(response.data.status === 'SUCCESS'){
            
-            setLoading(false)
+           
             setResponse({
               open: true,
               severity: "success",
@@ -124,6 +124,7 @@ export default function New(){
               message: response.data.message
             })
           }
+          setLoading(false)
         })
         .catch(function(error){
           console.log(error)
