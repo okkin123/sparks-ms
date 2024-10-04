@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
-import {Typography, 
-        Box,
+import {Box,
         Grid, 
         Stack,
         Paper,
@@ -24,7 +23,8 @@ import {Typography,
         Divider,
         List,
         Skeleton,
-        Button} from '@mui/material';
+        Button,
+        Typography} from '@mui/material';
         
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -65,13 +65,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
   }));
 
-  const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.body}`]: {
-      fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
-      color: theme.palette.primary.dark
-    },
-  }));
+
   
   
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
@@ -81,10 +75,15 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     },
     [`& #bankAccount`]: {
       border: 0,
-      padding: 4,
+      padding: 2,
       fontFamily: 'Verdana, sans-serif',
       fontSize: 10.5,
     }
+  }));
+
+  const StyledTypography = styled(Typography)(({ theme }) => ({
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
   }));
 
   const VisuallyHiddenInput = styled('input')({
@@ -122,23 +121,23 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
         <Grid item>
           <Stack direction="column" spacing={2}>
           <img src={bsLogo} width={220} alt="logo" />
-          <Typography variant="body2">TRN NUMBER: {quotation.company_trn}</Typography>
+          <StyledTypography variant="body2">TRN NUMBER: {quotation.company_trn}</StyledTypography>
           </Stack>
         </Grid>
         <Grid item>
             <Stack direction="column" spacing={1}>
-                <Typography variant="body2"><strong>Quotation No.: {quotation.quotation_number}</strong></Typography>
-                <Typography variant="body2">Date: {quotation.quotation_date}</Typography>
+                <StyledTypography variant="body2"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography>
+                <StyledTypography variant="body2">Date: {quotation.quotation_date}</StyledTypography>
             </Stack>
         </Grid>
         <Grid item>
             <Stack direction="column" spacing={1}>
-                <Typography variant="body2">Client Name: {quotation.client_name}</Typography>
-                <Typography variant="body2">Attention To: {quotation.attention_to}</Typography>
+                <StyledTypography variant="body2">Client Name: {quotation.client_name}</StyledTypography>
+                <StyledTypography variant="body2">Attention To: {quotation.attention_to}</StyledTypography>
             </Stack>
         </Grid>
       <Grid item>
-          <Typography variant="body2">Project Name: {quotation.project_name}</Typography>
+          <StyledTypography variant="body2">Project Name: {quotation.project_name}</StyledTypography>
       </Grid>
       <Grid item>
       <TableContainer>
@@ -209,53 +208,55 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </TableContainer>
       </Grid>
       <Grid item>
-      <TableContainer>
-        <Table size="small">
-          <TableBody>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount" colSpan={2} sx={{fontSize: 11}}><strong>Please transfer the amount to the below UAE bank account details:</strong></StyledPrintTableCell>
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>BENIFICIARY:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.benificiary}</StyledPrintTableCell>
-              
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>BANK NAME:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.name}</StyledPrintTableCell>
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>BANK ADDRESS:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.address}</StyledPrintTableCell>
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.account_number}</StyledPrintTableCell>
-              
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>IBAN:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.iban}</StyledPrintTableCell>
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>SWIFT CODE:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.swift_code}</StyledPrintTableCell>
-              
-            </StyledTableRow>
-            <StyledTableRow>
-              <StyledPrintTableCell id="bankAccount"><strong>ROUTING CODE:</strong></StyledPrintTableCell>
-              <StyledPrintTableCell id="bankAccount">{bankAccount.routing_code}</StyledPrintTableCell>
-            </StyledTableRow>
-          </TableBody>    
-        </Table>
-      </TableContainer>
+        <TableContainer>
+          <Table size="small">
+            <TableBody>
+              <StyledTableRow>
+                <TableCell id="bankAccount" sx={{fontSize: 16}} colSpan={2}><strong>Please transfer the amount to the below UAE bank account details:</strong></TableCell>
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
+                <TableCell id="bankAccount"><strong>Client Approval:</strong></TableCell>
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.name}</TableCell>
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.address}</TableCell>
+                <TableCell id="bankAccount"><strong>Name:</strong></TableCell>
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.account_number}</TableCell>
+                
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
+                <TableCell id="bankAccount"><strong>Signature:</strong></TableCell>
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.swift_code}</TableCell>
+                
+              </StyledTableRow>
+              <StyledTableRow>
+                <TableCell id="bankAccount"><strong>ROUTING CODE:</strong></TableCell>
+                <TableCell id="bankAccount">{bankAccount.routing_code}</TableCell>
+              </StyledTableRow>
+            </TableBody>    
+          </Table>
+        </TableContainer>
       </Grid>
       </Grid>
   
       </Box>
 
 
-       <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{quotation.company_address}</Typography>
+       <StyledTypography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{quotation.company_address}</StyledTypography>
       </Box>
     )
   })
@@ -550,7 +551,7 @@ export default function Details(){
                           /> : null }
                       </Stack>
                       <Stack direction="row" justifyContent="space-between">
-                      { quotation.company_trn ? <Typography variant="subtitle1">TRN NUMBER: {quotation.company_trn}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      { quotation.company_trn ? <StyledTypography variant="subtitle1">TRN NUMBER: {quotation.company_trn}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       
                       </Stack>
                 </Stack>
@@ -558,19 +559,19 @@ export default function Details(){
                 <Grid item>
                    <Stack direction="row" justifyContent="space-between">
                       <Stack direction="column" spacing={1}>
-                          { quotation.quotation_number ? <Typography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.quotation_date ? <Typography variant="subtitle1">Date: {quotation.quotation_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.client_name ? <Typography variant="subtitle1">Client Name: {quotation.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.attention_to ? <Typography variant="subtitle1">Attention To: {quotation.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.project_name ? <Typography variant="subtitle1">Project Name: {quotation.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.quotation_number ? <StyledTypography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.quotation_date ? <StyledTypography variant="subtitle1">Date: {quotation.quotation_date}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.client_name ? <StyledTypography variant="subtitle1">Client Name: {quotation.client_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.attention_to ? <StyledTypography variant="subtitle1">Attention To: {quotation.attention_to}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { quotation.project_name ? <StyledTypography variant="subtitle1">Project Name: {quotation.project_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       <Stack direction="column" spacing={1}>
-                      { quotation.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                      {invoices.length > 0 ? <Typography variant='subtitle1'><strong>INVOICES ISSUED:</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} />}
+                      { quotation.status ? <StyledTypography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      {invoices.length > 0 ? <StyledTypography variant='subtitle1'><strong>INVOICES ISSUED:</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
                       {invoices.length > 0 ? null : <Skeleton variant="rounded" width={210} height={30} />}
                           {invoices.map((invoice, key) => (
                             <React.Fragment key={key}>
-                              <Typography variant="subtitle2">#{invoice.invoice_number} - {invoice.amount_with_vat} ({invoice.status})</Typography>
+                              <StyledTypography variant="subtitle2">#{invoice.invoice_number} - {invoice.amount_with_vat} ({invoice.status})</StyledTypography>
                             </React.Fragment>
                           ))}
                     
@@ -655,7 +656,7 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
-                        
+                        <TableCell id="bankAccount"><strong>Client Approval:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
@@ -664,6 +665,7 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.address}</TableCell>
+                        <TableCell id="bankAccount"><strong>Name:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
@@ -673,6 +675,7 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
+                        <TableCell id="bankAccount"><strong>Signature:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
@@ -688,7 +691,7 @@ export default function Details(){
                 </TableContainer>
                 </Grid>
                 <Grid item>
-                  <Typography variant="body1"><strong>APPROVAL HISTORY</strong></Typography>
+                  <StyledTypography variant="body1"><strong>APPROVAL HISTORY</strong></StyledTypography>
                   <List sx={{ bgcolor: 'background.paper' }} dense={true}>
                   {
                    approvalHistory.map((approval ,key)=>(
@@ -700,13 +703,13 @@ export default function Details(){
                       <ListItemText
                         primary={
                           <Stack direction="row" justifyContent="space-between">
-                            <Typography variant="body1">{approval.status}</Typography>
-                            <Typography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</Typography>
+                            <StyledTypography variant="body1">{approval.status}</StyledTypography>
+                            <StyledTypography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</StyledTypography>
                           </Stack>
                         } 
                         secondary={
                           <Stack direction="row" justifyContent="space-between">
-                            <Typography
+                            <StyledTypography
                               sx={{ display: 'inline' }}
                               component="span"
                               variant="body2"
@@ -714,7 +717,7 @@ export default function Details(){
                             >
                               <strong>{approval.fullname}</strong>
                               {approval.comments !== '' ? ' - '+approval.comments : ''}
-                            </Typography>
+                            </StyledTypography>
                              {
                                 approval.supporting_doc_name !== '' && approval.supporting_doc_name !== null? 
                                   <Button color="secondary" size="small" justifyContent="flex-end" onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>Download Supporting Document</Button> : null 
@@ -860,7 +863,7 @@ export default function Details(){
                           </Grid>
                           <Grid item>
                           <Stack direction="column" spacing={2}>
-                          <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
+                          <StyledTypography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</StyledTypography>
                           <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} />
                           {/* <Stack direction="row" spacing={2} sx={{whiteSpace: 'nowrap'}}>
                           <Button
@@ -881,7 +884,7 @@ export default function Details(){
                                     formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
                                   }} />
                             </Button>
-                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            <StyledTypography variant="subtitle1">{formik_update_quotation_status.values.file_name}</StyledTypography>
                             </Stack>
                             <FormHelperText sx={{color: "red"}}>
                             {formik_update_quotation_status.touched.file && formik_update_quotation_status.errors.file}
@@ -953,7 +956,7 @@ export default function Details(){
                                     formik_update_quotation_status.setFieldValue('file_name', file ? file.name : '');
                                   }} />
                             </Button>
-                            <Typography variant="subtitle1">{formik_update_quotation_status.values.file_name}</Typography>
+                            <StyledTypography variant="subtitle1">{formik_update_quotation_status.values.file_name}</StyledTypography>
                             </Stack>  
                           </Grid>
                           <Grid item>

@@ -126,7 +126,8 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
+              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
+              //file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
               project_expense_details: data
             });
           }

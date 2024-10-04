@@ -137,10 +137,11 @@ export default function New(){
         AxiosInstance.get("/preferences/vat")
         .then(function(result){
           formik_project_expense.setFieldValue('vat_percentage',result.data.vat)
+
           const value = formik_project_expense.values.amount_without_vat || 0;
-          const vat = result.data.vat;
-          formik_project_expense.setFieldValue('vat_amount', (value * (parseInt(vat) / 100)).toFixed(2))
-          formik_project_expense.setFieldValue('amount_with_vat', (value + (value * (parseInt(vat) / 100))).toFixed(2) )
+          const vat = isNaN(result.data.vat) ? 0 : parseInt(result.data.vat);
+          formik_project_expense.setFieldValue('vat_amount', (value * (vat / 100)).toFixed(2))
+          formik_project_expense.setFieldValue('amount_with_vat', (value) + parseFloat((value * (vat / 100)).toFixed(2)) )
         })
         .catch(function(error){
           console.log(error)
@@ -378,10 +379,11 @@ export default function New(){
                       onChange={(evt)=>{
                         const value = +evt.target.value || 0;
                         const vat = formik_project_expense.values.vat_percentage;
-                        formik_project_expense.setFieldValue('amount_without_vat', value)
+                        formik_project_expense.setFieldValue('amount_without_vat', evt.target.value)
                         formik_project_expense.setFieldValue('vat_amount', (value * (parseInt(vat) / 100)).toFixed(2))
                         formik_project_expense.setFieldValue('amount_with_vat', (value + (value * (parseInt(vat) / 100))).toFixed(2) )
                       }}
+
                       size="small"
                       error={
                         formik_project_expense.touched.amount_without_vat && Boolean(formik_project_expense.errors.amount_without_vat)
