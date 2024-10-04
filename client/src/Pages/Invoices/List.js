@@ -121,6 +121,10 @@ const columns = [
       )
     },
     {
+      accessorKey: 'po_number',
+      header: 'P.O. NO.'
+    },
+    {
       accessorKey: 'quotation_number',
       header: 'QUOTATION NO.'
     },
@@ -214,6 +218,7 @@ export default function List(props){
             locked: element.created_by_email !== result.data.user_email ? !!element.locked : false,
             invoice_number: element.invoice_number,
             quotation_number: element.quotation_number,
+            po_number: element.po_number !== 0 ? element.po_number : '',
             status: element.STATUS,
             created_by: element.created_by_email,
             invoice_date: dayjs(new Date(element.invoice_date)).format('DD-MMM-YYYY'),

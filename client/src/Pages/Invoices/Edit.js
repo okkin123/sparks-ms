@@ -69,10 +69,19 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const InvoiceDetailSchema = Yup.object().shape({
   topics: Yup.string()
     .required('This field is required!'),
-  amount_without_vat: Yup.string()
-    .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
-    .required('This field is required!')
-  });
+  amount_without_vat: Yup.number()
+    .typeError('Only numbers and decimal points are allowed!')
+    .required('This field is required!'),
+  amount_with_vat: Yup.number()
+    .typeError('Only numbers and decimal points are allowed!')
+    .test('is-required-if', 'This field is required!', function (value) {
+      const { amount_without_vat } = this.parent;
+      if (isNaN(amount_without_vat) || amount_without_vat === 0) {
+        return value !== undefined && value !== null && value !== '';
+      }
+      return true;
+    }),
+});
 
 
   const InvoiceSchema = Yup.object().shape({
@@ -88,7 +97,8 @@ const InvoiceDetailSchema = Yup.object().shape({
       }
       return true;
     }),
-    //.required('This field is required!'),
+    po_number: Yup.number()
+    .integer('Only whole numbers are allowed'),
     address: Yup.string()
     .required('This field is required!'),
     
@@ -139,8 +149,9 @@ export default function Edit(props){
     const handleClearForms = ()=>{
       formik_invoice_detail.resetForm();
       formik_invoice_detail.setValues({
-        topics: '',
-        total_cost: '',
+        topics: "",
+        amount_without_vat: "",
+        amount_with_vat: ""
       });
 
     }
@@ -227,6 +238,7 @@ export default function Edit(props){
         client_name: "",
         attention_to: "",
         address: "",
+        po_number: "",
         project_name: "",
         project_description: "",
         vat_percentage: null,
@@ -249,11 +261,11 @@ export default function Edit(props){
         }
         else
         {
-          if(quotationBreakdown.total_cost_with_vat > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
+          if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
           {
             setError({
               open: true,
-              message: "Total amount for this invoice is invalid! The remaining balance for this quotation is insufficient. Please check and try again!" 
+              message: "Total amount for this invoice is invalid! The remaining balan ce for this quotation is insufficient. Please check and try again!" 
             })
           }else{
             setError({
@@ -299,6 +311,7 @@ export default function Edit(props){
               is_vat: !!result.data.invoice[0].is_vat ? 'Yes' : 'No',
               date: dayjs(new Date(result.data.invoice[0].invoice_date)).format('YYYY-MM-DD'),
               ref_quotation_number: result.data.invoice[0].quotation_number,
+              po_number: result.data.invoice[0].po_number !== 0 ? result.data.invoice[0].po_number : '',
               client_name: result.data.invoice[0].client_name,
               attention_to: result.data.invoice[0].attention_to,
               project_name: result.data.invoice[0].project_name,
@@ -347,6 +360,7 @@ export default function Edit(props){
             formik_invoice.setFieldValue('is_vat', !!result.data.quotation[0].is_vat ? 'Yes' : 'No');
             formik_invoice.setFieldValue('client_name', result.data.quotation[0].client_name);
             formik_invoice.setFieldValue('attention_to', result.data.quotation[0].attention_to);
+            formik_invoice.setFieldValue('po_number', result.data.quotation[0].po_number !== 0 ? result.data.quotation[0].po_number : '');
             formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
             formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
             formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
@@ -653,6 +667,18 @@ export default function Edit(props){
                         )}
                         fullWidth
                       />
+                      <TextField variant='outlined' label="P.O. No."
+                        name="po_number"
+                        value={formik_invoice.values.po_number}
+                        onChange={formik_invoice.handleChange}
+                        size="small"
+                        error={
+                          formik_invoice.touched.po_number && Boolean(formik_invoice.errors.po_number)
+                          }
+                        helperText={
+                          formik_invoice.touched.po_number && formik_invoice.errors.po_number
+                          }
+                        fullWidth />
                   </Stack>
                 </Grid>
                 <Grid item>
@@ -770,7 +796,7 @@ export default function Edit(props){
                         const value = +event.target.value || 0;
                         const amount_without_vat = (value / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
                         formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
-                        formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat.toFixed(2))
+                        formik_invoice_detail.setFieldValue('amount_without_vat', parseFloat(amount_without_vat.toFixed(2)))
                        }}
                        error={
                         formik_invoice_detail.touched.amount_with_vat && Boolean(formik_invoice_detail.errors.amount_with_vat)
@@ -788,33 +814,26 @@ export default function Edit(props){
                        name="amount_without_vat"
                        value={formik_invoice_detail.values.amount_without_vat}
                        size="small"
-                       error={
-                        formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
-                        }
-                        helperText={
-                          formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
-                        }
                        readOnly
                        fullWidth
                       
                       />
                     </Grid></React.Fragment> : 
                     <Grid item>
-                      <TextField 
+                       <TextField 
                        label="Amount"
                        variant="outlined"
                        name="amount_without_vat"
                        value={formik_invoice_detail.values.amount_without_vat}
                        size="small"
                        onChange={formik_invoice_detail.handleChange}
+                       fullWidth
                        error={
                         formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
                         }
                         helperText={
                           formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
-                        }
-                       fullWidth
-                      
+                       }
                       />
                     </Grid>}
                     <Grid item container justifyContent="flex-end">
@@ -938,34 +957,27 @@ export default function Edit(props){
                                             name="amount_without_vat"
                                             value={formik_invoice_detail.values.amount_without_vat}
                                             size="small"
-                                            error={
-                                              formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
-                                              }
-                                              helperText={
-                                                formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
-                                              }
                                             readOnly
                                             fullWidth
                                             
                                             />
                                           </Grid></React.Fragment> : 
                                           <Grid item>
-                                            <TextField 
-                                            label="Amount"
-                                            variant="outlined"
-                                            name="amount_without_vat"
-                                            value={formik_invoice_detail.values.amount_without_vat}
-                                            size="small"
-                                            onChange={formik_invoice_detail.handleChange}
-                                            error={
-                                              formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
+                                          <TextField 
+                                              label="Amount"
+                                              variant="outlined"
+                                              name="amount_without_vat"
+                                              value={formik_invoice_detail.values.amount_without_vat}
+                                              size="small"
+                                              onChange={formik_invoice_detail.handleChange}
+                                              fullWidth
+                                              error={
+                                                formik_invoice_detail.touched.amount_without_vat && Boolean(formik_invoice_detail.errors.amount_without_vat)
+                                                }
+                                                helperText={
+                                                  formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
                                               }
-                                              helperText={
-                                                formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
-                                              }
-                                            fullWidth
-                                            
-                                            />
+                                              />
                                           </Grid>}
                                         <Grid item container justifyContent="flex-end">
                                             <Grid item>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef} from 'react';
 import { styled } from '@mui/material/styles';
-import {Typography, 
-        Box,
+import {Box,
         Grid, 
         Stack,
         Paper,
@@ -24,7 +23,8 @@ import {Typography,
         Divider,
         Skeleton,
         List,
-        Button} from '@mui/material';
+        Button,
+        Typography} from '@mui/material';
         
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -40,44 +40,58 @@ import FileUpload from '../../Components/FileUpload';
 import "../../Assets/print.css";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.common.white,
-      whiteSpace: 'nowrap',
-      fontSize: 10.5,
-    },
-    [`&.${tableCellClasses.body}`]: {
-      fontSize: 10.5,
-      color: theme.palette.primary.dark
-    },
-    [`&.${tableCellClasses.footer}`]: {
-      fontSize: 10.5,
-      color: theme.palette.primary.main,
-      fontWeight: 'bold',
-      whiteSpace: 'nowrap'
-    }
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    whiteSpace: 'nowrap',
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
+    padding: 4,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
+    color: theme.palette.primary.dark,
+    padding: 4,
+   
+  },
+  [`&.${tableCellClasses.footer}`]: {
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
+    color: theme.palette.primary.main,
+    fontWeight: 'bold',
+    whiteSpace: 'nowrap',
+    padding: 4,
+  }
 
-  }));
+}));
 
-  
-  const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.body}`]: {
-      fontSize: 10.5,
-      color: theme.palette.primary.dark
-    },
-  }));
-  
-  
-  const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    // hide last border
-    'td,th': {
-      border: '1px solid '+theme.palette.primary.light,
-    },
-    [`& #bankAccount`]: {
-      border: 0,
-      padding: 4
-    }
-  }));
+const StyledPrintTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.body}`]: {
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
+    color: theme.palette.primary.dark
+  },
+}));
+
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  // hide last border
+  'td,th': {
+    border: '1px solid '+theme.palette.primary.light,
+  },
+  [`& #bankAccount`]: {
+    border: 0,
+    padding: 2,
+    fontFamily: 'Verdana, sans-serif',
+    fontSize: 10.5,
+  }
+}));
+
+const StyledTypography = styled(Typography)(({ theme }) => ({
+  fontFamily: 'Verdana, sans-serif',
+  fontSize: 10.5,
+}));
 
 
   const PrintComponent = React.forwardRef((props, ref)=>{
@@ -102,30 +116,31 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
           <Stack direction="column" spacing={2}>
             <img src={bsLogo} width={220} alt="logo" />
             <Stack direction="row" justifyContent="flex-end">
-            <Typography variant="body2">TRN #: {invoice.company_trn}</Typography>
+            <StyledTypography variant="body2">TRN #: {invoice.company_trn}</StyledTypography>
             </Stack>
         </Stack>
       </Grid>
       <Grid item>
           <Stack direction="row" justifyContent="center">
-              <Typography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></Typography>
+              <StyledTypography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledTypography>
           </Stack>
       </Grid>
     
       <Grid item>
-          <Stack direction="column">
-            <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2">Client Name: {invoice.client_name}</Typography>
-                <Typography variant="body2">Date: {invoice.invoice_date}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography variant="body2">Address: {invoice.address}</Typography>
-              <Typography variant="body2">Ref Quotation #: {invoice.quotation_number}</Typography>
-            </Stack>
-            <Typography variant="body2">TRN #: {invoice.client_trn}</Typography>
-            <Typography variant="body2">Attention To: {invoice.attention_to}</Typography>
-            <Typography variant="body2">Project Name: {invoice.project_name}</Typography>
-          </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Stack direction="column" spacing={0.5}>
+            <StyledTypography variant="body2">Client Name: {invoice.client_name}</StyledTypography>
+            <StyledTypography variant="body2">Address: {invoice.address}</StyledTypography>
+            <StyledTypography variant="body2">TRN #: {invoice.client_trn}</StyledTypography>
+            <StyledTypography variant="body2">Attention To: {invoice.attention_to}</StyledTypography>
+            <StyledTypography variant="body2">Project Name: {invoice.project_name}</StyledTypography>
+        </Stack>
+        <Stack direction="column" spacing={0.5}>
+          <StyledTypography variant="body2">Date: {invoice.invoice_date}</StyledTypography>
+          <StyledTypography variant="body2">Ref Quotation #: {invoice.quotation_number}</StyledTypography>
+          { invoice.po_number && <StyledTypography variant="body2">P.O. No.: {invoice.po_number}</StyledTypography> }
+        </Stack>
+      </Stack>
       </Grid>
       <Grid item>
       <TableContainer>
@@ -253,8 +268,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </Grid>
       
       </Box>
-      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption"><strong>Note: </strong>This is a computer generated invoice, hence no signature is required.</Typography>
-      <Typography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{invoice.company_address}<br/><u>www.spark-communications.net</u></Typography>
+      <StyledTypography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption"><strong>Note: </strong>This is a computer generated invoice, hence no signature is required.</StyledTypography>
+      <StyledTypography sx={{marginTop: 'auto', textAlign: 'center'}} variant="caption">{invoice.company_address}<br/><u>www.spark-communications.net</u></StyledTypography>
       </Box>
     )
   })
@@ -309,10 +324,10 @@ export default function Details(){
         AxiosInstance.post("/invoice/details", {invoice_number : paramValue})
         .then((result) => {
           if (result.data.status === "SUCCESS") {
-
             setInvoice({
                     invoice_number: result.data.invoice[0].invoice_number,
                     quotation_number: result.data.invoice[0].quotation_number,
+                    po_number: result.data.invoice[0].po_number!==0 ? result.data.invoice[0].po_number : null,
                     status: result.data.invoice[0].STATUS,
                     created_by: result.data.invoice[0].created_by_email,
                     invoice_date: dayjs(new Date(result.data.invoice[0].invoice_date)).format('DD-MMM-YYYY'),
@@ -542,34 +557,38 @@ export default function Details(){
                       
                       </Stack>
                       <Stack direction="row" justifyContent="flex-end">
-                      {invoice.status ? <Typography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      {invoice.status ? <StyledTypography variant="subtitle1" color="info"><strong>STATUS: {invoice.status}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                       <Stack direction="row" justifyContent="flex-end">
                       
-                      {invoice.company_trn ? <Typography variant="subtitle1">TRN #: {invoice.company_trn}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      {invoice.company_trn ? <StyledTypography variant="subtitle1">TRN #: {invoice.company_trn}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       </Stack>
                  </Stack>
                 </Grid>
                 <Grid item>
                     <Stack direction="row" justifyContent="center">
-                    {invoice.invoice_number ? <Typography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></Typography> : <Skeleton variant="rounded" width={410} height={50} /> }
+                    {invoice.invoice_number ? <StyledTypography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={410} height={50} /> }
                         
                     </Stack>
                 </Grid>
              
                 <Grid item>
-                    <Stack direction="column" spacing={1}>
-                      <Stack direction="row" justifyContent="space-between">
-                          {invoice.client_name ? <Typography variant="subtitle1">Client Name: {invoice.client_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          {invoice.invoice_date ? <Typography variant="subtitle1">Date: {invoice.invoice_date}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                    <Stack direction="row" justifyContent="space-between">
+                      <Stack direction="column" spacing={0.5}>
+                          {invoice.client_name ? <StyledTypography variant="subtitle1">Client Name: {invoice.client_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { invoice.address ? <StyledTypography variant="subtitle1">Address: {invoice.address}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
+                          { invoice.client_trn ? <StyledTypography variant="subtitle1">TRN #: {invoice.client_trn}</StyledTypography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { invoice.attention_to ? <StyledTypography variant="subtitle1">Attention To: {invoice.attention_to}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { invoice.project_name ? <StyledTypography variant="subtitle1">Project Name: {invoice.project_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
+                          
                       </Stack>
-                      <Stack direction="row" justifyContent="space-between">
-                        { invoice.address ? <Typography variant="subtitle1">Address: {invoice.address}</Typography> : <Skeleton variant="rounded" width={210} height={15} />}
-                        { invoice.quotation_number ? <Typography variant="subtitle1">Ref Quotation No.: {invoice.quotation_number}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      <Stack direction="column" spacing={0.5}>
+                        {invoice.invoice_date ? <StyledTypography variant="subtitle1">Date: {invoice.invoice_date}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                        { invoice.quotation_number ? <StyledTypography variant="subtitle1">Ref Quotation No.: {invoice.quotation_number}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }    
+                        { invoice.po_number && <StyledTypography variant="subtitle1">P.O. No.: {invoice.po_number}</StyledTypography> }
                       </Stack>
-                      { invoice.client_trn ? <Typography variant="subtitle1">TRN #: {invoice.client_trn}</Typography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
-                      { invoice.attention_to ? <Typography variant="subtitle1">Attention To: {invoice.attention_to}</Typography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                      { invoice.project_name ? <Typography variant="subtitle1">Project Name: {invoice.project_name}</Typography> : <Skeleton variant="rounded" width={210} height={15} />}
+         
+                    
                     </Stack>
                 </Grid> 
                 <Grid item>
@@ -696,7 +715,7 @@ export default function Details(){
                 </TableContainer>) : <Skeleton variant="rounded" width="100%" height={300} />  }
                 </Grid>
                 <Grid item>
-                  {approvalHistory.length > 0 ? (<React.Fragment><Typography variant="body2"><strong>APPROVAL HISTORY</strong></Typography>
+                  {approvalHistory.length > 0 ? (<React.Fragment><StyledTypography variant="body2"><strong>APPROVAL HISTORY</strong></StyledTypography>
                   <List sx={{ bgcolor: 'background.paper' }} dense={true}>
                   {
                    approvalHistory.map((approval ,key)=>(
@@ -708,13 +727,13 @@ export default function Details(){
                       <ListItemText
                         primary={
                           <Stack direction="row" justifyContent="space-between">
-                            <Typography variant="body2">{approval.status}</Typography>
-                            <Typography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</Typography>
+                            <StyledTypography variant="body2">{approval.status}</StyledTypography>
+                            <StyledTypography variant="subtitle2">{dayjs(approval.date_time).format('MMM DD,YYYY | hh:mm a ')}</StyledTypography>
                           </Stack>
                         } 
                         secondary={
                           <Stack direction="row" justifyContent="space-between">
-                            <Typography
+                            <StyledTypography
                               sx={{ display: 'inline' }}
                               component="span"
                               variant="body2"
@@ -722,7 +741,7 @@ export default function Details(){
                             >
                               <strong>{approval.fullname}</strong>
                               {approval.comments !== '' ? ' - '+approval.comments : ''}
-                            </Typography>
+                            </StyledTypography>
                              {
                                 approval.supporting_doc_name !== '' && approval.supporting_doc_name !== null? 
                                   <Button color="secondary" size="small" justifyContent="flex-end" onClick={()=>downloadSupportingDoc(approval.supporting_doc_name)}>Download Supporting Document</Button> : null 
@@ -826,7 +845,7 @@ export default function Details(){
                           </Grid>
                           <Grid item>
                           <Stack direction="column" spacing={2}>
-                          <Typography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</Typography>
+                          <StyledTypography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</StyledTypography>
                           <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} />
                           </Stack>
                           </Grid></React.Fragment>: null }
