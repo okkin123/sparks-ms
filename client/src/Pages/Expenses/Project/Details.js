@@ -166,6 +166,7 @@ export default function Details(){
               
                 
                 setProjectExpensesDetails({
+                    project_expense_id: result.data.project_expense_details[0].project_expense_id,
                     pe_number: result.data.project_expense_details[0].pe_number,
                     project_name: result.data.project_expense_details[0].project_name,
                     supplier_name: result.data.project_expense_details[0].supplier_name,
@@ -302,7 +303,18 @@ export default function Details(){
       };
   
 
-     
+     function handleVoidExpense(project_expense_id){
+        AxiosInstance.post("/project_expense/void_expense", {project_expense_id : project_expense_id})
+        .then(function(response){
+            alert(response.data.status +" "+ response.data.message)
+            if(response.data.status === "SUCCESS"){
+                window.location.reload()
+            }  
+        })
+        .catch(function(error){
+            console.log(error)
+        })
+     }
     
     return(
         <Box
@@ -320,11 +332,20 @@ export default function Details(){
                     <Grid item>
                         <Stack direction="row" justifyContent="space-between">
                             <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
+                            <Stack direction="row" spacing={2}>
+
+                            {projectExpenseDetails.status === 'UNPAID' ? <Chip
+                                label="Void" 
+                                size="small"
+                                onClick={()=>handleVoidExpense(projectExpenseDetails.project_expense_id)}
+                            /> : null}
+                            
                             <Chip 
                                 label={"Status: "+projectExpenseDetails.status} 
                                 size="small"
-                                color={projectExpenseDetails.status === 'PAID' ? 'success' : projectExpenseDetails.status === 'PARTIALLY PAID' ? 'warning' : 'error'}
+                                color={projectExpenseDetails.status === 'PAID' ? 'success' : projectExpenseDetails.status === 'PARTIALLY PAID' ? 'warning' :  projectExpenseDetails.status === 'UNPAID' ? 'info' : 'error'}
                             />
+                            </Stack>
                         </Stack>
                     </Grid>
                     <Grid item container direction="row" spacing={2}>

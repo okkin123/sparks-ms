@@ -101,7 +101,7 @@ const columns=[
         <Chip 
             label={renderedCellValue} 
             size="small"
-            color={renderedCellValue === 'PAID' ? 'success' : renderedCellValue === 'PARTIALLY PAID' ? 'warning' : 'error'}
+            color={renderedCellValue === 'PAID' ? 'success' : renderedCellValue === 'PARTIALLY PAID' ? 'warning' : renderedCellValue === 'UNPAID' ? 'info' : 'error'}
         />
         )
     },
