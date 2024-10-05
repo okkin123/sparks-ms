@@ -154,7 +154,7 @@ module.exports = {
     })
   },
   payments: (req, res) =>{
-    dbConnection.query("SELECT * FROM vw_project_expense_payments WHERE project_expense_id=?",
+    dbConnection.query("SELECT * FROM vw_project_expense_payments WHERE project_expense_id=? ORDER BY project_expense_id DESC",
       [req.body.project_expense_id],
       function(err, data, fields){
         if (err) {
@@ -195,6 +195,25 @@ module.exports = {
             status: "SUCCESS",
             message: "Thes selected payment has been voided!"
           });
+        }
+      }
+    )
+  },
+  void_expense: (req, res)=>{
+    dbConnection.query("UPDATE tbl_project_expenses SET is_void=? WHERE project_expense_id=? AND user_id=?",
+      [true, req.body.project_expense_id, req.user.user_id],
+      function(err, data, fields){
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: data.length > 0 ? "SUCCESS" : "WARNING",
+            message: data.length > 0 ? "This project expense has been voided!" : "You are not authorized to void this expense!"
+          });
+            
         }
       }
     )

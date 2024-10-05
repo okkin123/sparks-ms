@@ -141,7 +141,8 @@ export default function New(){
           const value = formik_project_expense.values.amount_without_vat || 0;
           const vat = isNaN(result.data.vat) ? 0 : parseInt(result.data.vat);
           formik_project_expense.setFieldValue('vat_amount', (value * (vat / 100)).toFixed(2))
-          formik_project_expense.setFieldValue('amount_with_vat', (value) + parseFloat((value * (vat / 100)).toFixed(2)) )
+          formik_project_expense.setFieldValue('amount_with_vat', (parseFloat(value) + (parseFloat(value) * (parseInt(vat) / 100))).toFixed(2))
+
         })
         .catch(function(error){
           console.log(error)

@@ -36,5 +36,6 @@ router.route("/insert_payment").post(middleware.authentication, destB.single('fi
 router.route("/payments").post(controller.payments)
 router.route("/download_supporting_doc/:filename").get(controller.download_supporting_doc);
 router.route("/void_payment").post(middleware.authentication, controller.void_payment)
+router.route("/void_expense").post(middleware.authentication, controller.void_expense)
 
 module.exports = router;
