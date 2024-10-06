@@ -184,7 +184,8 @@ export default function Details(){
                     total_payments: result.data.project_expense_details[0].total_payments,
                     remaining_balance: result.data.project_expense_details[0].remaining_balance,
                     currency: result.data.project_expense_details[0].currency,
-                    status: result.data.project_expense_details[0].STATUS
+                    status: result.data.project_expense_details[0].STATUS,
+                    authorized: JSON.parse(result.data.project_expense_details[0].reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
                   })
 
                   setFile(result.data.file_url)
@@ -227,10 +228,11 @@ export default function Details(){
                     bank_name: element.bank_name,
                     account_number: element.account_number,
                     iban: element.iban,
-                    user: element.fullname,
+                    processed_by: element.processed_by,
                     status: element.status,
                     supporting_doc_name: element.supporting_doc_name,
-                    voided_by: element.voided_by
+                    voided_by: element.voided_by,
+                    authorized: JSON.parse(element.reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
                     })
                 ))
             }       
@@ -334,7 +336,7 @@ export default function Details(){
                             <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
                             <Stack direction="row" spacing={2}>
 
-                            {projectExpenseDetails.status === 'UNPAID' ? <Chip
+                            {projectExpenseDetails.status === 'UNPAID' && projectExpenseDetails.authorized ? <Chip
                                 label="Void" 
                                 size="small"
                                 onClick={()=>handleVoidExpense(projectExpenseDetails.project_expense_id)}
@@ -408,7 +410,7 @@ export default function Details(){
                                                     <ListItem
                                                     secondaryAction={
                                                         <Stack direction="row" spacing={1}>
-                                                            { !element.voided_by && <IconButton edge="end" size="small" color="error" onClick={()=>{
+                                                            { !element.voided_by && element.authorized && <IconButton edge="end" size="small" color="error" onClick={()=>{
                                                             handleVoidPaymentDialog(key)
                                                             setDialogVoid({...dialogVoid, open: true, project_expense_payment_id: parseInt(element.project_expense_payment_id),
                                                             content:
@@ -482,7 +484,7 @@ export default function Details(){
                                                                 <Chip variant='outlined' color="secondary" label={'Bank Name: '+element.bank_name} size="small" />
                                                                 <Chip variant='outlined' color="warning" label={'Account No.: '+element.account_number} size="small" />
                                                                 <Chip variant='outlined' color="info" label={'IBAN: '+element.iban} size="small" />
-                                                                <Chip label={'Processed By: '+element.user} size="small" />
+                                                                <Chip label={'Processed By: '+element.processed_by} size="small" />
                                                                 { element.voided_by && <Chip color="error" label={'Voided By: '+element.voided_by} size="small" />}
                                                             </Stack>
                                                         }

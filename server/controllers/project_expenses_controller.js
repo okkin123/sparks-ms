@@ -68,13 +68,13 @@ module.exports = {
                     function(err3, data3, fields3){
           
                       if(data3.length === 0){
-                        dbConnection.query("INSERT INTO tbl_suppliers(supplier_name, bank_name, account_number, iban) VALUES(?,?,?,?)",
-                          [values.supplier_name, values.bank_name, values.account_number, values.iban],
+                        dbConnection.query("INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban) VALUES(?,?,?,?,?)",
+                          [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban],
                           function(err2, data2, fields2){})
                       }else{
                         
-                        dbConnection.query("UPDATE tbl_suppliers SET bank_name=?, account_number=?, iban=? WHERE supplier_id=?",
-                          [values.bank_name, values.account_number, values.iban, data3[0].supplier_id],
+                        dbConnection.query("UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=? WHERE supplier_id=?",
+                          [values.bank_name, values.account_name, values.account_number, values.iban, data3[0].supplier_id],
                           function(err4, data4, fields4){
                             if(err4)
                               console.log(err4)
@@ -126,8 +126,9 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
-              //file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
+              //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
+              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
+              user_id: req.user.user_id,
               project_expense_details: data
             });
           }
@@ -165,6 +166,7 @@ module.exports = {
         } else {
           res.send({
             status: "SUCCESS",
+            user_id: req.user.user_id,
             payments: data
           });
         }
