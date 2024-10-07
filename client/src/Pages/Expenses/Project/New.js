@@ -1,4 +1,4 @@
-import {Autocomplete, Box, AppBar, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
+import {Autocomplete, Box, AppBar, Divider, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Paper, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton, Checkbox, FormControlLabel} from '@mui/material';
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../Components/PdfViewer';
 import FileUpload from '../../../Components/FileUpload';
@@ -56,6 +56,7 @@ export default function New(){
     const [fileAlert, setFileAlert] = useState(false)
     const [previousValue, setPreviousValue] = useState({
       bank_name: "",
+      account_name: "",
       account_number: "",
       iban: ""
     })
@@ -95,6 +96,8 @@ export default function New(){
         vat_percentage: 0,
         currency: "",
         bank_name: "",
+        account_name: "",
+        set_account_name: false,
         account_number: "",
         iban: ""
       },
@@ -163,6 +166,7 @@ export default function New(){
               ...result.data.suppliers.map(element => ({
                 supplier_name: element.supplier_name,
                 bank_name: element.bank_name,
+                account_name: element.account_name,
                 account_number: element.account_number,
                 iban: element.iban
               }))
@@ -218,6 +222,8 @@ export default function New(){
         vat_percentage: "",
         currency: "",
         bank_name: "",
+        account_name: "",
+        set_account_name: false,
         account_number: "",
         iban: ""
       })
@@ -427,31 +433,40 @@ export default function New(){
                             label: option.supplier_name,
                             value: option.supplier_name,
                             bank_name: option.bank_name,
+                            account_name: option.account_name,
                             account_number: option.account_number,
                             iban: option.iban,
                           }))}
                           value={formik_project_expense.values.supplier_name}
                           onChange={(event, newValue) => {
+
+                              formik_project_expense.setFieldValue('account_name', event.target.value);
+                            
+
                             if (newValue) {
                               formik_project_expense.setFieldValue('supplier_name', newValue.value);
                               formik_project_expense.setFieldValue('bank_name', newValue.bank_name);
+                              formik_project_expense.setFieldValue('account_name', newValue.account_name);
                               formik_project_expense.setFieldValue('account_number', newValue.account_number);
                               formik_project_expense.setFieldValue('iban', newValue.iban);
                               formik_project_expense.setFieldValue('save_bank_details', true);
                               
                               setPreviousValue({
                                 bank_name: newValue.bank_name,
+                                account_name: newValue.account_name,
                                 account_number: newValue.account_number,
                                 iban: newValue.iban
                               })
                             } else {
                               formik_project_expense.setFieldValue('supplier_name', '');
                               formik_project_expense.setFieldValue('bank_name', '');
+                              formik_project_expense.setFieldValue('account_name', '');
                               formik_project_expense.setFieldValue('account_number', '');
                               formik_project_expense.setFieldValue('iban', '');
                               formik_project_expense.setFieldValue('save_bank_details', false);
                               setPreviousValue({
                                 bank_name: "",
+                                account_name: "",
                                 account_number: "",
                                 iban: ""
                               })
@@ -505,6 +520,30 @@ export default function New(){
                         readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
                       }}
                       />  
+                      <Stack direction="column">
+                      <TextField label="Account Name." size="small" variant="outlined" name="account_name" fullWidth 
+                      onChange={formik_project_expense.handleChange} value={formik_project_expense.values.account_name} 
+                      error={
+                        formik_project_expense.touched.account_name && Boolean(formik_project_expense.errors.account_name)
+                      }
+                      helperText={
+                        formik_project_expense.touched.account_name && formik_project_expense.errors.account_name
+                      }
+                      InputProps={{
+                        readOnly: (supplierExists(formik_project_expense.values.supplier_name) && !isEditing) ||formik_project_expense.values.set_account_name,
+                      }}
+                      />  
+                      <FormControlLabel control={<Checkbox name="set_account_name" size="small"checked={formik_project_expense.values.set_account_name} onChange={(event)=>{
+                        
+                        formik_project_expense.setFieldValue('set_account_name', event.target.checked)
+                        if(event.target.checked === true){
+                          formik_project_expense.setFieldValue('account_name', formik_project_expense.values.supplier_name)
+                        }else{
+                          formik_project_expense.setFieldValue('account_name', '')
+                        }
+                       
+                      }}  />} label="Set as the same as supplier name." />
+                      </Stack>
                        <TextField label="Account No." size="small" variant="outlined" name="account_number" fullWidth 
                       onChange={formik_project_expense.handleChange} value={formik_project_expense.values.account_number} 
                       error={
