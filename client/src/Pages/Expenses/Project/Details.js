@@ -5,7 +5,7 @@ import AxiosFileInstance from '../../../AxiosFileInstance';
 import dayjs from 'dayjs';
 
 import PdfViewer from '../../../Components/PdfViewer';
-import PrintIcon from '@mui/icons-material/Print';
+// import PrintIcon from '@mui/icons-material/Print';
 import NumberFormatCustom from '../../../Components/NumberFormatCustom';
 import FileUpload from '../../../Components/FileUpload';
 import Dialog from '../../../Components/Dialog';
@@ -112,6 +112,7 @@ export default function Details(){
             mode_of_payment: "",
             cheque_no: "",
             bank_name: "",
+            account_name: "",
             account_number: "",
             name: "",
             date: null,
@@ -168,9 +169,12 @@ export default function Details(){
                 setProjectExpensesDetails({
                     project_expense_id: result.data.project_expense_details[0].project_expense_id,
                     pe_number: result.data.project_expense_details[0].pe_number,
+                    invoice_file_name: result.data.project_expense_details[0].invoice_file_name,
+                    invoice_file_path: result.data.project_expense_details[0].invoice_file_path,
                     project_name: result.data.project_expense_details[0].project_name,
                     supplier_name: result.data.project_expense_details[0].supplier_name,
                     bank_name: result.data.project_expense_details[0].bank_name,
+                    account_name: result.data.project_expense_details[0].account_name,
                     account_number: result.data.project_expense_details[0].account_number,
                     iban: result.data.project_expense_details[0].iban,
                     invoice_number: result.data.project_expense_details[0].invoice_number,
@@ -192,6 +196,7 @@ export default function Details(){
                   getPayments(result.data.project_expense_details[0].project_expense_id)
                   formik_make_payment.setFieldValue('project_expense_id', result.data.project_expense_details[0].project_expense_id)
                   formik_make_payment.setFieldValue('bank_name', result.data.project_expense_details[0].bank_name)
+                  formik_make_payment.setFieldValue('account_name', result.data.project_expense_details[0].account_name)
                   formik_make_payment.setFieldValue('account_number', result.data.project_expense_details[0].account_number)
                   formik_make_payment.setFieldValue('iban', result.data.project_expense_details[0].iban)
                   
@@ -226,11 +231,13 @@ export default function Details(){
                     date: dayjs(new Date(element.date_paid)).format('DD-MMM-YYYY'),
                     supporting_doc: element.supporting_doc_name,
                     bank_name: element.bank_name,
+                    account_name: element.account_name,
                     account_number: element.account_number,
                     iban: element.iban,
                     processed_by: element.processed_by,
                     status: element.status,
                     supporting_doc_name: element.supporting_doc_name,
+                    supporting_doc_path: element.supporting_doc_path,
                     voided_by: element.voided_by,
                     authorized: JSON.parse(element.reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
                     })
@@ -282,9 +289,9 @@ export default function Details(){
         })
     }
 
-    const downloadSupportingDoc = async (filename) => {
+    const downloadFile = async (filename, filepath) => {
         try {
-          const response = await AxiosInstance.get(`/project_expense/download_supporting_doc/${filename}`, {
+          const response = await AxiosInstance.post(`/project_expense/download_file`, {filepath: filepath}, {
             responseType: 'blob',
           });
       
@@ -431,10 +438,11 @@ export default function Details(){
                                                                     <Chip color="secondary" label={element.mode_of_payment} size="small" />
                                                                     {element.cheque_no !== 0 && <Chip color="warning" label={'Cheque No. '+element.cheque_no} size="small" /> }
                                                                     <Chip color="info" label={'Date Paid: '+element.date} size="small" />
-                                                                    <Chip variant='outlined' color="secondary" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                    <Chip variant='outlined' color="success" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                    <Chip variant='outlined' color="secondary" label={'Account Name: '+element.account_name} size="small" />
                                                                     <Chip variant='outlined' color="warning" label={'Account No.: '+element.account_number} size="small" />
                                                                     <Chip variant='outlined' color="info" label={'IBAN: '+element.iban} size="small" />
-                                                                    <Chip label={'Processed By: '+element.user} size="small" />
+                                                                    <Chip label={'Processed By: '+element.processed_by} size="small" />
                                                                 </Stack>
                                                                 }
                                                             />
@@ -455,7 +463,7 @@ export default function Details(){
                                                                         </Stack>
                                                                 </Stack>
                                                             } />
-                                                            <IconButton onClick={()=>downloadSupportingDoc(element.supporting_doc_name)} color="secondary" edge="end" size="small" >
+                                                            <IconButton onClick={()=>downloadFile(element.supporting_doc_name, element.supporting_doc_path)} color="secondary" edge="end" size="small" >
                                                             <FileDownloadIcon />
                                                             </IconButton>
                                                         </Stack>
@@ -481,7 +489,8 @@ export default function Details(){
                                                                 <Chip color="secondary" label={element.mode_of_payment} size="small" />
                                                                 {element.cheque_no !== 0 && <Chip color="warning" label={'Cheque No. '+element.cheque_no} size="small" /> }
                                                                 <Chip color="info" label={'Date Paid: '+element.date} size="small" />
-                                                                <Chip variant='outlined' color="secondary" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                <Chip variant='outlined' color="success" label={'Bank Name: '+element.bank_name} size="small" />
+                                                                <Chip variant='outlined' color="secondary" label={'Account Name: '+element.account_name} size="small" />
                                                                 <Chip variant='outlined' color="warning" label={'Account No.: '+element.account_number} size="small" />
                                                                 <Chip variant='outlined' color="info" label={'IBAN: '+element.iban} size="small" />
                                                                 <Chip label={'Processed By: '+element.processed_by} size="small" />
@@ -538,6 +547,7 @@ export default function Details(){
                                         formik_make_payment.values.mode_of_payment === 'Cheque Deposit') &&
                                         <React.Fragment>
                                             <TextField label="Bank Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.bank_name} />
+                                            <TextField label="Account Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.account_name} />
                                             <TextField label="Account No" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.account_number} />
                                             <TextField label="IBAN" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.iban} />
                                             <Stack direction="row" spacing={2}>
@@ -584,9 +594,9 @@ export default function Details(){
                                 <AppBar position="static">
                                 <Toolbar variant='dense'>
                                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                    Supplier Invoice
+                                     Invoice
                                     </Typography>
-                                    <IconButton
+                                    {/* <IconButton
                                         size="large"
                                         edge="start"
                                         color="inherit"
@@ -594,13 +604,14 @@ export default function Details(){
                                         //sx={{ ml: 2 }}
                                     >
                                         <PrintIcon />
-                                    </IconButton>
+                                    </IconButton> */}
                                     <IconButton
                                         size="large"
                                         edge="start"
                                         color="inherit"
                                         aria-label="menu"
                                         //sx={{ ml: 2 }}
+                                        onClick={()=>downloadFile(projectExpenseDetails.invoice_file_name, projectExpenseDetails.invoice_file_path)}
                                     >
                                         <FileDownloadIcon />
                                     </IconButton>

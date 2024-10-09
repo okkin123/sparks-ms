@@ -54,8 +54,8 @@ module.exports = {
     
 
         dbConnection.query(
-            "INSERT INTO tbl_project_expenses(invoice_file_name, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-            [req.file.filename, values.date_issued, values.ref_invoice_number, values.supplier_name, values.supplier_invoice_number, values.is_vat, values.vat_percentage, values.amount_without_vat, vat_amount, amount_with_vat, values.currency, req.user.user_id],
+            "INSERT INTO tbl_project_expenses(invoice_file_name, invoice_file_path, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [req.file.filename, req.file.path, values.date_issued, values.ref_invoice_number, values.supplier_name, values.supplier_invoice_number, values.is_vat, values.vat_percentage, values.amount_without_vat, vat_amount, amount_with_vat, values.currency, req.user.user_id],
             function(err, data, fields) {
               if (err) {
                 res.send({
@@ -126,8 +126,8 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_name}`,
-              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
+              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
+              //file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
               user_id: req.user.user_id,
               project_expense_details: data
             });
@@ -137,9 +137,8 @@ module.exports = {
     },
   insert_payment: (req, res)=>{
     const values = JSON.parse(req.body.values);
-
-    dbConnection.query("INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date_paid, cheque_no, bank_name, account_number, iban, amount, user_id, supporting_doc_name) VALUES(?,?,?,?,?,?,?,?,?,?)",
-    [values.project_expense_id, values.mode_of_payment, values.date, isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no, values.bank_name, values.account_number, values.iban, values.amount, req.user.user_id, req.file.filename],
+    dbConnection.query("INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date_paid, cheque_no, bank_name, account_name, account_number, iban, amount, user_id, supporting_doc_name, supporting_doc_path) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+    [values.project_expense_id, values.mode_of_payment, values.date, isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no, values.bank_name, values.account_name, values.account_number, values.iban, values.amount, req.user.user_id, req.file.filename, req.file.path],
     function(err, data, fields) {
       if (err) {
         res.send({
@@ -173,10 +172,9 @@ module.exports = {
       }
     )
   },
-  download_supporting_doc: (req, res)=>{
-    const filename = req.params.filename;
-    const filePath = `uploads/payment_receipts/${filename}`;
-    res.download(filePath, (err) => {
+  download_file: (req, res)=>{
+    const filepath = req.body.filepath;
+    res.download(filepath, (err) => {
       if (err) {
         console.error(err);
         res.status(500).send('File not found.');
@@ -219,6 +217,26 @@ module.exports = {
         }
       }
     )
-  }
+  },
+  get_vendor_details: (req, res)=>{
+    dbConnection.query(
+        "SELECT * FROM vw_project_vendor_expenses GROUP BY ??",
+        [req.body.fieldname],
+        function(err, data, fields) {
+          if (err) {
+            res.send({
+              status: "ERROR",
+              message: err.sqlMessage
+            });
+          } else {
+            res.send({
+              status: "SUCCESS",
+              vendor_details: data
+            });
+          }
+        }
+      )
+      
+},
 
 }
