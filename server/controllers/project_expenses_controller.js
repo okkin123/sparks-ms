@@ -238,5 +238,37 @@ module.exports = {
       )
       
 },
+insert_vendor_expense: (req, res)=>{
+  const values = req.body.values;
+  const details = values.flatMap(detail => [
+  detail.ref_invoice_number,
+  detail.vendor_name,
+  detail.location,
+  detail.amount_without_vat,
+  detail.vat_amount,
+  detail.amount_with_vat,
+  req.user.user_id
+  ]);
+
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?)').join(',');
+
+  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, vendor_name, location, amount_without_vat, vat_amount, amount_with_vat, user_id) VALUES ${placeholders}`,
+    details,
+    function(err, data, fields){
+      if (err) {
+        res.send({
+          status: "ERROR",
+          message: err.sqlMessage
+        });
+      } else {
+        res.send({
+          status: "SUCCESS",
+          message: "New vendor expenses for projects are submitted successfuly!"
+        });
+          
+      }
+    }
+  )
+}
 
 }

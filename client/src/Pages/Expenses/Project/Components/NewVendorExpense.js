@@ -4,22 +4,22 @@ import { Grid,
     TableRow,
     Table,
     TableBody,
+    TableFooter,
     TextField,
     Stack,
     Button,
     IconButton,
     Autocomplete,
-    FormControl,
-    Select,
-    MenuItem,
-    Divider
+    Divider,
+    Checkbox,
+    Paper,
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import { styled } from '@mui/material/styles';  
 import React, {useState, useEffect, useMemo, useCallback} from 'react';
 
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import AxiosInstance from '../../../../AxiosInstance';
@@ -28,6 +28,9 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import debounce from 'lodash/debounce';
+
+
+
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
       backgroundColor: theme.palette.primary.main,
@@ -68,7 +71,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             fontSize: 13,
         },
       },
-    })
+ })
 
 
   const ProjectVendorExpenseSchema = Yup.object().shape({
@@ -99,7 +102,11 @@ export default function NewVendorExpense(){
         location: []
       })
     const [loading, setLoading] = useState(false)
-
+    const [grandTotal, setGrandTotal] = useState({
+        total_amount_without_vat: 0,
+        total_vat_amount: 0,
+        total_amount_with_vat: 0
+    })
     const formik_vendor_expense = useFormik({
         initialValues: {
             expenses: [
@@ -113,19 +120,52 @@ export default function NewVendorExpense(){
                 amount_without_vat: "",
                 vat_percentage: 0,
                 vat_amount: "",
-                amount_with_vat: "",
-                remarks: ""
+                amount_with_vat: ""
               }
             ]
           },
-          validateOnChange: false,
-          validateOnBlur: false,
+          validateOnChange: true,
+          validateOnBlur: true,
           validationSchema: ProjectVendorExpenseSchema,
           onSubmit: (values, { validateForm }) => {
-            console.log(values)
+           // setLoading(true)
+            AxiosInstance.post("/project_expense/insert_vendor_expense", {values : values.expenses})
+            .then(function(result){
+                if(result.data.status === 'SUCCESS'){
+                   alert(result.data.message)
+                }else{
+                  console.log(result.data.message)
+                }
+
+             //   setLoading(false)
+            })
+            .catch(function(error){
+              console.log(error)
+            })
             
           }
     })
+
+    useEffect(()=>{
+        const totalAmountWithoutVat = formik_vendor_expense.values.expenses.reduce((accumulator, expense) => {
+            return accumulator + parseFloat(expense.amount_without_vat || 0);
+          }, 0);
+        const totalVatAmount = formik_vendor_expense.values.expenses.reduce((accumulator, expense) => {
+        return accumulator + parseFloat(expense.vat_amount || 0);
+        }, 0);
+        const totalAmountWithVat = formik_vendor_expense.values.expenses.reduce((accumulator, expense) => {
+        return accumulator + parseFloat(expense.amount_with_vat || 0);
+        }, 0);
+
+
+        setGrandTotal({
+            total_amount_without_vat: totalAmountWithoutVat,
+            total_vat_amount: totalVatAmount,
+            total_amount_with_vat: totalAmountWithVat
+        })
+  
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+      },[formik_vendor_expense])
 
     const [vatPercentage, setVatPercentage] = useState("");
 
@@ -189,7 +229,6 @@ export default function NewVendorExpense(){
         AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name})
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
-    
               setVendorDetails({
                 ...vendorDetails,
                 [field_name]: result.data.vendor_details.map(element => element[field_name])
@@ -204,25 +243,20 @@ export default function NewVendorExpense(){
         })
        }
 
-    // const debouncedHandleChange = useCallback((index, event) => {
-    //     const { name, value } = event.target;
-    //     const updatedExpenses = [...formik_vendor_expense.values.expenses];
-    //     updatedExpenses[index] = {
-    //         ...updatedExpenses[index],
-    //         [name.split('.').pop()]: value
-    //     };
-    //     formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-    // }, [formik_vendor_expense]);
+    // eslint-disable-next-line
+    const debouncedHandleChange = useCallback(debounce((index, event) => {
 
-    const debouncedHandleChange = useCallback((index, event) => {
+
         const { name, value } = event.target;
         const updatedExpenses = [...formik_vendor_expense.values.expenses];
         updatedExpenses[index][name.split('.').pop()] = value;
-    
+      
         formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-    }, [formik_vendor_expense]);
 
-    //const debouncedHandleChange= useMemo(() => debounce(handleChange, 300), [handleChange]);
+        
+    }, 100), [formik_vendor_expense]);
+
+
 
     const handleAddRecord = useCallback(()=>{
         const newExpense = {
@@ -235,8 +269,7 @@ export default function NewVendorExpense(){
             amount_without_vat: "",
             vat_percentage: 0,
             vat_amount: "",
-            amount_with_vat: "",
-            remarks: ""
+            amount_with_vat: ""
           };
           formik_vendor_expense.setFieldValue('expenses', [
             ...formik_vendor_expense.values.expenses,
@@ -244,7 +277,7 @@ export default function NewVendorExpense(){
           ]);
     }, [formik_vendor_expense]);
 
-     const debouncedHandleAddRecord = useMemo(() => debounce(handleAddRecord, 300), [handleAddRecord]);
+     const debouncedHandleAddRecord = useMemo(() => debounce(handleAddRecord, 100), [handleAddRecord]);
 
 
        useEffect(()=>{
@@ -273,79 +306,59 @@ export default function NewVendorExpense(){
                 </Stack>
             </Grid>
             <Grid item>
-            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table size="small">
+              <TableContainer component={Paper} style={{ maxHeight: 400, maxWidth: '100%', overflow: 'auto' }}>
+                <Table stickyHeader>
                     <TableHead>
                         <StyledTableRow>
+                        
+                            <StyledTableCell align="center">REMOVE</StyledTableCell>
                             <StyledTableCell align="center">SN</StyledTableCell>
-                            <StyledTableCell align="center"sx={{width: '5%'}}>VAT APPLICABLE</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: '20%'}}>PROJECT NAME</StyledTableCell>
-                            <StyledTableCell align="center" sx={{width: '10%'}}>DATE</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: '15%'}}>VENDOR NAME</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: '15%'}}>LOCATION</StyledTableCell>
+                            <StyledTableCell align="center">VAT APPLICABLE</StyledTableCell>
+                            <StyledTableCell align="left" sx={{width: "20%"}}>PROJECT NAME</StyledTableCell>
+                            <StyledTableCell align="center" sx={{width: "15%"}}>DATE</StyledTableCell>
+                            <StyledTableCell align="left" sx={{width: "10%"}}>VENDOR NAME</StyledTableCell>
+                            <StyledTableCell align="left" sx={{width: "15%"}}>LOCATION</StyledTableCell>
                             <StyledTableCell align="center">AMOUNT</StyledTableCell>
                             <StyledTableCell align="center">VAT {vatPercentage}</StyledTableCell>
                             <StyledTableCell align="center">TOTAL AMOUNT</StyledTableCell>
-                            <StyledTableCell align="center" sx={{width: '15%'}}>REMARKS</StyledTableCell>
-                            <StyledTableCell align="center">REMOVE</StyledTableCell>
+                            {/* <StyledTableCell align="center">REMARKS</StyledTableCell> */}
                         </StyledTableRow>
                     </TableHead>
                     <TableBody>
                         {formik_vendor_expense.values.expenses.map((expense, index)=>(
                         <StyledTableRow key={index}>
+                            <StyledTableCell align='center'>
+                                <IconButton color="error"
+                                   onClick={() => {
+                                    const updatedExpenses = formik_vendor_expense.values.expenses.filter((_, i) => i !== index);
+                                    formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
+
+                                        // Remove the validation error for the specific expense
+                                        const updatedErrors = { ...formik_vendor_expense.errors };
+                                        if (updatedErrors.expenses) {
+                                        updatedErrors.expenses = updatedErrors.expenses.filter((_, i) => i !== index);
+                                        formik_vendor_expense.setErrors(updatedErrors);
+                                        }
+
+                                        // Adjust the touched object as well
+                                        const updatedTouched = { ...formik_vendor_expense.touched };
+                                        if (updatedTouched.expenses) {
+                                        updatedTouched.expenses = updatedTouched.expenses.filter((_, i) => i !== index);
+                                        formik_vendor_expense.setTouched(updatedTouched);
+                                        }
+
+                                  }}>
+                                    <DeleteIcon />
+                                </IconButton>
+                            </StyledTableCell>
                             <StyledTableCell align="center">
                                 {index+1}
                             </StyledTableCell>
-                            <StyledTableCell>
-                            <FormControl
-                                fullWidth
-                                size="small"
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                      '& fieldset': {
-                                        border: 'none',
-                                      },
-                                      '& input': {
-                                        fontSize: 13,
-                                        },
-                                    },
-                                  }}
-                                // error={formik_project_expense.touched.is_vat && Boolean(formik_project_expense.errors.is_vat)}
-                                >
-                                <Select
-                                name={`expenses[${index}].is_vat`}
-                                value={expense.is_vat}
-                                onChange={(event)=>handleVatApplicableOnChange(event.target.value, index)}
-                                inputProps={{
-                                    sx: {
-                                      '& .MuiOutlinedInput-notchedOutline': {
-                                        border: 'none',
-                                      },
-                                      fontSize: 13, // Add your desired font size here
-                                    },
-                                    // Add any other custom props here
-                                }}
-                                MenuProps={{
-                                    PaperProps: {
-                                      sx: {
-                                        '& .MuiMenuItem-root': {
-                                          fontSize: 13, // Add your desired font size here
-                                        },
-                                      },
-                                    },
-                                }}
-                                >
-                                <MenuItem value={true}>
-                                    Yes
-                                </MenuItem>
-                                <MenuItem value={false}>
-                                    No
-                                </MenuItem>
-                                </Select>
-                                {/* <FormHelperText>
-                                {formik_project_expense.touched.is_vat && formik_project_expense.errors.is_vat}
-                                </FormHelperText> */}
-                            </FormControl>
+                            <StyledTableCell align="center">
+                                <Checkbox 
+                                 onChange={(event)=>handleVatApplicableOnChange(event.target.checked, index)}
+                                 checked={expense.is_vat} 
+                                 color="default" />
                             </StyledTableCell>
                             <StyledTableCell>
                             <Autocomplete
@@ -491,7 +504,7 @@ export default function NewVendorExpense(){
                                     clearOnBlur={false}
                                     handleHomeEndKeys
                                     onFocus={() => handleGetVendorDetails('location')}
-                                options={vendorDetails.location.map((option) => option)}
+                                    options={vendorDetails.location.map((option) => option)}
                                     value={expense.location}
                                     onChange={(event, value) => {
                                         const updatedExpenses = [...formik_vendor_expense.values.expenses];
@@ -556,6 +569,7 @@ export default function NewVendorExpense(){
                                         formik_vendor_expense.touched.expenses?.[index]?.amount_without_vat && formik_vendor_expense.errors.expenses?.[index]?.amount_without_vat
                                      }
                                      error={Boolean(formik_vendor_expense.errors.expenses?.[index]?.amount_without_vat)}
+                                     autoComplete="off"
                                      />
                             </StyledTableCell>
                             <StyledTableCell align="center">
@@ -585,6 +599,7 @@ export default function NewVendorExpense(){
                                         formik_vendor_expense.touched.expenses?.[index]?.amount_with_vat && formik_vendor_expense.errors.expenses?.[index]?.amount_with_vat
                                      }
                                      error={Boolean(formik_vendor_expense.errors.expenses?.[index]?.amount_with_vat )}
+                                      autoComplete="off"
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                         '& input': {
@@ -593,38 +608,27 @@ export default function NewVendorExpense(){
                                         }
                                 }} />
                             </StyledTableCell>
-                            <StyledTableCell>
-                                <CustomInput name={`expenses[${index}].remarks`} 
-                                onChange={(event) => debouncedHandleChange(index, event)} value={expense.remarks} variant='outlined' fullWidth size="small"
+                            {/* <StyledTableCell>
+                                <CustomInput 
+                                    name={`expenses[${index}].remarks`} 
+                                    onChange={(event) => debouncedHandleChange(index, event)} 
+                                    value={expense.remarks} 
+                                    variant='outlined' 
+                                    fullWidth 
+                                    size="small"
                                 />
-                            </StyledTableCell>
-                            <StyledTableCell align='center'>
-                                <IconButton color="error"
-                                   onClick={() => {
-                                    const updatedExpenses = formik_vendor_expense.values.expenses.filter((_, i) => i !== index);
-                                    formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-
-                                        // Remove the validation error for the specific expense
-                                        const updatedErrors = { ...formik_vendor_expense.errors };
-                                        if (updatedErrors.expenses) {
-                                        updatedErrors.expenses = updatedErrors.expenses.filter((_, i) => i !== index);
-                                        formik_vendor_expense.setErrors(updatedErrors);
-                                        }
-
-                                        // Adjust the touched object as well
-                                        const updatedTouched = { ...formik_vendor_expense.touched };
-                                        if (updatedTouched.expenses) {
-                                        updatedTouched.expenses = updatedTouched.expenses.filter((_, i) => i !== index);
-                                        formik_vendor_expense.setTouched(updatedTouched);
-                                        }
-
-                                  }}>
-                                    <RemoveCircleOutlineIcon />
-                                </IconButton>
-                            </StyledTableCell>
+                            </StyledTableCell> */}
                         </StyledTableRow>
                         ))}
                     </TableBody>
+                    <TableFooter>
+                        <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1 }}>
+                            <StyledTableCell colSpan={7} align="right">GRAND TOTAL:</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)}</StyledTableCell>
+                        </StyledTableRow>
+                    </TableFooter>
                 </Table>
             </TableContainer>
             </Grid>
