@@ -13,6 +13,8 @@ import { Grid,
     Divider,
     Checkbox,
     Paper,
+    Collapse,
+    Alert
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import { styled } from '@mui/material/styles';  
@@ -20,6 +22,8 @@ import React, {useState, useEffect, useMemo, useCallback} from 'react';
 
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
+
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import AxiosInstance from '../../../../AxiosInstance';
@@ -102,11 +106,19 @@ export default function NewVendorExpense(){
         location: []
       })
     const [loading, setLoading] = useState(false)
+    const [currency, setCurrency] = useState("");
     const [grandTotal, setGrandTotal] = useState({
         total_amount_without_vat: 0,
         total_vat_amount: 0,
         total_amount_with_vat: 0
     })
+
+    const [response, setResponse] = useState({
+        open: false,
+        severity: "",
+        message: ""
+      })
+
     const formik_vendor_expense = useFormik({
         initialValues: {
             expenses: [
@@ -124,20 +136,29 @@ export default function NewVendorExpense(){
               }
             ]
           },
-          validateOnChange: true,
-          validateOnBlur: true,
+          validateOnChange: false,
+          validateOnBlur: false,
           validationSchema: ProjectVendorExpenseSchema,
           onSubmit: (values, { validateForm }) => {
-           // setLoading(true)
-            AxiosInstance.post("/project_expense/insert_vendor_expense", {values : values.expenses})
-            .then(function(result){
-                if(result.data.status === 'SUCCESS'){
-                   alert(result.data.message)
+            setLoading(true)
+            AxiosInstance.post("/project_expense/insert_vendor_expense", {values : values.expenses, currency: currency})
+            .then(function(reponse){
+                if(reponse.data.status === 'SUCCESS'){
+                    setResponse({
+                        open: true,
+                        severity: "success",
+                        message: reponse.data.message
+                    })
+                    handleClearValues();
                 }else{
-                  console.log(result.data.message)
+                    setResponse({
+                        open: true,
+                        severity: "error",
+                        message: reponse.data.message
+                    })
                 }
 
-             //   setLoading(false)
+               setLoading(false)
             })
             .catch(function(error){
               console.log(error)
@@ -226,7 +247,7 @@ export default function NewVendorExpense(){
     };
 
     function handleGetVendorDetails(field_name){
-        AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name})
+        AxiosInstance.post("/project_expense/get_vendor_details", {field_name: field_name})
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
               setVendorDetails({
@@ -290,10 +311,60 @@ export default function NewVendorExpense(){
         .catch(function(error){
           console.log(error)
         })
+
+        AxiosInstance.get("/preferences/currency")
+        .then(function(result){
+             setCurrency(result.data.currency);
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+
        },[])
+
+
+       function handleClearValues(){
+
+        formik_vendor_expense.setFieldValue('expenses',[{
+                is_vat: false,
+                ref_invoice_number: "",
+                project_name: "",
+                date: "",
+                vendor_name: "",
+                location: "",
+                amount_without_vat: "",
+                vat_percentage: 0,
+                vat_amount: "",
+                amount_with_vat: ""
+        }])
+        
+       }
 
     return(
         <Grid container direction="column" spacing={2} sx={{paddingLeft: 4, paddingRight: 4, paddingTop: 2 }}>
+            <Grid item>
+                <Collapse in={response.open}>
+                    <Alert
+                    action={
+                        <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={() => {
+                            setResponse({...response, open: false});
+                        }}
+                        >
+                        <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                    }
+                    //sx={{ mb: 2 }}
+                    //icon={<CheckIcon fontSize="inherit" />}
+                    severity={response.severity}
+                    >
+                    {response.message}
+                    </Alert>
+                </Collapse>
+            </Grid>
             <Grid item>
                 <Stack direction="row" justifyContent="flex-end">
                     <Button
@@ -318,9 +389,9 @@ export default function NewVendorExpense(){
                             <StyledTableCell align="center" sx={{width: "15%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>VENDOR NAME</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "15%"}}>LOCATION</StyledTableCell>
-                            <StyledTableCell align="center">AMOUNT</StyledTableCell>
+                            <StyledTableCell align="center">AMOUNT {`(${currency})`}</StyledTableCell>
                             <StyledTableCell align="center">VAT {vatPercentage}</StyledTableCell>
-                            <StyledTableCell align="center">TOTAL AMOUNT</StyledTableCell>
+                            <StyledTableCell align="center">TOTAL AMOUNT {`(${currency})`}</StyledTableCell>
                             {/* <StyledTableCell align="center">REMARKS</StyledTableCell> */}
                         </StyledTableRow>
                     </TableHead>
@@ -624,9 +695,9 @@ export default function NewVendorExpense(){
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1 }}>
                             <StyledTableCell colSpan={7} align="right">GRAND TOTAL:</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)}</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)}</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${currency}`}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
                         </StyledTableRow>
                     </TableFooter>
                 </Table>

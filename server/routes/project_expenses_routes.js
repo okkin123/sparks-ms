@@ -39,5 +39,6 @@ router.route("/void_payment").post(middleware.authentication, controller.void_pa
 router.route("/void_expense").post(middleware.authentication, controller.void_expense)
 router.route("/get_vendor_details").post(controller.get_vendor_details)
 router.route("/insert_vendor_expense").post(middleware.authentication, controller.insert_vendor_expense)
+router.route("/list_vendor_expense").get(controller.list_vendor_expense)
 
 module.exports = router;

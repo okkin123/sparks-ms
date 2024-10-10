@@ -219,9 +219,10 @@ module.exports = {
     )
   },
   get_vendor_details: (req, res)=>{
+
     dbConnection.query(
         "SELECT * FROM vw_project_vendor_expenses GROUP BY ??",
-        [req.body.fieldname],
+        [req.body.field_name],
         function(err, data, fields) {
           if (err) {
             res.send({
@@ -242,17 +243,21 @@ insert_vendor_expense: (req, res)=>{
   const values = req.body.values;
   const details = values.flatMap(detail => [
   detail.ref_invoice_number,
+  detail.date,
   detail.vendor_name,
   detail.location,
+  detail.is_vat,
+  detail.vat_percentage,
   detail.amount_without_vat,
   detail.vat_amount,
   detail.amount_with_vat,
+  req.body.currency,
   req.user.user_id
   ]);
 
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?)').join(',');
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?,?)').join(',');
 
-  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, vendor_name, location, amount_without_vat, vat_amount, amount_with_vat, user_id) VALUES ${placeholders}`,
+  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, date, vendor_name, location, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
     details,
     function(err, data, fields){
       if (err) {
@@ -269,6 +274,25 @@ insert_vendor_expense: (req, res)=>{
       }
     }
   )
-}
+},
+list_vendor_expense: (req, res)=>{
+  dbConnection.query(
+      "SELECT * FROM vw_project_vendor_expenses ORDER BY date DESC",
+      function(err, data, fields) {
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            vendor_expenses: data
+          });
+        }
+      }
+    )
+    
+},
 
 }
