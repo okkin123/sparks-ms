@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react' 
+import React, {useEffect, useState, useRef} from 'react' 
 import {Typography, Chip, Stack, Box, Button} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
@@ -166,9 +166,31 @@ export default function ListVendorExpense(){
         
        // console.log(rowSelection)
     };
+
+    const stackRef = useRef(null);
+    const [boxWidth, setBoxWidth] = useState(0);
+  
+    useEffect(() => {
+      const updateBoxWidth = () => {
+        if (stackRef.current) {
+          setBoxWidth(stackRef.current.offsetWidth  );
+        }
+      };
+  
+      updateBoxWidth();
+      window.addEventListener('resize', updateBoxWidth);
+  
+      return () => {
+        window.removeEventListener('resize', updateBoxWidth);
+      };
+    }, []);
   
     return(
-        <Stack direction="column">
+        <Stack
+        direction="column"
+        ref={stackRef}
+        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
+        >
             <CustomColumnFilter 
             columns={
                 columns.filter((column)=>column.accessorKey==='invoice_number' 
@@ -181,7 +203,7 @@ export default function ListVendorExpense(){
             total_amount_with_vat={total_amount_with_vat}
             />
            <Box sx={{
-                width: window.innerWidth - 340,
+                width: boxWidth,
                 overflowX: 'auto',
             }}>
             <MaterialReactTable
@@ -226,8 +248,8 @@ export default function ListVendorExpense(){
                     },
                     children: (
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button size="small" color="primary" onClick={handleLogSelectedRows}>
-                        Log Selected Rows
+                        <Button variant="outlined" size="small" color="success" onClick={handleLogSelectedRows}>
+                            EDIT SELECTED ROWS
                         </Button>
                     </Box>
                     ),
