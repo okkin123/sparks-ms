@@ -4,7 +4,7 @@ import {Select, MenuItem, TextField, Typography, Chip, Button, Stack} from '@mui
 import { NumericFormat } from 'react-number-format';
 
 const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, total_vat_amount, total_amount_with_vat }) => {
-  const [selectedColumn, setSelectedColumn] = useState('');
+  const [selectedColumn, setSelectedColumn] = useState('project_name');
   const [filterValue, setFilterValue] = useState('');
 
   const handleColumnChange = (event) => {
@@ -20,7 +20,7 @@ const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, tota
   };
 
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{paddingLeft: 2, paddingRight: 2, paddingTop: 2}}>
+    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{padding: 2}}>
      <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="subtitle1">
         Search By:
@@ -32,7 +32,7 @@ const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, tota
         size="small"
       >
         <MenuItem value="" disabled>Select Column</MenuItem>
-        {columns.map((column) => (
+        {columns.map((column, i) => (
           <MenuItem key={column.accessorKey} value={column.accessorKey}>
             {column.header}
           </MenuItem>
@@ -45,10 +45,11 @@ const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, tota
         placeholder="Keyword..."
         variant="outlined"
         sx={{ minWidth: '18rem'}}
+        onKeyDown={(e)=>e.key === 'Enter' ? handleApplyFilters() : null}
       />
-      <Button variant="contained" color="info" onClick={handleApplyFilters}>
+      {/* <Button variant="contained" color="info" onClick={handleApplyFilters}>
         Search
-      </Button>
+      </Button> */}
       </Stack>
       <Stack direction="row" spacing={2} alignItems="center">
         <Chip label={<>Total Amount w/o Vat: <NumericFormat

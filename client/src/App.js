@@ -13,6 +13,8 @@ import InvoiceDetails from "./Pages/Invoices/Details";
 import ProjectExpenseDetails from "./Pages/Expenses/Project/Details";
 import ProtectedRoutes from "./ProtectedRoutes";
 
+import EditVendorExpense from "./Pages/Expenses/Project/Components/EditVendorExpense";
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -50,6 +52,8 @@ function App() {
             <Route path="/quotation/edit" Component={QEdit} />
             <Route path="/invoice/details" Component={InvoiceDetails} />
             <Route path="/project_expense/details" Component={ProjectExpenseDetails} />
+
+            <Route path="/project_expense/vendor/edit" Component={ProjectExpenseDetails} />
           </Routes>
         </BrowserRouter>
       </div>
