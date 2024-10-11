@@ -11,6 +11,7 @@ const forgotRoutes = require("./routes/forgot_routes");
 const quotationRoutes = require("./routes/quotation_routes");
 const invoiceRoutes = require("./routes/invoice_routes");
 const projectExpenseRoutes = require("./routes/project_expenses_routes");
+const adminExpenseRoutes = require("./routes/admin_expenses_routes");
 const preferencesRoutes = require("./routes/preferences_routes");
 
 const port = process.env.PORT;
@@ -32,6 +33,7 @@ app.use("/forgot", forgotRoutes);
 app.use("/quotation", quotationRoutes);
 app.use("/invoice", invoiceRoutes);
 app.use("/project_expense", projectExpenseRoutes);
+app.use("/admin_expense", adminExpenseRoutes);
 app.use("/preferences", preferencesRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/supplier_invoices', express.static(path.join(__dirname, '')));

@@ -1,24 +1,16 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Stack, Box, Button} from '@mui/material'
+import {Typography, Chip, Stack, Box, Button, Grid, Toolbar, Divider} from '@mui/material'
 import LoadingButton from "@mui/lab/LoadingButton";
-import AxiosInstance from '../../../../AxiosInstance';
+import AxiosInstance from '../../../AxiosInstance';
 import {
     MaterialReactTable,
   } from 'material-react-table';
-import { theme } from '../../../../Theme';
+import { theme } from '../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-import CustomColumnFilter from './CustomColumnFilter';
+import CustomColumnFilter from '../Project/Components/CustomColumnFilter';
 import { useNavigate } from 'react-router-dom';
 const columns=[
-    {
-        accessorKey: 'ref_invoice_number',
-        header: 'INVOICE NO.'
-    },
-    {
-        accessorKey: 'project_name',
-        header: 'PROJECT NAME'
-    },
     {
         accessorKey: 'vendor_name',
         header: 'VENDOR NAME'
@@ -102,21 +94,19 @@ const columns=[
     
 ];
 
-export default function ListVendorExpense(){
-    const [vendorExpenses, setVendorExpenses] = useState([]);
+export default function List(){
+    const [adminExpenses, setAdminExpenses] = useState([]);
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
     const [refresh, setRefresh] = useState(false)
     useEffect(()=>{
         setLoading(true)
-        AxiosInstance.get("/project_expense/list_vendor_expense")
+        AxiosInstance.get("/admin_expense/list")
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
-                const fetchVendorExpenses = result.data.vendor_expenses.map((element) => ({
-                    project_vendor_expense_id: element.project_vendor_expense_id,
+                const fetchAdminExpenses = result.data.vendor_expenses.map((element) => ({
+                    admin_expense_id: element.project_vendor_expense_id,
                     is_vat: !!element.vat_applicable,
-                    ref_invoice_number: element.invoice_number,
-                    project_name: element.project_name,
                     vendor_name: element.vendor_name,
                     location: element.location,
                     description: element.description,
@@ -132,7 +122,7 @@ export default function ListVendorExpense(){
                     currency: element.currency
                   })); 
                 
-                  setVendorExpenses(fetchVendorExpenses)
+                  setAdminExpenses(fetchAdminExpenses)
                   setLoading(false)
             }else{
                 console.log(result.data.message)
@@ -152,7 +142,7 @@ export default function ListVendorExpense(){
       }));
     };
   
-    const filteredData = vendorExpenses.filter((row) =>
+    const filteredData = adminExpenses.filter((row) =>
       Object.entries(columnFilters).every(([column, value]) =>
         row[column]?.toString().toLowerCase().includes(value.toLowerCase())
       )
@@ -221,6 +211,18 @@ export default function ListVendorExpense(){
     }, []);
   
     return(
+        <React.Fragment>
+        <Toolbar />
+        {/* <Paper> */}
+        <Grid container direction="column" spacing={2} sx={{padding: 2}}>
+          <Grid item>
+            <Typography variant="h6">LIST OF PROJECT EXPENSE</Typography>
+          </Grid>
+          <Grid item>
+             <Divider />
+          </Grid>
+
+          <Grid item>
         <Stack
         direction="column"
         ref={stackRef}
@@ -257,7 +259,7 @@ export default function ListVendorExpense(){
             initialState={{
                 density: 'compact',
                 isLoading: loading,
-                columnPinning: { left: ['mrt-row-select','invoice_number', 'project_name']}
+                columnPinning: { left: ['mrt-row-select']}
             }}
             state={{
                 rowSelection: rowSelection,
@@ -295,5 +297,8 @@ export default function ListVendorExpense(){
              />
             </Box>
         </Stack>
+        </Grid>
+        </Grid>
+        </React.Fragment>
     )
 }

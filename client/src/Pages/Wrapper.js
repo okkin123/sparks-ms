@@ -41,6 +41,11 @@ import Preferences from "./Preferences";
 import PEList from "./Expenses/Project/List";
 import PENew from "./Expenses/Project/New";
 
+import EditVendorExpense from "./Expenses/Project/Components/EditVendorExpense";
+
+import AENew from "./Expenses/Admin/New";
+import AEList from "./Expenses/Admin/List";
+
 import Cookies from "universal-cookie";
 const cookies = new Cookies();
 const drawerWidth = 240;
@@ -82,6 +87,12 @@ export default function SideMenu() {
     penew: {
       selected: false
     },
+    aenew: {
+      selected: false
+    },
+    aelist: {
+      selected: false
+    },
     pelist: {
       selected: false
     },
@@ -113,6 +124,7 @@ export default function SideMenu() {
     invoice: !location.state ? false : true,
     expense: !location.state ? false : true,
     project_expense: !location.state ? false : true,
+    admin_expense: !location.state ? false : true,
   });
 
 
@@ -209,8 +221,9 @@ useEffect(()=>{
               } />
               ) : location.state.invoice_edit ? (
                 <InvoiceEdit invoice_number={location.state.invoice_number} quotation_number={location.state.quotation_number} />
-            ) :
-            <Dashboard />,
+            )  : location.state.vendor_expense_edit ? (
+              <EditVendorExpense initialValues={location.state.initialValues} />
+          ) :<Dashboard />,
       qlist: location.state.quotation_created ? {...component.qlist, selected: true} : location.state.quotation_edit ? {...component.qlist, selected: false}  : {...component.qlist, selected: false} ,
       qnew: {...component.qnew, selected: false},
       invoice_list: location.state.invoice_created ? {...component.invoice_list, selected: true} : location.state.invoice_edit ? {...component.invoice_list, selected: false}  : {...component.invoice_list, selected: false} ,  
@@ -441,8 +454,49 @@ useEffect(()=>{
               </ListItemButton>
             </List>
           </Collapse>
+          <ListItem
+              disablePadding
+              onClick={() => setDropdownMenu({ ...dropdownMenu, admin_expense: !dropdownMenu.admin_expense })}
+            >
+              <ListItemButton sx={{pl: 4}}>
+                <ListItemIcon>
+                  <Folder />
+                </ListItemIcon>
+                <ListItemText primary="Admin" />
+                {dropdownMenu.admin_expense ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={dropdownMenu.admin_expense} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton
+                selected={component.aenew.selected}
+                onClick={() => {
+                  handleSelect('aenew', <AENew />);
+                }}
+                sx={{ pl: 8 }}
+              >
+                <ListItemIcon>
+                  <Add />
+                </ListItemIcon>
+                <ListItemText primary="New" />
+              </ListItemButton>
+              <ListItemButton
+                selected={component.aelist.selected}
+                onClick={() => {
+                  handleSelect('aelist', <AEList />);
+                }}
+                sx={{ pl: 8 }}
+              >
+                <ListItemIcon>
+                  <ViewList />
+                </ListItemIcon>
+                <ListItemText primary="View List" />
+              </ListItemButton>
+            </List>
+          </Collapse>
         </List>
       </Collapse>
+
     </List>
           <Divider />
           { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
