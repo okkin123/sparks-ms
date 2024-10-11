@@ -19,7 +19,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import Check from '@mui/icons-material/Check';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-
+import { theme } from '../../../Theme';
 import { NumericFormat } from 'react-number-format';
 
 const MakePaymentSchema = Yup.object().shape({
@@ -390,6 +390,17 @@ export default function Details(){
                                             inputComponent: NumberFormatCustom,
                                             }} />
                                         <TextField label="Remaining Balance" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.remaining_balance}
+                                        sx={{ '& .MuiInputBase-root': {
+                                            color: theme.palette.secondary.main, // You can use theme colors or any valid CSS color value
+                                            fontWeight: 'bold'
+                                          },
+                                          '& .MuiInputLabel-root': {
+                                            color: theme.palette.secondary.main,  // Label color
+                                          },
+                                          '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: theme.palette.secondary.main, // Border color
+                                          },
+                                        }} 
                                         InputProps={{
                                             inputComponent: NumberFormatCustom,
                                             }} />

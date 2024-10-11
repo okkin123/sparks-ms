@@ -1,4 +1,4 @@
-import { Grid,
+import {Grid, Divider,Toolbar, Paper, Typography,
     TableContainer,
     TableHead,
     TableRow,
@@ -10,9 +10,7 @@ import { Grid,
     Button,
     IconButton,
     Autocomplete,
-    Divider,
     Checkbox,
-    Paper,
     Collapse,
     Alert
 } from '@mui/material';
@@ -26,13 +24,12 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import AxiosInstance from '../../../../AxiosInstance';
+import AxiosInstance from '../../../AxiosInstance'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import {debounce, throttle} from 'lodash';
-
 
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -78,12 +75,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
  })
 
 
-  const ProjectVendorExpenseSchema = Yup.object().shape({
+  const AdminExpenseSchema = Yup.object().shape({
     expenses: Yup.array().of(
       Yup.object().shape({
         date: Yup.date().required('Date is required!'),
-        project_name: Yup.string()
-        .required('This field is required!'),
         vendor_name: Yup.string()
         .required('This field is required!'),
         location: Yup.string()
@@ -100,9 +95,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     )
   });
 
-export default function NewVendorExpense(props){
 
-    const [invoiceDetails, setInvoiceDetails] = useState([])
+
+export default function New(props){
+
     const [vendorDetails, setVendorDetails] = useState({
         vendor_name: [],
         location: []
@@ -129,8 +125,6 @@ export default function NewVendorExpense(props){
             props.mode === 'EDIT' ? props.initialValues : [
               {
                 is_vat: false,
-                ref_invoice_number: "",
-                project_name: "",
                 date: "",
                 vendor_name: "",
                 location: "",
@@ -143,10 +137,10 @@ export default function NewVendorExpense(props){
             ]
           },
           validateOnChange: false,
-          validationSchema: ProjectVendorExpenseSchema,
+          validationSchema: AdminExpenseSchema,
           onSubmit: (values, { validateForm }) => {
             setLoading(true)
-            AxiosInstance.post(props.mode === 'EDIT' ? "/project_expense/update_vendor_expense" : "/project_expense/insert_vendor_expense", {values : values.expenses, currency: currency})
+            AxiosInstance.post(props.mode === 'EDIT' ? "/admin_expense/update" : "/admin_expense/insert", {values : values.expenses, currency: currency})
             .then(function(reponse){
                 if(reponse.data.status === 'SUCCESS'){
                     setResponse({
@@ -194,26 +188,6 @@ export default function NewVendorExpense(props){
       },[formik_vendor_expense])
 
     const [vatPercentage, setVatPercentage] = useState("");
-
-    function handleGetInvoiceDetails(){
-        AxiosInstance.get("/project_expense/get_invoice_details")
-        .then(function(result){
-            if(result.data.status === 'SUCCESS'){
-              setInvoiceDetails((invoiceDetails)=>[
-                ...result.data.invoice_details.map(element => ({
-                  invoice_number: element.invoice_number,
-                  project_name: element.project_name
-                }))
-              ])
-    
-            }else{
-              console.log(result.data.message)
-            }
-        })
-        .catch(function(error){
-          console.log(error)
-        })
-       }
 
        const handleVatApplicableOnChange = (is_vat, index) => {
         const updatedExpenses = [...formik_vendor_expense.values.expenses];
@@ -285,8 +259,6 @@ export default function NewVendorExpense(props){
     const handleAddRecord = useCallback(()=>{
         const newExpense = {
             is_vat: false,
-            ref_invoice_number: "",
-            project_name: "",
             date: "",
             vendor_name: "",
             location: "",
@@ -331,8 +303,6 @@ export default function NewVendorExpense(props){
 
         formik_vendor_expense.setFieldValue('expenses',[{
                 is_vat: false,
-                ref_invoice_number: "",
-                project_name: "",
                 date: "",
                 vendor_name: "",
                 location: "",
@@ -346,8 +316,18 @@ export default function NewVendorExpense(props){
        }
 
     return(
-        <Grid container direction="column" spacing={2} sx={{paddingLeft: 4, paddingRight: 4, paddingTop: 2 }}>
-            <Grid item>
+        <React.Fragment>
+            <Toolbar />
+            <Paper>
+            <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
+              <Grid item>
+                <Typography variant="h6">NEW ADMIN EXPENSE</Typography>
+              </Grid>
+              <Grid item>
+                 <Divider />
+              </Grid>
+
+              <Grid item>
                 <Collapse in={response.open}>
                     <Alert
                     action={
@@ -390,7 +370,6 @@ export default function NewVendorExpense(props){
                             <StyledTableCell align="center">REMOVE</StyledTableCell>
                             <StyledTableCell align="center">SN</StyledTableCell>
                             <StyledTableCell align="center">VAT APPLICABLE</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: "15%"}}>PROJECT NAME</StyledTableCell>
                             <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>VENDOR NAME</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>LOCATION</StyledTableCell>
@@ -436,73 +415,6 @@ export default function NewVendorExpense(props){
                                  onChange={(event)=>handleVatApplicableOnChange(event.target.checked, index)}
                                  checked={expense.is_vat} 
                                  color="default" />
-                            </StyledTableCell>
-                            <StyledTableCell>
-                            <Autocomplete
-                                freeSolo
-                                selectOnFocus 
-                                clearOnBlur
-                                handleHomeEndKeys
-                                onFocus={() => handleGetInvoiceDetails()}
-                                options={invoiceDetails.map((option) => ({
-                                    label: `${option.invoice_number} - ${option.project_name}`,
-                                    value: option.invoice_number,
-                                    projectName: option.project_name
-                                }))}
-                                value={
-                                    expense.ref_invoice_number
-                                    ? {
-                                        label: `${expense.ref_invoice_number} - ${expense.project_name}`,
-                                        value: expense.ref_invoice_number,
-                                        projectName: expense.project_name
-                                    }
-                                    : null
-                                }
-                                onChange={(event, newValue) => {
-                                    const updatedExpenses = [...formik_vendor_expense.values.expenses];
-                                    if (newValue) {
-                                    updatedExpenses[index] = {
-                                        ...updatedExpenses[index],
-                                        ref_invoice_number: newValue.value,
-                                        project_name: newValue.projectName
-                                    };
-                                    } else {
-                                    updatedExpenses[index] = {
-                                        ...updatedExpenses[index],
-                                        ref_invoice_number: '',
-                                        project_name: ''
-                                    };
-                                    }
-                                    formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-                                }}
-                                renderInput={(params) => (
-                                    <CustomInput
-                                    {...params}
-                                    name={`expenses[${index}].project_name`}
-                                    onChange={(event) => debouncedHandleChange(index, event)}
-                                    value={expense.project_name}
-                                    variant='outlined'
-                                    fullWidth
-                                    sx={{width: '100%'}}
-                                    size="small"
-                                    helperText={
-                                        formik_vendor_expense.touched.expenses?.[index]?.project_name && formik_vendor_expense.errors.expenses?.[index]?.project_name
-                                    }
-                                    error={Boolean(formik_vendor_expense.errors.expenses?.[index]?.project_name)}
-                                    />
-                                )}
-                                sx={{width: '100%'}}
-                                componentsProps={{
-                                    paper: {
-                                      sx: {
-                                        '& .MuiAutocomplete-listbox': {
-                                          fontSize: 13,
-                                        },
-                                      },
-                                    },
-                                 }}
-                                fullWidth
-                                />
                             </StyledTableCell>
                             <StyledTableCell>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -710,7 +622,7 @@ export default function NewVendorExpense(props){
                     </TableBody>
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1 }}>
-                            <StyledTableCell colSpan={8} align="right">GRAND TOTAL:</StyledTableCell>
+                            <StyledTableCell colSpan={7} align="right">GRAND TOTAL:</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
@@ -726,6 +638,10 @@ export default function NewVendorExpense(props){
             
             <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_vendor_expense.handleSubmit} loading={loading}>{props.mode === 'EDIT' ? 'Update Expenses ': 'Submit Expenses'}</LoadingButton>
             </Grid>
-        </Grid>
+            
+            </Grid>
+            </Paper>
+        </React.Fragment>
     )
 }
+

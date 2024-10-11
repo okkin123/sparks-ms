@@ -60,7 +60,7 @@ export default function New(){
                 <NewSupplierExpense />
               </TabPanel>
               <TabPanel value={tabValue} index={1}>
-                <NewVendorExpense />
+                <NewVendorExpense mode="NEW" />
               </TabPanel>
             
             </Grid>
@@ -69,29 +69,3 @@ export default function New(){
     )
 }
 
-// npm install @react-pdf-viewer/core @react-pdf-viewer/default-layout react-dropzone
-
-
-// // App.js
-// import React, { useState } from 'react';
-// import FileUpload from './FileUpload';
-// import PdfViewer from './PdfViewer';
-
-// const App = () => {
-//   const [file, setFile] = useState(null);
-
-//   const handleFileUpload = (file) => {
-//     const fileUrl = URL.createObjectURL(file);
-//     setFile(fileUrl);
-//   };
-
-//   return (
-//     <div>
-//       <h1>PDF Viewer</h1>
-//       <FileUpload onFileUpload={handleFileUpload} />
-//       {file && <PdfViewer file={file} />}
-//     </div>
-//   );
-// };
-
-// export default App;

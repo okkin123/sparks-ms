@@ -1,30 +1,8 @@
-import {Grid, Box, Divider, Toolbar, Paper, Typography} from '@mui/material';
-import React, {useState} from 'react';
-import NewVendorExpense from './Components/NewVendorExpense';
+import {Grid, Divider, Toolbar, Paper, Typography} from '@mui/material';
+import React from 'react';
+import NewVendorExpense from './NewVendorExpense';
 
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
-
-
-export default function EditVendorExpense(){
+export default function EditVendorExpense(props){
 
     return(
         <React.Fragment>
@@ -38,7 +16,7 @@ export default function EditVendorExpense(){
                  <Divider />
               </Grid>
               <Grid item>
-                <NewVendorExpense />
+                <NewVendorExpense mode="EDIT" initialValues={props.initialValues} />
               </Grid>
             </Grid>
             </Paper>
