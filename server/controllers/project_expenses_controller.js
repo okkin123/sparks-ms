@@ -41,55 +41,74 @@ module.exports = {
           
     },
     insert: (req, res)=>{
-        let vat_amount, amount_with_vat;
-        const values = JSON.parse(req.body.values);
-        if(values.is_vat){
-            vat_amount = values.vat_amount;
-            amount_with_vat = values.amount_with_vat
-        }else{
-            vat_amount = 0;
-            amount_with_vat = values.amount_without_vat
-        }
-
-    
-
-        dbConnection.query(
-            "INSERT INTO tbl_project_expenses(invoice_file_name, invoice_file_path, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [req.file.filename, req.file.path, values.date_issued, values.ref_invoice_number, values.supplier_name, values.supplier_invoice_number, values.is_vat, values.vat_percentage, values.amount_without_vat, vat_amount, amount_with_vat, values.currency, req.user.user_id],
-            function(err, data, fields) {
-              if (err) {
-                res.send({
+      let vat_amount, amount_with_vat;
+      const values = JSON.parse(req.body.values);
+      
+      if (values.is_vat) {
+          vat_amount = values.vat_amount;
+          amount_with_vat = values.amount_with_vat;
+      } else {
+          vat_amount = 0;
+          amount_with_vat = values.amount_without_vat;
+      }
+      
+      const insertExpense = (callback) => {
+          dbConnection.query(
+              "INSERT INTO tbl_project_expenses(invoice_file_name, invoice_file_path, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+              [req.file.filename, req.file.path, values.date_issued, values.ref_invoice_number, values.supplier_name, values.supplier_invoice_number, values.is_vat, values.vat_percentage, values.amount_without_vat, vat_amount, amount_with_vat, values.currency, req.user.user_id],
+              callback
+          );
+      };
+      
+      const checkSupplier = (callback) => {
+          dbConnection.query(
+              "SELECT * FROM tbl_suppliers WHERE supplier_name=?",
+              [values.supplier_name],
+              callback
+          );
+      };
+      
+      const insertSupplier = () => {
+          dbConnection.query(
+              "INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban) VALUES(?,?,?,?,?)",
+              [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban],
+              (err2, data2, fields2) => {
+                  if (err2) console.log(err2);
+              }
+          );
+      };
+      
+      const updateSupplier = (supplier_id) => {
+          dbConnection.query(
+              "UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=? WHERE supplier_id=?",
+              [values.bank_name, values.account_name, values.account_number, values.iban, supplier_id],
+              (err4, data4, fields4) => {
+                  if (err4) console.log(err4);
+              }
+          );
+      };
+      
+      insertExpense((err, data, fields) => {
+          if (err) {
+              res.send({
                   status: "ERROR",
                   message: err.sqlMessage
-                });
-              } else {
-                  dbConnection.query("SELECT * FROM tbl_suppliers WHERE supplier_name=?",
-                    [values.supplier_name],
-                    function(err3, data3, fields3){
-          
-                      if(data3.length === 0){
-                        dbConnection.query("INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban) VALUES(?,?,?,?,?)",
-                          [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban],
-                          function(err2, data2, fields2){})
-                      }else{
-                        
-                        dbConnection.query("UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=? WHERE supplier_id=?",
-                          [values.bank_name, values.account_name, values.account_number, values.iban, data3[0].supplier_id],
-                          function(err4, data4, fields4){
-                            if(err4)
-                              console.log(err4)
-                          })
-                      }
-                        
-                    }
-                  )
-                res.send({
+              });
+          } else {
+              checkSupplier((err3, data3, fields3) => {
+                  if (data3.length === 0) {
+                      insertSupplier();
+                  } else {
+                      updateSupplier(data3[0].supplier_id);
+                  }
+              });
+              res.send({
                   status: "SUCCESS",
                   message: "New project expense has been added!"
-                });
-              }
-            }
-          )
+              });
+          }
+      });
+      
           
     },
     list: (req, res)=>{
@@ -126,8 +145,8 @@ module.exports = {
           } else {
             res.send({
               status: "SUCCESS",
-              file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
-              //file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_name}`,
+              //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
+              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_path}`,
               user_id: req.user.user_id,
               project_expense_details: data
             });

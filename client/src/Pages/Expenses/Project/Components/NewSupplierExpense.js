@@ -2,8 +2,10 @@ import {Autocomplete, Divider, AppBar, FormControl, FormHelperText, Grid, InputL
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../../Components/PdfViewer';
 import FileUpload from '../../../../Components/FileUpload';
+import NumberFormatCustom from '../../../../Components/NumberFormatCustom';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
+
 import AxiosFileInstance from '../../../../AxiosFileInstance';
 import AxiosInstance from '../../../../AxiosInstance';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -219,7 +221,7 @@ export default function NewSupplierExpense(){
         vat_amount: "",
         amount_with_vat: "",
         vat_percentage: "",
-        currency: "",
+        currency: formik_project_expense.values.currency,
         bank_name: "",
         account_name: "",
         set_account_name: false,
@@ -233,7 +235,7 @@ export default function NewSupplierExpense(){
      
      return(
         <Grid container direction="column" spacing={2} sx={{paddingLeft: 4, paddingRight: 4  }}>
-              <Grid item>
+              <Grid item sx={{mt: 2}}>
                   <Collapse in={response.open}>
                       <Alert
                       action={
@@ -369,7 +371,7 @@ export default function NewSupplierExpense(){
                             }
                             fullWidth
                             autoComplete="off" />
-                            <TextField variant='outlined' label="Amount"
+                            <TextField variant='outlined' label={`Amount (${formik_project_expense.values.currency})`}
                             name="amount_without_vat"
                             value={formik_project_expense.values.amount_without_vat}
                             onChange={(evt)=>{
@@ -395,19 +397,25 @@ export default function NewSupplierExpense(){
                                 (
                                 <Stack direction="row" spacing={2}>
 
-                                    <TextField variant='outlined' label="Vat Amount"
+                                    <TextField variant='outlined' label={`Vat Amount (${formik_project_expense.values.currency})`}
                                     size="small"
                                     name="vat_amount"
                                     value={formik_project_expense.values.vat_amount}
                                     readOnly
                                     fullWidth
+                                    InputProps={{
+                                      inputComponent: NumberFormatCustom,
+                                      }}
                                     autoComplete="off" />
-                                    <TextField variant='outlined' label="Amount w/ Vat"
+                                    <TextField variant='outlined' label={`Amount w/ Vat (${formik_project_expense.values.currency})`}
                                     size="small"
                                     name="amount_with_vat"
                                     value={formik_project_expense.values.amount_with_vat}
                                     readOnly
                                     fullWidth
+                                    InputProps={{
+                                      inputComponent: NumberFormatCustom,
+                                      }}
                                     autoComplete="off" />
                                 </Stack>
                                 ) : null } 

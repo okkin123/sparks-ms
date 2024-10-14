@@ -55,7 +55,7 @@ module.exports = {
         
         const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?,?)').join(',');
         
-        const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
+        const id_details = values.flatMap(id_detail => [id_detail.admin_expense_id]);
         const id_placeholders = values.map(() => '?').join(',');
         
         dbConnection.beginTransaction(function(err) {
@@ -67,7 +67,7 @@ module.exports = {
           }
         
           dbConnection.query(
-            `DELETE FROM tbl_project_vendor_expenses WHERE project_vendor_expense_id IN (${id_placeholders})`, 
+            `DELETE FROM tbl_admin_expenses WHERE admin_expense_id IN (${id_placeholders})`, 
             id_details,
             function(err1, data1, fields1) {
               if (err1) {
@@ -80,7 +80,7 @@ module.exports = {
               }
         
               dbConnection.query(
-                `INSERT INTO tbl_project_vendor_expenses(date, vendor_name, location, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
+                `INSERT INTO tbl_admin_expenses(date, vendor_name, location, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
                 details,
                 function(err2, data2, fields2) {
                   if (err2) {
@@ -116,12 +116,12 @@ module.exports = {
     delete: (req, res)=>{
         const values = req.body.values;
       
-        const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
+        const id_details = values.flatMap(id_detail => [id_detail.admin_expense_id]);
         const id_placeholders = values.map(() => '?').join(',');
         
         
           dbConnection.query(
-            `DELETE FROM tbl_project_vendor_expenses WHERE project_vendor_expense_id IN (${id_placeholders})`, 
+            `DELETE FROM tbl_admin_expenses WHERE admin_expense_id IN (${id_placeholders})`, 
             id_details,
             function(err, data, fields) {
               if (err) {
@@ -140,7 +140,7 @@ module.exports = {
       },
       list: (req, res)=>{
         dbConnection.query(
-            "SELECT * FROM tbl_admin_expenses ORDER BY date DESC",
+            "SELECT * FROM vw_admin_expenses ORDER BY date DESC",
             function(err, data, fields) {
               if (err) {
                 res.send({
@@ -150,7 +150,7 @@ module.exports = {
               } else {
                 res.send({
                   status: "SUCCESS",
-                  vendor_expenses: data
+                  admin_expenses: data
                 });
               }
             }

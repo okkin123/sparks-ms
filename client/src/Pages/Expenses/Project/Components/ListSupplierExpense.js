@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react' 
-import {Typography, Chip, Link, Box} from '@mui/material'
+import React, {useEffect, useState, useRef} from 'react' 
+import {Typography, Chip, Link, Box, Stack, Button} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
@@ -7,7 +7,7 @@ import {
 import { theme } from '../../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-
+import SupplierExpenseColumnFilter from './SupplierExpenseColumnFilter';
 
 const parentHeight = window.innerHeight;
 const parentWidth = window.innerWidth;
@@ -156,6 +156,32 @@ const columns=[
         accessorKey: 'currency',
         header: 'CURRENCY'
     },
+    {
+        accessorKey: 'total_payments',
+        header: 'PAYMENTS',
+        Cell: ({ renderedCellValue }) => (
+            <NumericFormat
+            value={renderedCellValue}
+            displayType={'text'}
+            thousandSeparator={true}
+            decimalScale={2}
+            fixedDecimalScale={true}
+          />
+        )
+    },
+    {
+        accessorKey: 'remaining_balance',
+        header: 'BALANCE',
+        Cell: ({ renderedCellValue }) => (
+            <NumericFormat
+            value={renderedCellValue}
+            displayType={'text'}
+            thousandSeparator={true}
+            decimalScale={2}
+            fixedDecimalScale={true}
+          />
+        )
+    },
     
 ];
 
@@ -181,7 +207,9 @@ export default function ListSupplierExpense(){
                     vat_percentage: !!element.is_vat ? element.vat_percentage+'%' : '',
                     vat_amount: !!element.is_vat ? element.vat_amount: '',
                     amount_with_vat: element.amount_with_vat,
-                    currency: element.currency
+                    currency: element.currency,
+                    total_payments: element.total_payments,
+                    remaining_balance: element.remaining_balance
                   })); 
                 
                   setProjectExpenses(fetchedProjectExpenses)
@@ -195,10 +223,67 @@ export default function ListSupplierExpense(){
         })
     },[])
 
+    const [columnFilters, setColumnFilters] = useState({});
+
+    const handleFilterChange = (column, value) => {
+        setColumnFilters((prevFilters) => ({
+          ...prevFilters,
+          [column]: value,
+        }));
+      };
+    
+      const filteredData = projectExpenses.filter((row) =>
+        Object.entries(columnFilters).every(([column, value]) =>
+          row[column]?.toString().toLowerCase().includes(value.toLowerCase())
+        )
+      );
+
+        const total_amount_wo_vat = filteredData.reduce((sum, row) => sum + (row.amount_without_vat || 0), 0);
+        const total_vat_amount = filteredData.reduce((sum, row) => sum + (row.vat_amount || 0), 0);
+        const total_amount_with_vat = filteredData.reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
+        const total_payments = filteredData.reduce((sum, row) => sum + (row.total_payments || 0), 0);
+        const remaining_balance = filteredData.reduce((sum, row) => sum + (row.remaining_balance || 0), 0);
+        const [rowSelection, setRowSelection] = useState({});
+
+    const stackRef = useRef(null);
+    const [boxWidth, setBoxWidth] = useState(0);
+  
+    useEffect(() => {
+      const updateBoxWidth = () => {
+        if (stackRef.current) {
+          setBoxWidth(stackRef.current.offsetWidth  );
+        }
+      };
+  
+      updateBoxWidth();
+      window.addEventListener('resize', updateBoxWidth);
+  
+      return () => {
+        window.removeEventListener('resize', updateBoxWidth);
+      };
+    }, []);
+
     return(
-        <React.Fragment>
+        <Stack
+        direction="column"
+        ref={stackRef}
+        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
+        >
+            <SupplierExpenseColumnFilter 
+            columns={
+                columns.filter((column)=>column.accessorKey==='invoice_number' 
+                || column.accessorKey==='supplier_name'
+                || column.accessorKey==='project_name')
+            } 
+            onFilterChange={handleFilterChange}
+            total_amount_wo_vat={total_amount_wo_vat}
+            total_vat_amount={total_vat_amount}
+            total_amount_with_vat={total_amount_with_vat}
+            total_payments={total_payments}
+            remaining_balance={remaining_balance}
+            />
              <Box sx={{
-                width: window.innerWidth - 320,
+                width: boxWidth,
                 overflowX: 'auto',
             }}>
             <MaterialReactTable
@@ -206,16 +291,19 @@ export default function ListSupplierExpense(){
             enableColumnActions={false}
             enableDensityToggle={false}
             enableHiding={false}
-            enableGlobalFilter={true}
-            enableRowSelection={false}
-            positionGlobalFilter='left'
+            enableGlobalFilter={false}
+            enableRowSelection={true}
+            enableFullScreenToggle={false}
+            getRowId={(row) => row.project_expense_id} //give each row a more useful id
+            onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
             initialState={{
                 density: 'compact',
                 isLoading: loading,
-                columnPinning: { left: ['pe_number', 'status', 'supplier_name'] },
+                columnPinning: { left: ['mrt-row-select','pe_number', 'status', 'supplier_name'] },
                 showGlobalFilter: true,
             }}
             state={{
+                rowSelection: rowSelection,
                 isLoading: loading
             }} 
             muiTableHeadCellProps={{
@@ -224,18 +312,28 @@ export default function ListSupplierExpense(){
                 color: 'white'
                 }
             }}
-            muiSearchTextFieldProps={{
-                placeholder: 'Search Keyword...',
-                sx: { minWidth: '18rem'},
-                variant: 'outlined',
-            }}
             muiPaginationProps={{
-                rowsPerPageOptions: [10, 20],
+                rowsPerPageOptions: [10, 20, { label: 'All', value: filteredData.length}],
                 variant: 'outlined',
             }}
             paginationDisplayMode='pages'
-            columns={columns} data={projectExpenses} />
+            muiToolbarAlertBannerProps={{
+                sx: {
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                },
+                children: (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="outlined" size="small" color="secondary">
+                        GENERATE STATEMENT
+                    </Button>
+                </Box>
+                ),
+            }}
+            columns={columns} data={filteredData} />
          </Box>
-        </React.Fragment>
+         </Stack>
     )
 }
