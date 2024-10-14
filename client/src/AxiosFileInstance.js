@@ -4,8 +4,8 @@ import Cookies from "universal-cookie";
 const cookies = new Cookies();
 // Create an Axios instance
 const AxiosFileInstance = axios.create({
-  //baseURL: "http://localhost:3000/",
-  baseURL: "https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/",
+  baseURL: "http://localhost:4000/",
+  //baseURL: "https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/",
   headers: {
     "Content-Type": "multipart/form-data"
   }

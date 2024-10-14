@@ -8,7 +8,7 @@ import {
 import { theme } from '../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-import CustomColumnFilter from '../Project/Components/CustomColumnFilter';
+import CustomColumnFilter from '../Admin/Components/CustomColumnFilter';
 import { useNavigate } from 'react-router-dom';
 const columns=[
     {
@@ -104,13 +104,13 @@ export default function List(){
         AxiosInstance.get("/admin_expense/list")
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
-                const fetchAdminExpenses = result.data.vendor_expenses.map((element) => ({
-                    admin_expense_id: element.project_vendor_expense_id,
+                const fetchAdminExpenses = result.data.admin_expenses.map((element) => ({
+                    admin_expense_id: element.admin_expense_id,
                     is_vat: !!element.vat_applicable,
                     vendor_name: element.vendor_name,
                     location: element.location,
                     description: element.description,
-                    created_by: element.created_by_email,
+                    created_by: element.created_by,
                     date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
                     date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
                     vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
@@ -158,12 +158,12 @@ export default function List(){
     const handleEditSelectedRows = () => {
         const selectedRowData = Object.keys(rowSelection).map((rx, x) => {
 
-            return filteredData.find((ry, y) => ry.project_vendor_expense_id === parseInt(rx));
+            return filteredData.find((ry, y) => ry.admin_expense_id === parseInt(rx));
         });
        
         navigate('/', {
             state: {
-                vendor_expense_edit: true,
+                admin_expense_edit: true,
                 initialValues: selectedRowData
             }
         })
@@ -173,10 +173,10 @@ export default function List(){
         setLoading(true)
         const selectedRowData = Object.keys(rowSelection).map((rx, x) => {
 
-            return filteredData.find((ry, y) => ry.project_vendor_expense_id === parseInt(rx));
+            return filteredData.find((ry, y) => ry.admin_expense_id === parseInt(rx));
         });
 
-        AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRowData})
+        AxiosInstance.post("/admin_expense/delete", {values : selectedRowData})
         .then(function(response){
             if(response.data.status === 'SUCCESS'){
                 alert(response.data.message)
@@ -216,7 +216,7 @@ export default function List(){
         {/* <Paper> */}
         <Grid container direction="column" spacing={2} sx={{padding: 2}}>
           <Grid item>
-            <Typography variant="h6">LIST OF PROJECT EXPENSE</Typography>
+            <Typography variant="h6">LIST OF ADMIN EXPENSE</Typography>
           </Grid>
           <Grid item>
              <Divider />
@@ -253,7 +253,7 @@ export default function List(){
             enableGlobalFilter={false}
             enableRowSelection={true}
             enableFullScreenToggle={false}
-            getRowId={(row) => row.project_vendor_expense_id} //give each row a more useful id
+            getRowId={(row) => row.admin_expense_id} //give each row a more useful id
             onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
             
             initialState={{

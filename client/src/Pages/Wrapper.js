@@ -223,6 +223,8 @@ useEffect(()=>{
                 <InvoiceEdit invoice_number={location.state.invoice_number} quotation_number={location.state.quotation_number} />
             )  : location.state.vendor_expense_edit ? (
               <EditVendorExpense initialValues={location.state.initialValues} />
+            )  : location.state.admin_expense_edit ? (
+              <AENew mode="EDIT" initialValues={location.state.initialValues} />
           ) :<Dashboard />,
       qlist: location.state.quotation_created ? {...component.qlist, selected: true} : location.state.quotation_edit ? {...component.qlist, selected: false}  : {...component.qlist, selected: false} ,
       qnew: {...component.qnew, selected: false},
