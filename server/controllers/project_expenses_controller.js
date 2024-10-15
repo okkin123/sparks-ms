@@ -146,7 +146,7 @@ module.exports = {
             res.send({
               status: "SUCCESS",
               //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
-              file_url: `http://localhost:4000/supplier_invoices/${data[0].invoice_file_path}`,
+              file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
               user_id: req.user.user_id,
               project_expense_details: data
             });
