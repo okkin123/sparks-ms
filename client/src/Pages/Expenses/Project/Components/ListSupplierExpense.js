@@ -101,7 +101,7 @@ const columns=[
         )
     },
     {
-        accessorKey: 'date_issued',
+        accessorKey: 'date',
         header: 'DATE ISSUED'
     },  
     {
@@ -186,8 +186,10 @@ const columns=[
 ];
 
 export default function ListSupplierExpense(){
-    const [projectExpenses, setProjectExpenses] = useState([]);
-    const [loading, setLoading] = useState(false)
+   const [projectExpenses, setProjectExpenses] = useState([]);
+   const [filteredData, setFilteredData] = useState([]);
+   const [rowSelection, setRowSelection] = useState({});
+   const [loading, setLoading] = useState(false)
     
     useEffect(()=>{
         setLoading(true)
@@ -201,7 +203,7 @@ export default function ListSupplierExpense(){
                     supplier_name: element.supplier_name,
                     invoice_number: element.invoice_number,
                     created_by_email: element.created_by_email,
-                    date_issued: dayjs(new Date(element.date_issued)).format('DD-MMM-YYYY'),
+                    date: dayjs(new Date(element.date_issued)).format('DD-MMM-YYYY'),
                     is_vat: !!element.is_vat ? 'Yes' : 'No',
                     amount_without_vat: element.amount_without_vat,
                     vat_percentage: !!element.is_vat ? element.vat_percentage+'%' : '',
@@ -213,6 +215,7 @@ export default function ListSupplierExpense(){
                   })); 
                 
                   setProjectExpenses(fetchedProjectExpenses)
+                  setFilteredData(fetchedProjectExpenses);
                   setLoading(false)
             }else{
                 console.log(result.data.message)
@@ -223,44 +226,43 @@ export default function ListSupplierExpense(){
         })
     },[])
 
-    const [columnFilters, setColumnFilters] = useState({});
 
-    const handleFilterChange = (column, value) => {
-        setColumnFilters((prevFilters) => ({
-          ...prevFilters,
-          [column]: value,
-        }));
+    const handleFilter = (filters) => {
+        const newFilteredData = projectExpenses.filter(row => {
+          const columnMatch = filters.column
+            ? row[filters.column].toString().toLowerCase().includes(filters.value.toLowerCase())
+            : true;
+          const dateMatch = filters.fromDate && filters.toDate
+            ? dayjs(new Date(row.date)).isBetween(filters.fromDate, filters.toDate, null, '[]')
+            : true;
+          return columnMatch && dateMatch;
+        });
+        setFilteredData(newFilteredData);
       };
-    
-      const filteredData = projectExpenses.filter((row) =>
-        Object.entries(columnFilters).every(([column, value]) =>
-          row[column]?.toString().toLowerCase().includes(value.toLowerCase())
-        )
-      );
 
-        const total_amount_wo_vat = filteredData.reduce((sum, row) => sum + (row.amount_without_vat || 0), 0);
-        const total_vat_amount = filteredData.reduce((sum, row) => sum + (row.vat_amount || 0), 0);
-        const total_amount_with_vat = filteredData.reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
-        const total_payments = filteredData.reduce((sum, row) => sum + (row.total_payments || 0), 0);
-        const remaining_balance = filteredData.reduce((sum, row) => sum + (row.remaining_balance || 0), 0);
-        const [rowSelection, setRowSelection] = useState({});
+
+    const total_amount_wo_vat = filteredData.reduce((sum, row) => sum + (row.amount_without_vat || 0), 0);
+    const total_vat_amount = filteredData.reduce((sum, row) => sum + (row.vat_amount || 0), 0);
+    const total_amount_with_vat = filteredData.reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
+    const total_payments = filteredData.reduce((sum, row) => sum + (row.total_payments || 0), 0);
+    const remaining_balance = filteredData.reduce((sum, row) => sum + (row.remaining_balance || 0), 0);
 
     const stackRef = useRef(null);
     const [boxWidth, setBoxWidth] = useState(0);
-  
+
     useEffect(() => {
-      const updateBoxWidth = () => {
+    const updateBoxWidth = () => {
         if (stackRef.current) {
-          setBoxWidth(stackRef.current.offsetWidth  );
+        setBoxWidth(stackRef.current.offsetWidth  );
         }
-      };
-  
-      updateBoxWidth();
-      window.addEventListener('resize', updateBoxWidth);
-  
-      return () => {
+    };
+
+    updateBoxWidth();
+    window.addEventListener('resize', updateBoxWidth);
+
+    return () => {
         window.removeEventListener('resize', updateBoxWidth);
-      };
+    };
     }, []);
 
     return(
@@ -275,7 +277,7 @@ export default function ListSupplierExpense(){
                 || column.accessorKey==='supplier_name'
                 || column.accessorKey==='project_name')
             } 
-            onFilterChange={handleFilterChange}
+            onFilter={handleFilter}
             total_amount_wo_vat={total_amount_wo_vat}
             total_vat_amount={total_vat_amount}
             total_amount_with_vat={total_amount_with_vat}
