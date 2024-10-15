@@ -5,7 +5,7 @@ const cookies = new Cookies();
 // Create an Axios instance
 const AxiosFileInstance = axios.create({
   //baseURL: "http://localhost:4000/",
-  baseURL: "https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/",
+  baseURL: "https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/",
   headers: {
     "Content-Type": "multipart/form-data"
   }
