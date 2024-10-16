@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Link, Box, Stack, Button, TextField, FormControl, Select, MenuItem, FormHelperText, InputLabel, Divider, Alert} from '@mui/material'
+import {Typography, Chip, Link, Box, Stack, Button, TextField, FormControl, Select, MenuItem, FormHelperText, InputLabel, Divider} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
@@ -15,7 +15,6 @@ import { useFormik } from 'formik'
 import AxiosFileInstance from '../../../../AxiosFileInstance';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-
 import LoadingButton from '@mui/lab/LoadingButton';
 
 const parentHeight = window.innerHeight;
@@ -165,73 +164,56 @@ const columns=[
         accessorKey: 'currency',
         header: 'CURRENCY'
     },
-    {
-        accessorKey: 'total_payments',
-        header: 'PAYMENTS',
-        Cell: ({ renderedCellValue }) => (
-            <NumericFormat
-            value={renderedCellValue}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          />
-        )
-    },
-    {
-        accessorKey: 'remaining_balance',
-        header: 'BALANCE',
-        Cell: ({ renderedCellValue }) => (
-            <NumericFormat
-            value={renderedCellValue}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          />
-        )
-    },
     
 ];
 
 const MakePaymentSchema = Yup.object().shape({
     mode_of_payment: Yup.string().required('This field is required!'),
     date: Yup.date().required('Date is required'),
-    reference_number: Yup.string()
+    cheque_no: Yup.string()
     .matches(/^\d+$/, 'Only whole numbers are allowed!')
     .test('is-required-if', 'This field is required!', function (value) {
         const { mode_of_payment } = this.parent;
-        if (mode_of_payment === 'Cheque Deposit' || mode_of_payment === 'Online Transfer') {
+        if (mode_of_payment === 'Cheque Deposit') {
             return value !== undefined && value !== null && value !== '';
         }
         return true;
     }),
-    amount: Yup.string()
-      .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
-      .required('This field is required!')
+    reference_number: Yup.string()
+    .test('is-required-if', 'This field is required!', function (value) {
+        const { mode_of_payment } = this.parent;
+        if (mode_of_payment === 'Online Transfer') {
+            return value !== undefined && value !== null && value !== '';
+        }
+        return true;
+    })
   });
 
 export default function ListSupplierExpense(){
    const [projectExpenses, setProjectExpenses] = useState([]);
    const [filteredData, setFilteredData] = useState([]);
    const [rowSelection, setRowSelection] = useState({});
-   const [loading, setLoading] = useState(false)
+   const [loading, setLoading] = useState({
+    make_payment: false,
+    table: false
+   })
    const [fileAlert, setFileAlert] = useState(false)
    const [fileError, setFileError] = useState('')
-   const [amountAlert, setAmountAlert] = useState('');
    const [makePayment, setMakePayment] = useState({
     open: false,
     ref_invoice_numbers: [],
     total_amount: 0
    })
+   const [refresh, setRefresh] = useState(false)
    const formik_make_payment = useFormik({
         initialValues: {
             project_expense_id: 0,
             mode_of_payment: "",
+            project_expense_ids: [],
+            cheque_no: "",
             reference_number: "",
             name: "",
             date: null,
-            amount: "",
             file: null
         },
         validateOnChange: false,
@@ -240,12 +222,9 @@ export default function ListSupplierExpense(){
                 if(values.file === null){
                     setFileError('Supporting Document is required!')
                     setFileAlert(true)
-                }else if(parseFloat(values.amount) !== makePayment.total_amount)
-                {
-                    setAmountAlert('The amount is invalid! The total amount is not equal to the amount entered. Please check and try again!')
                 }
                 else{
-                    setLoading({...loading, make_payment: true})
+                    setLoading((loading)=>({...loading, make_payment: true}))
                     const formData = new FormData();
                     formData.append('file', values.file);
                     formData.append('values', JSON.stringify(values))
@@ -255,11 +234,14 @@ export default function ListSupplierExpense(){
                     if(response.data.status === 'SUCCESS'){
                         
                         alert(response.data.message)
-                        window.location.reload()
+                        setMakePayment({...makePayment, open: false})
+                        setRowSelection({})
+                        setRefresh(!refresh)
+
                     }else{
                         console.log(response.data.message)
                     }
-                    setLoading({...loading, make_payment: false})
+                    setLoading((loading)=>({...loading, make_payment: false}))
                     })
                     .catch(function(error){
                     console.log(error)
@@ -275,7 +257,7 @@ export default function ListSupplierExpense(){
     };
     
     useEffect(()=>{
-        setLoading(true)
+        setLoading((loading)=>({...loading, table: true}))
         AxiosInstance.get("/project_expense/list")
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
@@ -293,14 +275,12 @@ export default function ListSupplierExpense(){
                     vat_percentage: !!element.is_vat ? element.vat_percentage+'%' : '',
                     vat_amount: !!element.is_vat ? element.vat_amount: '',
                     amount_with_vat: element.amount_with_vat,
-                    currency: element.currency,
-                    total_payments: element.total_payments,
-                    remaining_balance: element.remaining_balance
+                    currency: element.currency
                   })); 
                 
                   setProjectExpenses(fetchedProjectExpenses)
                   setFilteredData(fetchedProjectExpenses);
-                  setLoading(false)
+                  setLoading((loading)=>({...loading, table: false}))
             }else{
                 console.log(result.data.message)
             }
@@ -308,7 +288,7 @@ export default function ListSupplierExpense(){
         .catch(function(error){
             console.log(error)
         })
-    },[])
+    },[refresh])
 
 
     const handleFilter = (filters) => {
@@ -334,39 +314,42 @@ export default function ListSupplierExpense(){
     const total_amount_with_vat = filteredData
     .filter(row => row.status !== 'VOIDED')
     .reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
-    const total_payments = filteredData
-    .filter(row => row.status !== 'VOIDED')
-    .reduce((sum, row) => sum + (row.total_payments || 0), 0);
-    const remaining_balance = filteredData
-    .filter(row => row.status !== 'VOIDED')
-    .reduce((sum, row) => sum + (row.remaining_balance || 0), 0);
 
     const stackRef = useRef(null);
-    const [boxWidth, setBoxWidth] = useState(0);
+    const tableBodyRef = useRef(null);
+    const [box, setBox] = useState({
+        width: 0,
+        height: 0
+    });
+
 
     useEffect(() => {
-    const updateBoxWidth = () => {
+    const updateBox = () => {
         if (stackRef.current) {
-        setBoxWidth(stackRef.current.offsetWidth  );
+        setBox({
+            width: stackRef.current.offsetWidth,
+            height: 500
+        });
         }
     };
 
-    updateBoxWidth();
-    window.addEventListener('resize', updateBoxWidth);
+    updateBox();
+    window.addEventListener('resize', updateBox);
 
     return () => {
-        window.removeEventListener('resize', updateBoxWidth);
+        window.removeEventListener('resize', updateBox);
     };
     }, []);
 
 
     const handleMakePayment = () => {
         const selectedRowData = Object.keys(rowSelection).map((rx) => {
-            return filteredData.find((ry) => ry.project_expense_id === parseInt(rx) && ry.status !== 'VOIDED');
+            return filteredData.find((ry) => ry.project_expense_id === parseInt(rx) && (ry.status !== 'VOIDED' && ry.status !== 'PAID'));
         }).filter(Boolean); // Filter out any undefined values if no match is found
     
-        const totalAmount = selectedRowData.reduce((sum, row) => sum + row.remaining_balance, 0);
-    
+        formik_make_payment.setFieldValue('project_expense_ids', selectedRowData.map(row => row.project_expense_id));
+        const totalAmount = selectedRowData.reduce((sum, row) => sum + row.amount_with_vat, 0);
+        
         setMakePayment({
             open: true,
             ref_invoice_numbers: selectedRowData,
@@ -375,90 +358,104 @@ export default function ListSupplierExpense(){
     };
 
     return(
-        <Stack
-        direction="column"
+        <Box
         ref={stackRef}
-        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw'}}
-        >
-            <SupplierExpenseColumnFilter 
-            columns={
-                columns.filter((column)=>column.accessorKey==='invoice_number' 
-                || column.accessorKey==='supplier_name'
-                || column.accessorKey==='project_name')
-            } 
-            onFilter={handleFilter}
-            total_amount_wo_vat={total_amount_wo_vat}
-            total_vat_amount={total_vat_amount}
-            total_amount_with_vat={total_amount_with_vat}
-            total_payments={total_payments}
-            remaining_balance={remaining_balance}
-            />
-             <Box sx={{
-                maxWidth: boxWidth,
-                position: 'relative'
-            }}>
+        sx={{ width: '100%'}}
+            >
             <MaterialReactTable
             enableColumnFilters={false}
             enableColumnActions={false}
             enableDensityToggle={false}
             enableHiding={false}
             enableGlobalFilter={false}
-            enableRowSelection={true}
+            enableRowSelection
             enableFullScreenToggle={false}
             getRowId={(row) => row.project_expense_id} //give each row a more useful id
             onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
             initialState={{
                 density: 'compact',
-                isLoading: loading,
-                columnPinning: { left: ['mrt-row-select','pe_number', 'status', 'supplier_name'] },
-                showGlobalFilter: true,
+                isLoading: loading.table,
+                columnPinning: { left: ['mrt-row-select','pe_number', 'status', 'supplier_name'] }
             }}
             state={{
                 rowSelection: rowSelection,
-                isLoading: loading
+                isLoading: loading.table
             }} 
             muiTableHeadCellProps={{
                 sx:{
                 backgroundColor: theme.palette.primary.main,
-                color: 'white'
+                color: 'white',
+                '& .MuiTableSortLabel-root': {
+                    color: 'white',
+                    '&.Mui-active': {
+                      color: 'white',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  },
                 }
+            }}
+            muiSelectAllCheckboxProps={{
+                sx: {
+                  color: 'white',
+                  '&.Mui-checked': {
+                    color: 'white',
+                  },
+                },
             }}
             muiPaginationProps={{
                 rowsPerPageOptions: [10, 20, { label: 'All', value: filteredData.length}],
-                variant: 'outlined',
+                variant: 'filled',
             }}
             paginationDisplayMode='pages'
-              muiTableBodyProps={{
-                sx: {
-                    display: 'block',
-                    maxHeight: '400px', // Adjust the height as needed
+            muiTableContainerProps={{
+                sx: { maxHeight: box.height, 
+                    maxWidth: box.width,
+                    overflowX: 'auto',
                     overflowY: 'auto',
-                    position: 'relative',
-                },
-              }}
-              muiTableHeadProps={{
+                    '&::-webkit-scrollbar': {
+                    width: '6px',
+                    height: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '6px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                    }
+                    },
+            }}
+            muiTableBodyProps={{
+                ref: tableBodyRef,
+            }}
+            muiTableHeadProps={{
                 sx: {
-                    display: 'table',
-                    width: '100%',
-                    tableLayout: 'fixed',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1,
                 },
-              }}
-              muiTableProps={{
-                sx: {
-                  display: 'table',
-                  width: '100%',
-                  tableLayout: 'fixed',
-                },
-              }}
+            }}
+            renderTopToolbarCustomActions={() => (
+                <SupplierExpenseColumnFilter 
+                    columns={
+                        columns.filter((column)=>column.accessorKey==='invoice_number' 
+                        || column.accessorKey==='supplier_name'
+                        || column.accessorKey==='project_name')
+                    } 
+                    onFilter={handleFilter}
+                    total_amount_wo_vat={total_amount_wo_vat}
+                    total_vat_amount={total_vat_amount}
+                    total_amount_with_vat={total_amount_with_vat}
+                    />
+                )}
             muiToolbarAlertBannerProps={{
                 sx: {
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                position: 'absolute', left: 0, top: 0, transform: 'translateY(0)', padding: 0
                 },
                 children: (
                 <Box sx={{ display: 'flex', gap: 2 }}>
@@ -476,7 +473,7 @@ export default function ListSupplierExpense(){
                                     <>
                                       {ref_invoice_number.invoice_number} - {ref_invoice_number.project_name} (
                                       <NumericFormat
-                                        value={ref_invoice_number.remaining_balance}
+                                        value={ref_invoice_number.amount_with_vat}
                                         displayType={'text'}
                                         thousandSeparator={true}
                                         decimalScale={2}
@@ -496,7 +493,6 @@ export default function ListSupplierExpense(){
                             /></>} />
                         </Stack>
                         <Divider />
-                        {amountAlert && <Alert severity="error">{amountAlert}</Alert> }
                         <FormControl
                             fullWidth
                             size="small"
@@ -523,15 +519,6 @@ export default function ListSupplierExpense(){
                             {formik_make_payment.touched.mode_of_payment && formik_make_payment.errors.mode_of_payment}
                             </FormHelperText>
                         </FormControl> 
-                        
-                       <TextField label="Reference No." size="small" variant="outlined" name="reference_number" fullWidth 
-                        onChange={formik_make_payment.handleChange} value={formik_make_payment.values.reference_number} 
-                        error={
-                            formik_make_payment.touched.reference_number && Boolean(formik_make_payment.errors.reference_number)
-                        }
-                        helperText={
-                            formik_make_payment.touched.reference_number && formik_make_payment.errors.reference_number
-                        } /> 
                 
                         <Stack direction="row" spacing={2}>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -550,14 +537,23 @@ export default function ListSupplierExpense(){
                                     },
                                 }} />
                             </LocalizationProvider>
-                            <TextField label="Amount" name="amount" onChange={formik_make_payment.handleChange} size="small" variant="outlined" 
-                            fullWidth value={formik_make_payment.values.amount}
-                            error={
-                                formik_make_payment.touched.amount && Boolean(formik_make_payment.errors.amount)
-                            }
-                            helperText={
-                                formik_make_payment.touched.amount && formik_make_payment.errors.amount
-                            } />
+                                                    
+                            {formik_make_payment.values.mode_of_payment === 'Cheque Deposit' && <TextField label="Cheque No." size="small" variant="outlined" name="cheque_no" fullWidth 
+                                onChange={formik_make_payment.handleChange} value={formik_make_payment.values.cheque_no} 
+                                error={
+                                    formik_make_payment.touched.cheque_no && Boolean(formik_make_payment.errors.cheque_no)
+                                }
+                                helperText={
+                                    formik_make_payment.touched.cheque_no && formik_make_payment.errors.cheque_no
+                                } />}
+                            {formik_make_payment.values.mode_of_payment === 'Online Transfer' && <TextField label="Reference No." size="small" variant="outlined" name="reference_number" fullWidth 
+                                onChange={formik_make_payment.handleChange} value={formik_make_payment.values.reference_number} 
+                                error={
+                                    formik_make_payment.touched.reference_number && Boolean(formik_make_payment.errors.reference_number)
+                                }
+                                helperText={
+                                    formik_make_payment.touched.reference_number && formik_make_payment.errors.reference_number
+                                } />}
                         </Stack>
                     
                         <Typography variant="subtitle1">Supporting Doc:</Typography>
@@ -569,15 +565,18 @@ export default function ListSupplierExpense(){
                                     ref_invoice_numbers: [],
                                     total_amount: 0
                                 })
-                                // formik_make_payment.setValues({
-                                //     project_expense_id: 0,
-                                //     mode_of_payment: "",
-                                //     cheque_no: "",
-                                //     name: "",
-                                //     date: null,
-                                //     amount: "",
-                                //     file: null
-                                // })
+                                formik_make_payment.resetForm();
+
+                                formik_make_payment.setValues({
+                                    project_expense_id: 0,
+                                    mode_of_payment: "",
+                                    project_expense_ids: [],
+                                    cheque_no: "",
+                                    reference_number: "",
+                                    name: "",
+                                    date: null,
+                                    file: null
+                                })
                                 setMakePayment({...makePayment, open: false})
                             }}>Cancel</Button>
                             <LoadingButton variant='contained' color='secondary' onClick={formik_make_payment.handleSubmit} loading={loading.make_payment}>Save Payment</LoadingButton>
@@ -585,17 +584,7 @@ export default function ListSupplierExpense(){
                         </Stack>
 
                     } />
-                    <div
-                        style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        width: '16px', // Adjust width as needed
-                        height: '100%',
-                        backgroundColor: 'transparent',
-                        pointerEvents: 'none',
-                        }}
-                    />
+
                     <Button variant="outlined" size="small" color="success">
                         GENERATE STATEMENT
                     </Button>
@@ -604,6 +593,5 @@ export default function ListSupplierExpense(){
             }}
             columns={columns} data={filteredData} />
          </Box>
-         </Stack>
     )
 }

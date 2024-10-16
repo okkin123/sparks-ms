@@ -17,7 +17,7 @@ const storageA = multer.diskStorage({
 
 const storageB = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/payment_receipts/');
+    cb(null, 'uploads/payment_supporting_docs/');
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '- Payment Receipt.pdf');

@@ -19,7 +19,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import Check from '@mui/icons-material/Check';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { theme } from '../../../Theme';
 import { NumericFormat } from 'react-number-format';
 
 const MakePaymentSchema = Yup.object().shape({
@@ -185,8 +184,6 @@ export default function Details(){
                     vat_percentage: !!result.data.project_expense_details[0].is_vat ? result.data.project_expense_details[0].vat_percentage+'%' : '',
                     vat_amount: result.data.project_expense_details[0].vat_amount,
                     amount_with_vat: result.data.project_expense_details[0].amount_with_vat,
-                    total_payments: result.data.project_expense_details[0].total_payments,
-                    remaining_balance: result.data.project_expense_details[0].remaining_balance,
                     currency: result.data.project_expense_details[0].currency,
                     status: result.data.project_expense_details[0].STATUS,
                     authorized: JSON.parse(result.data.project_expense_details[0].reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
@@ -384,29 +381,9 @@ export default function Details(){
                                 : <TextField label="Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat} InputProps={{
                                     inputComponent: NumberFormatCustom,
                                     }} />}
-                                    <Stack direction="row" spacing={2}>
-                                        <TextField label="Total Payments" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.total_payments}
-                                            InputProps={{
-                                            inputComponent: NumberFormatCustom,
-                                            }} />
-                                        <TextField label="Remaining Balance" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.remaining_balance}
-                                        sx={{ '& .MuiInputBase-root': {
-                                            color: theme.palette.secondary.main, // You can use theme colors or any valid CSS color value
-                                            fontWeight: 'bold'
-                                          },
-                                          '& .MuiInputLabel-root': {
-                                            color: theme.palette.secondary.main,  // Label color
-                                          },
-                                          '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: theme.palette.secondary.main, // Border color
-                                          },
-                                        }} 
-                                        InputProps={{
-                                            inputComponent: NumberFormatCustom,
-                                            }} />
-                                            <TextField label="Currency" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.currency}
-                                             />
-                                    </Stack>
+ 
+                                    <TextField label="Currency" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.currency}
+                                        />
 
 
                                     {/* Tabs         */}

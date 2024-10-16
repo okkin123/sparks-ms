@@ -113,7 +113,7 @@ module.exports = {
     },
     list: (req, res)=>{
       dbConnection.query(
-          "SELECT * FROM vw_project_expenses ORDER BY pe_number DESC",
+          "SELECT * FROM vw_project_expenses ORDER BY pe_number, STATUS DESC",
           function(err, data, fields) {
             if (err) {
               res.send({
@@ -156,8 +156,22 @@ module.exports = {
     },
   insert_payment: (req, res)=>{
     const values = JSON.parse(req.body.values);
-    dbConnection.query("INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date_paid, cheque_no, bank_name, account_name, account_number, iban, amount, user_id, supporting_doc_name, supporting_doc_path) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-    [values.project_expense_id, values.mode_of_payment, values.date, isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no, values.bank_name, values.account_name, values.account_number, values.iban, values.amount, req.user.user_id, req.file.filename, req.file.path],
+
+    const details = values.project_expense_ids.flatMap(project_expense_id => [
+      project_expense_id,
+      values.mode_of_payment,
+      values.date,
+      isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no,
+      values.reference_number,
+      req.user.user_id,
+      req.file.filename,
+      req.file.path
+      ]);
+    
+    const placeholders = values.project_expense_ids.map(() => '(?,?,?,?,?,?,?,?)').join(',');
+
+    dbConnection.query(`INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date, cheque_no, reference_no, user_id, supporting_doc_name, supporting_doc_path) VALUES ${placeholders}`,
+    details,
     function(err, data, fields) {
       if (err) {
         res.send({

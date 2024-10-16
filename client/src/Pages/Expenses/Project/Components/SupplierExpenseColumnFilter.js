@@ -7,10 +7,10 @@ import dayjs from 'dayjs';
 import Dialog from '../../../../Components/Dialog';
 import { NumericFormat } from 'react-number-format';
 
-const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, total_vat_amount, total_amount_with_vat, total_payments, remaining_balance}) => {
+const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, total_vat_amount, total_amount_with_vat}) => {
   const [open, setOpen] = useState(false);
 
-  const [filters, setFilters] = useState({ column: 'project_name', value: '', fromDate: '', toDate: '' });
+  const [filters, setFilters] = useState({ column: 'project_name', value: '', fromDate: null, toDate: null });
 
   const handleFilterChange = (e) => {
     setFilters({
@@ -21,6 +21,11 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
 
   const handleApplyFilters = () => {
     onFilter(filters);
+    setFilters({
+      ...filters,
+      fromDate: null,
+      toDate: null
+    })
   };
 
 
@@ -28,38 +33,48 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
 
 
   return (
-    <Stack direction="column" spacing={2} sx={{padding: 2}}>
-     <Stack direction="row" spacing={1} alignItems="center">
-      <Typography variant="subtitle1">
-        Search By:
-      </Typography>
-      <Select
-        name="column"
-        value={filters.column}
-        onChange={handleFilterChange}
-        displayEmpty
-        size="small"
-      >
-        <MenuItem value="" disabled>Select Column</MenuItem>
-        {columns.map((column, i) => (
-          <MenuItem key={column.accessorKey} value={column.accessorKey}>
-            {column.header}
-          </MenuItem>
-        ))}
-      </Select>
-      <TextField
-        size="small"
-        name="value"
-        value={filters.value}
-        onChange={handleFilterChange}
-        placeholder="Keyword..."
-        variant="outlined"
-        sx={{ minWidth: '18rem'}}
-        onKeyDown={(e)=>e.key === 'Enter' ? handleApplyFilters() : null}
-      />
-      <Button variant="contained" color="secondary" onClick={()=>setOpen(true)}>
-        Advanced Search
-      </Button>
+    <Stack spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>
+    
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Typography variant="subtitle1">
+          Search By:
+        </Typography>
+        <Select
+          name="column"
+          value={filters.column}
+          onChange={handleFilterChange}
+          displayEmpty
+          size="small"
+        >
+          <MenuItem value="" disabled>Select Column</MenuItem>
+          {columns.map((column, i) => (
+            <MenuItem key={column.accessorKey} value={column.accessorKey}>
+              {column.header}
+            </MenuItem>
+          ))}
+        </Select>
+        <TextField
+          size="small"
+          name="value"
+          value={filters.value}
+          onChange={handleFilterChange}
+          placeholder="Keyword..."
+          variant="outlined"
+          onKeyDown={(e)=>{
+            if(e.key === 'Enter'){
+            
+
+              handleApplyFilters()
+              
+            }
+          }}
+        />
+        <Button size="small" variant="contained" color="secondary" onClick={()=>setOpen(true)}>
+          Advanced Search
+        </Button>
+      </Stack>
+
+     
       <Dialog open={open} content={
         <Stack direction="column" spacing={2}>
           <Typography variant="h6">ADVANCED SEARCH</Typography>
@@ -104,7 +119,7 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
                       name: 'fromDate',
                       size: 'small', 
                       fullWidth: true,
-                      // error: Boolean(formik_project_expense.errors.date_issued),
+                      error: false
                       // helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
                   },
                   }} />
@@ -120,7 +135,7 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
                       name: 'toDate',
                       size: 'small', 
                       fullWidth: true,
-                      // error: Boolean(formik_project_expense.errors.date_issued),
+                      error: false
                       // helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
                   },
                   }} />
@@ -135,47 +150,37 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
           </Stack>
         </Stack>
       } />
-      </Stack>
+
+
     
-      <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
-        <Chip variant="outlined" label={<>Total Amount w/o Vat: <NumericFormat
+    
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Chip label={<>Total Amount w/o Vat: <NumericFormat
             value={total_amount_wo_vat}
             displayType={'text'}
             thousandSeparator={true}
             decimalScale={2}
             fixedDecimalScale={true}
           /></>} color="info" />
-       <Chip variant="outlined" label={<>Total Vat Amount: <NumericFormat
+       <Chip label={<>Total Vat Amount: <NumericFormat
             value={total_vat_amount}
             displayType={'text'}
             thousandSeparator={true}
             decimalScale={2}
             fixedDecimalScale={true}
-          /></>} color="error" />
+          /></>} color="warning" />
         <Chip label={<>Total Amount w/ Vat: <NumericFormat
             value={total_amount_with_vat}
             displayType={'text'}
             thousandSeparator={true}
             decimalScale={2}
             fixedDecimalScale={true}
-          /></>} color="info" />
-                  <Chip label={<>Total Payments: <NumericFormat
-            value={total_payments}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          /></>} color="error" />
-            <Chip label={<>Remaining Balance: <NumericFormat
-            value={remaining_balance}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          /></>} color="warning" />
+          /></>} color="success" />
       </Stack>
-    </Stack>
-  );
+      </Stack>
+
+  )
 };
+
 
 export default SupplierExpenseColumnFilter;
