@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import {Select, MenuItem, TextField, Typography, Chip, Stack, Button} from '@mui/material';
+import {Select, MenuItem, TextField, Typography, Stack, Button} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import Dialog from '../../../../Components/Dialog';
-import { NumericFormat } from 'react-number-format';
 
-const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, total_vat_amount, total_amount_with_vat}) => {
+const SupplierExpenseColumnFilter = ({ columns, onFilter}) => {
   const [open, setOpen] = useState(false);
 
-  const [filters, setFilters] = useState({ column: 'project_name', value: '', fromDate: null, toDate: null });
+  const [filters, setFilters] = useState({ column: 'supplier_name', value: '', fromDate: null, toDate: null });
 
   const handleFilterChange = (e) => {
     setFilters({
@@ -33,8 +32,7 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
 
 
   return (
-    <Stack spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>
-    
+    <React.Fragment>
       <Stack direction="row" spacing={1} alignItems="center">
         <Typography variant="subtitle1">
           Search By:
@@ -150,35 +148,7 @@ const SupplierExpenseColumnFilter = ({ columns, onFilter, total_amount_wo_vat, t
           </Stack>
         </Stack>
       } />
-
-
-    
-    
-      <Stack direction="row" spacing={2} alignItems="center">
-        <Chip label={<>Total Amount w/o Vat: <NumericFormat
-            value={total_amount_wo_vat}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          /></>} color="info" />
-       <Chip label={<>Total Vat Amount: <NumericFormat
-            value={total_vat_amount}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          /></>} color="warning" />
-        <Chip label={<>Total Amount w/ Vat: <NumericFormat
-            value={total_amount_with_vat}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          /></>} color="success" />
-      </Stack>
-      </Stack>
-
+      </React.Fragment>
   )
 };
 

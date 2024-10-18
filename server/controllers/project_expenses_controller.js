@@ -54,7 +54,7 @@ module.exports = {
       
       const insertExpense = (callback) => {
           dbConnection.query(
-              "INSERT INTO tbl_project_expenses(invoice_file_name, invoice_file_path, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+              "INSERT INTO tbl_project_supplier_expenses(invoice_file_name, invoice_file_path, date_issued, ref_invoice_number, supplier_name, invoice_number, is_vat, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
               [req.file.filename, req.file.path, values.date_issued, values.ref_invoice_number, values.supplier_name, values.supplier_invoice_number, values.is_vat, values.vat_percentage, values.amount_without_vat, vat_amount, amount_with_vat, values.currency, req.user.user_id],
               callback
           );
@@ -113,7 +113,7 @@ module.exports = {
     },
     list: (req, res)=>{
       dbConnection.query(
-          "SELECT * FROM vw_project_expenses ORDER BY pe_number, STATUS DESC",
+          "SELECT * FROM vw_project_supplier_expenses ORDER BY pe_number, STATUS DESC",
           function(err, data, fields) {
             if (err) {
               res.send({
@@ -130,11 +130,12 @@ module.exports = {
         )
         
   },
+
   details: (req, res)=>{
     const envFilePath = path.join(__dirname, '..', '');
 
     dbConnection.query(
-        "SELECT * FROM vw_project_expenses WHERE pe_number=?",
+        "SELECT * FROM vw_project_supplier_expenses WHERE pe_number=?",
         [req.body.pe_number],
         function(err, data, fields) {
           if (err) {
@@ -157,8 +158,8 @@ module.exports = {
   insert_payment: (req, res)=>{
     const values = JSON.parse(req.body.values);
 
-    const details = values.project_expense_ids.flatMap(project_expense_id => [
-      project_expense_id,
+    const details = values.project_supplier_expense_ids.flatMap(project_supplier_expense_id => [
+      project_supplier_expense_id,
       values.mode_of_payment,
       values.date,
       isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no,
@@ -168,9 +169,9 @@ module.exports = {
       req.file.path
       ]);
     
-    const placeholders = values.project_expense_ids.map(() => '(?,?,?,?,?,?,?,?)').join(',');
+    const placeholders = values.project_supplier_expense_ids.map(() => '(?,?,?,?,?,?,?,?)').join(',');
 
-    dbConnection.query(`INSERT INTO tbl_project_expense_payments(project_expense_id, mode_of_payment, date, cheque_no, reference_no, user_id, supporting_doc_name, supporting_doc_path) VALUES ${placeholders}`,
+    dbConnection.query(`INSERT INTO tbl_project_supplier_expense_payments(project_supplier_expense_id, mode_of_payment, date, cheque_no, reference_no, user_id, supporting_doc_name, supporting_doc_path) VALUES ${placeholders}`,
     details,
     function(err, data, fields) {
       if (err) {
@@ -186,24 +187,47 @@ module.exports = {
       }
     })
   },
-  payments: (req, res) =>{
-    dbConnection.query("SELECT * FROM vw_project_expense_payments WHERE project_expense_id=? ORDER BY project_expense_id DESC",
-      [req.body.project_expense_id],
-      function(err, data, fields){
+  get_supplier_payments: (req, res)=>{
+    dbConnection.query(
+      "SELECT supplier_name, mode_of_payment, date, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date, cheque_no, reference_no, currency, processed_by",
+      function(err, data, fields) {
         if (err) {
           res.send({
             status: "ERROR",
             message: err.sqlMessage
           });
         } else {
-          res.send({
-            status: "SUCCESS",
-            user_id: req.user.user_id,
-            payments: data
+          let completedQueries = 0;
+    
+          data.forEach((item, index) => {
+            dbConnection.query(
+              "SELECT amount FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
+              [item.supplier_name, item.mode_of_payment, item.date, item.cheque_no, item.reference_no, item.currency, item.processed_by],
+              function(err1, data1, fields1) {
+                if (err1) {
+                  res.send({
+                    status: "ERROR",
+                    message: err1.sqlMessage
+                  });
+                  return;
+                } else {
+                  // Push the details into the corresponding item in the data array
+                  data[index].details = data1;
+                  completedQueries++;
+    
+                  if (completedQueries === data.length) {
+                    res.send({
+                      status: "SUCCESS",
+                      supplier_payments: data
+                    });
+                  }
+                }
+              }
+            );
           });
         }
       }
-    )
+    );
   },
   download_file: (req, res)=>{
     const filepath = req.body.filepath;
@@ -214,27 +238,9 @@ module.exports = {
       }
     });
   },
-  void_payment: (req, res)=>{
-    dbConnection.query("UPDATE tbl_project_expense_payments SET voided_by=? WHERE project_expense_payment_id=?",
-      [req.user.user_id, req.body.project_expense_payment_id],
-      function(err, data, fields){
-        if (err) {
-          res.send({
-            status: "ERROR",
-            message: err.sqlMessage
-          });
-        } else {
-          res.send({
-            status: "SUCCESS",
-            message: "Thes selected payment has been voided!"
-          });
-        }
-      }
-    )
-  },
   void_expense: (req, res)=>{
-    dbConnection.query("UPDATE tbl_project_expenses SET is_void=? WHERE project_expense_id=? AND user_id=?",
-      [true, req.body.project_expense_id, req.user.user_id],
+    dbConnection.query("UPDATE tbl_project_supplier_expenses SET is_void=? WHERE project_supplier_expense_id=? AND user_id=?",
+      [true, req.body.project_supplier_expense_id, req.user.user_id],
       function(err, data, fields){
         if (err) {
           res.send({

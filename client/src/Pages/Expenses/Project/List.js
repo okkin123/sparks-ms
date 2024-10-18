@@ -1,5 +1,5 @@
 import React, {useState} from 'react' 
-import {Grid, Toolbar, Typography, Box, Divider, AppBar, Tabs, Tab} from '@mui/material'
+import {Grid, Toolbar, Typography, Divider, AppBar, Tabs, Tab} from '@mui/material'
 import ListSupplierExpense from './Components/ListSupplierExpense';
 import ListVendorExpense from './Components/ListVendorExpense';
 // function createMessageHandler(navigate, invoice_number, quotation_number, setRefresh, refresh) {
@@ -63,7 +63,7 @@ export default function List(){
         <React.Fragment>
             <Toolbar />
             {/* <Paper> */}
-            <Grid container direction="column" spacing={2} sx={{padding: 2}}>
+            <Grid container direction="column" spacing={2} sx={{paddingLeft: 2, paddingRight: 2, paddingTop: 2}}>
               <Grid item>
                 <Typography variant="h6">LIST OF PROJECT EXPENSE</Typography>
               </Grid>
@@ -72,7 +72,7 @@ export default function List(){
               </Grid>
 
               <Grid item>
-              <AppBar position="static" color="transparent">
+              <AppBar position="static" color="primary">
               <Tabs value={tabValue} onChange={handleTabChange}
                   textColor='inherit'>
                       <Tab label="Supplier" />
@@ -80,6 +80,8 @@ export default function List(){
                   </Tabs>
               </AppBar>
               </Grid>
+              </Grid>
+              <Grid container direction="column" sx={{paddingLeft: 2, paddingRight: 2}}>
               <Grid item>
               <TabPanel value={tabValue} index={0}>
                 <ListSupplierExpense />
