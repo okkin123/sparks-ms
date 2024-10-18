@@ -20,7 +20,8 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
 
         if (acceptedFiles.length === 1) {
             const file = acceptedFiles;
-            fileTypes.forEach(element => {
+            const isAllowed = fileTypes.includes(file[0].type);
+       
             //   if (file[0].type === 'image/jpeg' || file[0].type === 'image/png' || file[0].type === 'application/pdf') {
             //     setFileName(file[0].name);
             //     onFileUpload(file[0]);
@@ -28,13 +29,12 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
             //     setError('Unsupported File Format!');
             // }
             
-            if (file[0].type === element) {
+            if (isAllowed) {
                 setFileName(file[0].name);
                 onFileUpload(file[0]);
             } else {
                 setError('Unsupported File Format!');
             }
-            });
         }
   
         // eslint-disable-next-line
@@ -61,9 +61,9 @@ const FileUpload = ({ onFileUpload, fileTypes, mainError, alertOpen}) => {
         Upload File
       </Button>
       </Stack>
-      {fileName && alertOpen && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
-      {error && alertOpen &&<Alert severity='error'><strong>Error! </strong>{error}</Alert>}
-      {mainError && !fileName && alertOpen &&<Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
+      {(fileName && alertOpen) && <Alert severity='success'><strong>File is uploaded! </strong>{fileName}</Alert>}
+      {(error!=='' && alertOpen) &&<Alert severity='error'><strong>Error! </strong>{error}</Alert>}
+      {(mainError && !fileName && alertOpen) &&<Alert severity='error'><strong>Error! </strong>{mainError}</Alert>}
       </Stack>
     </div>
   );

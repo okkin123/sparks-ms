@@ -308,6 +308,7 @@ export default function Details(){
     const [approvalHistory, setApprovalHistory] = useState([])
     const [loading, setLoading] = useState(false);
     const contentToPrint = useRef(null);
+    const [fileAlert, setFileAlert] = useState(false)
     const toWords = new ToWords({localeCode: 'en-AE'});
     const [words, setWords] = useState('')
     useEffect(()=>{
@@ -431,6 +432,7 @@ export default function Details(){
 
     const handleFileUpload = (file) => {
      formik_update_quotation_status.setFieldValue('file', file);
+     setFileAlert(true)
     };
 
     const formik_update_quotation_status = useFormik({
@@ -846,7 +848,7 @@ export default function Details(){
                           <Grid item>
                           <Stack direction="column" spacing={2}>
                           <StyledTypography variant="subtitle1"><strong>Supporting Document</strong> - Max Size: 16mb</StyledTypography>
-                          <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} />
+                          <FileUpload onFileUpload={handleFileUpload} fileTypes={['image/jpeg', 'image/png', 'application/pdf']} alertOpen={fileAlert} />
                           </Stack>
                           </Grid></React.Fragment>: null }
                           <Grid item>
