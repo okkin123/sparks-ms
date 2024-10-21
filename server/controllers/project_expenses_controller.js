@@ -113,7 +113,7 @@ module.exports = {
     },
     list: (req, res)=>{
       dbConnection.query(
-          "SELECT * FROM vw_project_supplier_expenses ORDER BY pe_number, STATUS DESC",
+          "SELECT * FROM vw_project_supplier_expenses ORDER BY pe_number DESC",
           function(err, data, fields) {
             if (err) {
               res.send({
@@ -134,6 +134,7 @@ module.exports = {
   details: (req, res)=>{
     const envFilePath = path.join(__dirname, '..', '');
 
+
     dbConnection.query(
         "SELECT * FROM vw_project_supplier_expenses WHERE pe_number=?",
         [req.body.pe_number],
@@ -144,13 +145,28 @@ module.exports = {
               message: err.sqlMessage
             });
           } else {
-            res.send({
-              status: "SUCCESS",
-              //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
-              file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
-              user_id: req.user.user_id,
-              project_expense_details: data
-            });
+            dbConnection.query("SELECT * FROM vw_project_supplier_expense_payments WHERE pe_number=?",
+              [req.body.pe_number],
+              function(err1, data1, fields1){
+                if (err1) {
+                  res.send({
+                    status: "ERROR",
+                    message: err1.sqlMessage
+                  });
+                }else {
+                  res.send({
+                    status: "SUCCESS",
+                    //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
+                    file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
+                    user_id: req.user.user_id,
+                    project_supplier_expense_details: data,
+                    project_supplier_payment_details: data1,
+                  });
+                }
+              }
+            )
+            
+
           }
         }
       )
@@ -165,8 +181,8 @@ module.exports = {
       isNaN(parseInt(values.cheque_no)) ? 0 : values.cheque_no,
       values.reference_number,
       req.user.user_id,
-      req.file.filename,
-      req.file.path
+      values.file !== null ? req.file.filename : null,
+      values.file !== null ? req.file.path : null
       ]);
     
     const placeholders = values.project_supplier_expense_ids.map(() => '(?,?,?,?,?,?,?,?)').join(',');
@@ -189,7 +205,7 @@ module.exports = {
   },
   get_supplier_payments: (req, res)=>{
     dbConnection.query(
-      "SELECT supplier_name, mode_of_payment, date, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date, cheque_no, reference_no, currency, processed_by",
+      "SELECT supplier_name, mode_of_payment, date, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date, cheque_no, reference_no, currency, processed_by",
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -201,7 +217,7 @@ module.exports = {
     
           data.forEach((item, index) => {
             dbConnection.query(
-              "SELECT amount FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
+              "SELECT pe_number, invoice_number, project_name, mode_of_payment, date, cheque_no, reference_no, amount, currency, processed_by, status FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
               [item.supplier_name, item.mode_of_payment, item.date, item.cheque_no, item.reference_no, item.currency, item.processed_by],
               function(err1, data1, fields1) {
                 if (err1) {
@@ -218,6 +234,7 @@ module.exports = {
                   if (completedQueries === data.length) {
                     res.send({
                       status: "SUCCESS",
+                      user_id: req.user.user_id,
                       supplier_payments: data
                     });
                   }
@@ -228,6 +245,27 @@ module.exports = {
         }
       }
     );
+  },
+  void_supplier_payments: (req, res)=>{
+    console.log(req.body.supporting_doc_name)
+    dbConnection.query("UPDATE tbl_project_supplier_expense_payments SET voided_by=? WHERE supporting_doc_name=?",
+      [req.user.user_id, req.body.supporting_doc_name],
+      function name(err, data, fields) {
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            message: "The selected project expense is voided!"
+          });
+            
+        }
+      }
+
+    )
   },
   download_file: (req, res)=>{
     const filepath = req.body.filepath;

@@ -1,12 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, Chip} from '@mui/material';
+import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, Chip, Divider} from '@mui/material';
 import AxiosInstance from '../../../AxiosInstance';
 import dayjs from 'dayjs';
 
 import PdfViewer from '../../../Components/PdfViewer';
 // import PrintIcon from '@mui/icons-material/Print';
 import NumberFormatCustom from '../../../Components/NumberFormatCustom';
-
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
   
@@ -22,7 +21,7 @@ export default function Details(){
     const paramValue = params.get('pe_number');
 
 
-    const [projectExpenseDetails, setProjectExpensesDetails] = useState({
+    const [projectSupplierExpenseDetails, setProjectSupplierExpensesDetails] = useState({
         pe_number: "",
         project_name: "",
         supplier_name: "",
@@ -39,6 +38,7 @@ export default function Details(){
         currency: "",
     })
 
+    const [projectSupplierPaymentDetails, setProjectSupplierPaymentDetails] = useState([])
 
     const [file, setFile] = useState(null)
 
@@ -47,31 +47,45 @@ export default function Details(){
         AxiosInstance.post("/project_expense/details", {pe_number: paramValue})
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
-              
+               const expenses = result.data.project_supplier_expense_details;
+               const payments = result.data.project_supplier_payment_details;
                 
-                setProjectExpensesDetails({
-                    project_expense_id: result.data.project_expense_details[0].project_expense_id,
-                    pe_number: result.data.project_expense_details[0].pe_number,
-                    invoice_file_name: result.data.project_expense_details[0].invoice_file_name,
-                    invoice_file_path: result.data.project_expense_details[0].invoice_file_path,
-                    project_name: result.data.project_expense_details[0].project_name,
-                    supplier_name: result.data.project_expense_details[0].supplier_name,
-                    bank_name: result.data.project_expense_details[0].bank_name,
-                    account_name: result.data.project_expense_details[0].account_name,
-                    account_number: result.data.project_expense_details[0].account_number,
-                    iban: result.data.project_expense_details[0].iban,
-                    invoice_number: result.data.project_expense_details[0].invoice_number,
-                    created_by_email: result.data.project_expense_details[0].created_by_email,
-                    date_issued: dayjs(new Date(result.data.project_expense_details[0].date_issued)).format('DD-MMM-YYYY'),
-                    is_vat: !!result.data.project_expense_details[0].is_vat,
-                    amount_without_vat: result.data.project_expense_details[0].amount_without_vat,
-                    vat_percentage: !!result.data.project_expense_details[0].is_vat ? result.data.project_expense_details[0].vat_percentage+'%' : '',
-                    vat_amount: result.data.project_expense_details[0].vat_amount,
-                    amount_with_vat: result.data.project_expense_details[0].amount_with_vat,
-                    currency: result.data.project_expense_details[0].currency,
-                    status: result.data.project_expense_details[0].STATUS,
-                    authorized: JSON.parse(result.data.project_expense_details[0].reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
+                setProjectSupplierExpensesDetails({
+                    project_expense_id: expenses[0].project_expense_id,
+                    pe_number: expenses[0].pe_number,
+                    invoice_file_name: expenses[0].invoice_file_name,
+                    invoice_file_path: expenses[0].invoice_file_path,
+                    project_name: expenses[0].project_name,
+                    supplier_name: expenses[0].supplier_name,
+                    bank_name: expenses[0].bank_name,
+                    account_name: expenses[0].account_name,
+                    account_number: expenses[0].account_number,
+                    iban: expenses[0].iban,
+                    invoice_number: expenses[0].invoice_number,
+                    created_by_email: expenses[0].created_by_email,
+                    date_issued: dayjs(new Date(expenses[0].date_issued)).format('DD-MMM-YYYY'),
+                    is_vat: !!expenses[0].is_vat,
+                    amount_without_vat: expenses[0].amount_without_vat,
+                    vat_percentage: !!expenses[0].is_vat ? expenses[0].vat_percentage+'%' : '',
+                    vat_amount: expenses[0].vat_amount,
+                    amount_with_vat: expenses[0].amount_with_vat,
+                    currency: expenses[0].currency,
+                    status: expenses[0].STATUS,
+                    authorized: JSON.parse(expenses[0].reporting_to).user_id.some((user_id)=>user_id === result.data.user_id)
                   })
+
+                  const fetchedSupplierPaymentDetails = payments.map((element) => ({
+                    amount: element.amount,
+                    currency: element.currency,
+                    mode_of_payment: element.mode_of_payment,
+                    cheque_no: element.cheque_no,
+                    reference_no: element.reference_no,
+                    date: element.date,
+                    processed_by: element.processed_by,
+                    status: element.status,
+                    voided_by: element.voided_by
+                  })); 
+                  setProjectSupplierPaymentDetails(fetchedSupplierPaymentDetails)
 
                   setFile(result.data.file_url)
             }else{
@@ -144,19 +158,19 @@ export default function Details(){
                 <Grid container direction="column" spacing={3}>
                     <Grid item>
                         <Stack direction="row" justifyContent="space-between">
-                            <Chip color="secondary" size="small" label={"PE Number: "+ projectExpenseDetails.pe_number}/>
+                            <Chip color="secondary" size="small" label={"PE Number: "+ projectSupplierExpenseDetails.pe_number}/>
                             <Stack direction="row" spacing={2}>
 
-                            {projectExpenseDetails.status === 'UNPAID' && projectExpenseDetails.authorized ? <Chip
+                            {projectSupplierExpenseDetails.status === 'UNPAID' && projectSupplierExpenseDetails.authorized ? <Chip
                                 label="Void" 
                                 size="small"
-                                onClick={()=>handleVoidExpense(projectExpenseDetails.project_expense_id)}
+                                onClick={()=>handleVoidExpense(projectSupplierExpenseDetails.project_expense_id)}
                             /> : null}
                             
                             <Chip 
-                                label={"Status: "+projectExpenseDetails.status} 
+                                label={"Status: "+projectSupplierExpenseDetails.status} 
                                 size="small"
-                                color={projectExpenseDetails.status === 'PAID' ? 'success' : projectExpenseDetails.status === 'PARTIALLY PAID' ? 'warning' :  projectExpenseDetails.status === 'UNPAID' ? 'info' : 'error'}
+                                color={projectSupplierExpenseDetails.status === 'PAID' ? 'success' : projectSupplierExpenseDetails.status === 'PARTIALLY PAID' ? 'warning' :  projectSupplierExpenseDetails.status === 'UNPAID' ? 'info' : 'error'}
                             />
                             </Stack>
                         </Stack>
@@ -164,34 +178,70 @@ export default function Details(){
                     <Grid item container direction="row" spacing={2}>
                         <Grid item xl={5} lg={5}>
                             <Stack direction="column" spacing={2}>
-                                <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.supplier_name} />
+                                <TextField label="Supplier Name" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.supplier_name} />
                                 <Stack direction="row" spacing={2}>
-                                <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.date_issued} />
-                                <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.invoice_number} />
+                                <TextField label="Date Issued" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.date_issued} />
+                                <TextField label="Invoice No." size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.invoice_number} />
                                 </Stack>
-                                <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.project_name} />
+                                <TextField label="Project Name" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.project_name} />
                                 
 
-                                {projectExpenseDetails.is_vat ? 
+                                {projectSupplierExpenseDetails.is_vat ? 
                                     <Stack direction="row" spacing={2}>
-                                        <TextField label="Amount w/o Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat}
+                                        <TextField label="Amount w/o Vat" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.amount_without_vat}
                                             InputProps={{
                                             inputComponent: NumberFormatCustom,
                                             }} />
-                                        <TextField label="Vat Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.vat_amount} InputProps={{
+                                        <TextField label="Vat Amount" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.vat_amount} InputProps={{
                                             inputComponent: NumberFormatCustom,
                                             }} />
-                                        <TextField label="Amount w/ Vat" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_with_vat} InputProps={{
+                                        <TextField label="Amount w/ Vat" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.amount_with_vat} InputProps={{
                                             inputComponent: NumberFormatCustom,
                                             }} />
                                     </Stack>
-                                : <TextField label="Amount" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.amount_without_vat} InputProps={{
+                                : <TextField label="Amount" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.amount_without_vat} InputProps={{
                                     inputComponent: NumberFormatCustom,
                                     }} />}
  
-                                    <TextField label="Currency" size="small" variant="outlined" readOnly fullWidth value={projectExpenseDetails.currency}
+                                    <TextField label="Currency" size="small" variant="outlined" readOnly fullWidth value={projectSupplierExpenseDetails.currency}
                                         />
-
+                                <Typography variant="body1">PAYMENT DETAILS:</Typography>
+                                {projectSupplierPaymentDetails.map((projectSupplierPaymentDetail)=>(
+                                    <React.Fragment>
+                                    <Stack direction="row" gap={1} justifyContent="flex-start" alignItems="flex-start" flexWrap="wrap">
+                                    <Chip 
+                                        label={<>Status: <b>{projectSupplierPaymentDetail.status}</b></>}
+                                        size="small"
+                                        color={projectSupplierPaymentDetail.status === 'PAID' ? 'success' : 'error' }
+                                    /> 
+                                     {projectSupplierPaymentDetail.voided_by && <Chip 
+                                        label={<>Voided By: <b>{projectSupplierPaymentDetail.voided_by}</b></>}
+                                        size="small"
+                                    />}
+                                    <Chip 
+                                        label={<>Mode of Payment: <b>{projectSupplierPaymentDetail.mode_of_payment}</b></>}
+                                        size="small"
+                                        color={projectSupplierPaymentDetail.mode_of_payment === 'Cash' ? 'secondary' : projectSupplierPaymentDetail.mode_of_payment === 'Online Transfer' ? 'warning' : 'info' }
+                                    /> 
+                                    {projectSupplierPaymentDetail.mode_of_payment !== 'Cash' ? <Chip 
+                                        label={<>{projectSupplierPaymentDetail.mode_of_payment==='Cheque Deposit' ? 'Cheque No.: ' : projectSupplierPaymentDetail.mode_of_payment==='Online Transfer' ? 'Reference No.: ' : ''} 
+                                        <b>{projectSupplierPaymentDetail.mode_of_payment==='Cheque Deposit' ? projectSupplierPaymentDetail.cheque_no : projectSupplierPaymentDetail.mode_of_payment==='Online Transfer' ? projectSupplierPaymentDetail.reference_no : ''}</b></>}
+                                        size="small"
+                                    /> : null }
+                                    <Chip 
+                                    label={<>Date: <b>{dayjs(new Date(projectSupplierPaymentDetail.date)).format('DD-MMM-YYYY')}</b></>}
+                                        size="small"
+                                    /> 
+                                    <Chip 
+                                        label={<>Processed By: <b>{projectSupplierPaymentDetail.processed_by}</b></>}
+                                        size="small"
+                                    />
+                                   
+                                    
+                                </Stack> 
+                                <Divider />
+                                </React.Fragment>
+                                ))}
 
                             </Stack>
                         </Grid>
@@ -217,7 +267,7 @@ export default function Details(){
                                         color="inherit"
                                         aria-label="menu"
                                         //sx={{ ml: 2 }}
-                                        onClick={()=>downloadFile(projectExpenseDetails.invoice_file_name, projectExpenseDetails.invoice_file_path)}
+                                        onClick={()=>downloadFile(projectSupplierExpenseDetails.invoice_file_name, projectSupplierExpenseDetails.invoice_file_path)}
                                     >
                                         <FileDownloadIcon />
                                     </IconButton>
