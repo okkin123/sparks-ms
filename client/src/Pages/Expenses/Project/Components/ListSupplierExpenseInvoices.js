@@ -327,6 +327,10 @@ export default function ListSupplierExpenseInvoices(){
     const total_amount_with_vat = filteredData
     .filter(row => row.status !== 'VOIDED')
     .reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
+    const total_payments = filteredData
+    .filter(row => row.status === 'PAID')
+    .reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
+    const remaining_balance = parseFloat(total_amount_with_vat) - parseFloat(total_payments);
 
     const stackRef = useRef(null);
     const tableBodyRef = useRef(null);
@@ -490,7 +494,7 @@ export default function ListSupplierExpenseInvoices(){
                         thousandSeparator={true}
                         decimalScale={2}
                         fixedDecimalScale={true}
-                      /></>} color="warning" />
+                      /></>} color="warning"  variant="outlined" />
                     <Chip label={<>Total Amount w/ Vat: <NumericFormat
                         value={total_amount_with_vat}
                         displayType={'text'}
@@ -498,6 +502,20 @@ export default function ListSupplierExpenseInvoices(){
                         decimalScale={2}
                         fixedDecimalScale={true}
                       /></>} color="success" />
+                       <Chip label={<>Total Payments: <NumericFormat
+                        value={total_payments}
+                        displayType={'text'}
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                      /></>} color="error" />
+                       <Chip label={<>Remaining Balance: <NumericFormat
+                        value={remaining_balance}
+                        displayType={'text'}
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                      /></>} color="warning" />
                   </Stack>
                 </Stack>
                 )}

@@ -3,7 +3,7 @@ import {Select, MenuItem, TextField, Typography, Chip, Stack} from '@mui/materia
 
 import { NumericFormat } from 'react-number-format';
 
-const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, total_vat_amount, total_amount_with_vat }) => {
+const VendorExpenseColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, total_vat_amount, total_amount_with_vat }) => {
   const [selectedColumn, setSelectedColumn] = useState('project_name');
   const [filterValue, setFilterValue] = useState('');
 
@@ -78,4 +78,4 @@ const CustomColumnFilter = ({ columns, onFilterChange, total_amount_wo_vat, tota
   );
 };
 
-export default CustomColumnFilter;
+export default VendorExpenseColumnFilter;

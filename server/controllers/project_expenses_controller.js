@@ -70,8 +70,8 @@ module.exports = {
       
       const insertSupplier = () => {
           dbConnection.query(
-              "INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban) VALUES(?,?,?,?,?)",
-              [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban],
+              "INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban, mobile_no, email_address, trn_no) VALUES(?,?,?,?,?,?,?,?)",
+              [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban, values.mobile_no, values.email_address, values.trn_no],
               (err2, data2, fields2) => {
                   if (err2) console.log(err2);
               }
@@ -145,7 +145,7 @@ module.exports = {
               message: err.sqlMessage
             });
           } else {
-            dbConnection.query("SELECT * FROM vw_project_supplier_expense_payments WHERE pe_number=?",
+            dbConnection.query("SELECT * FROM vw_project_supplier_expense_payments WHERE pe_number=? ORDER by date_paid DESC",
               [req.body.pe_number],
               function(err1, data1, fields1){
                 if (err1) {
@@ -205,7 +205,7 @@ module.exports = {
   },
   get_supplier_payments: (req, res)=>{
     dbConnection.query(
-      "SELECT supplier_name, mode_of_payment, date, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date, cheque_no, reference_no, currency, processed_by",
+      "SELECT supplier_name, mode_of_payment, date_paid, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date_paid, cheque_no, reference_no, currency, processed_by",
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -217,7 +217,7 @@ module.exports = {
     
           data.forEach((item, index) => {
             dbConnection.query(
-              "SELECT pe_number, invoice_number, project_name, mode_of_payment, date, cheque_no, reference_no, amount, currency, processed_by, status FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
+              "SELECT pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, currency, processed_by, status FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date_paid=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
               [item.supplier_name, item.mode_of_payment, item.date, item.cheque_no, item.reference_no, item.currency, item.processed_by],
               function(err1, data1, fields1) {
                 if (err1) {
@@ -457,7 +457,7 @@ delete_vendor_expense: (req, res)=>{
 },
 list_vendor_expense: (req, res)=>{
   dbConnection.query(
-      "SELECT * FROM vw_project_vendor_expenses ORDER BY date DESC",
+      "SELECT * FROM vw_project_vendor_expenses ORDER BY date_issued DESC",
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -474,5 +474,24 @@ list_vendor_expense: (req, res)=>{
     )
     
 },
+get_supplier_statement: (req, res)=>{
+  dbConnection.query("SELECT * FROM vw_project_supplier_statement WHERE supplier_name=? AND (date_issued BETWEEN ? AND ?) ORDER BY date_issued",
+    [req.body.supplier_name, req.body.from_date, req.body.to_date],
+    function(err, data, fields)
+    {
+      if (err) {
+        res.send({
+          status: "ERROR",
+          message: err.sqlMessage
+        });
+      } else {
+        res.send({
+          status: "SUCCESS",
+          supplier_statement: data
+        });
+      }
+    }
+  )
+}
 
 }

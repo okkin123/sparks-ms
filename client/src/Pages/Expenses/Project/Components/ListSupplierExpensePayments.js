@@ -179,7 +179,7 @@ export default function ListSupplierExpensePayments(){
                     supplier_name: element.supplier_name,
                     status: element.status,
                     mode_of_payment: element.mode_of_payment,
-                    date: element.date,
+                    date: element.date_paid,
                     cheque_no: element.cheque_no,
                     reference_no: element.reference_no,
                     amount: element.amount,

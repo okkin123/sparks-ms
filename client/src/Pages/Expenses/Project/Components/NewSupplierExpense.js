@@ -37,7 +37,17 @@ const ProjectExpenseSchema = Yup.object().shape({
     .matches(/^\d+$/, 'Only whole numbers are allowed!')
     .required('This field is required!'),
   iban: Yup.string()
-  .required('This field is required!')
+    .required('This field is required!'),
+  mobile_no: Yup.string()
+    .matches(/^\d+$/, 'Only whole numbers are allowed')
+    .min(10, 'Mobile number must be at least 10 digits')
+    .required('This field is required!'),
+  email_address: Yup.string()
+    .email("Invalid email")
+    .required("This field is required!"),
+  trn_no: Yup.number()
+    .integer('Only whole numbers are allowed')
+    .required('This field is required!'),
 });
 
 
@@ -55,6 +65,9 @@ export default function NewSupplierExpense(){
     const [isEditing, setIsEditing] = useState(false)
     const [fileAlert, setFileAlert] = useState(false)
     const [previousValue, setPreviousValue] = useState({
+      mobile_no: "",
+      email_address: "",
+      trn_no: "",
       bank_name: "",
       account_name: "",
       account_number: "",
@@ -100,7 +113,10 @@ export default function NewSupplierExpense(){
         account_name: "",
         set_account_name: false,
         account_number: "",
-        iban: ""
+        iban: "",
+        mobile_no: "",
+        email_address: "",
+        trn_no: ""
       },
       validateOnChange: false,
       validationSchema: ProjectExpenseSchema,
@@ -169,7 +185,10 @@ export default function NewSupplierExpense(){
                 bank_name: element.bank_name,
                 account_name: element.account_name,
                 account_number: element.account_number,
-                iban: element.iban
+                iban: element.iban,
+                mobile_no: element.mobile_no,
+                email_address: element.email_address,
+                trn_no: element.trn_no
               }))
             ])
   
@@ -226,7 +245,10 @@ export default function NewSupplierExpense(){
         account_name: "",
         set_account_name: false,
         account_number: "",
-        iban: ""
+        iban: "",
+        mobile_no: "",
+        email_address: "",
+        trn_no: ""
       })
       setFile(null);
       setFileAlert(false)
@@ -433,6 +455,9 @@ export default function NewSupplierExpense(){
                                 account_name: option.account_name,
                                 account_number: option.account_number,
                                 iban: option.iban,
+                                mobile_no: option.mobile_no,
+                                email_address: option.email_address,
+                                trn_no: option.trn_no
                                 }))}
                                 value={formik_project_expense.values.supplier_name}
                                 onChange={(event, newValue) => {
@@ -441,27 +466,38 @@ export default function NewSupplierExpense(){
                     
 
                                 if (newValue) {
+                                    formik_project_expense.setFieldValue('mobile_no', newValue.mobile_no);
+                                    formik_project_expense.setFieldValue('email_address', newValue.email_address);
+                                    formik_project_expense.setFieldValue('trn_no', newValue.trn_no);
                                     formik_project_expense.setFieldValue('supplier_name', newValue.value);
                                     formik_project_expense.setFieldValue('bank_name', newValue.bank_name);
                                     formik_project_expense.setFieldValue('account_name', newValue.account_name);
                                     formik_project_expense.setFieldValue('account_number', newValue.account_number);
                                     formik_project_expense.setFieldValue('iban', newValue.iban);
-                                    formik_project_expense.setFieldValue('save_bank_details', true);
+
                                     
                                     setPreviousValue({
+                                    mobile_no: newValue.mobile_no,
+                                    email_address: newValue.email_address,
+                                    trn_no: newValue.trn_no,
                                     bank_name: newValue.bank_name,
                                     account_name: newValue.account_name,
                                     account_number: newValue.account_number,
                                     iban: newValue.iban
                                     })
                                 } else {
+                                    formik_project_expense.setFieldValue('mobile_no', '');
+                                    formik_project_expense.setFieldValue('email_address', '');
+                                    formik_project_expense.setFieldValue('trn_no', '');
                                     formik_project_expense.setFieldValue('supplier_name', '');
                                     formik_project_expense.setFieldValue('bank_name', '');
                                     formik_project_expense.setFieldValue('account_name', '');
                                     formik_project_expense.setFieldValue('account_number', '');
                                     formik_project_expense.setFieldValue('iban', '');
-                                    formik_project_expense.setFieldValue('save_bank_details', false);
                                     setPreviousValue({
+                                    mobile_no: "",
+                                    email_address: "",
+                                    trn_no: "",
                                     bank_name: "",
                                     account_name: "",
                                     account_number: "",
@@ -496,7 +532,7 @@ export default function NewSupplierExpense(){
                                 fullWidth
                             />
                             <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="body2">Bank Details:</Typography>
+                            <Typography variant="body2">Details:</Typography>
                             <Stack direction="row" spacing={1}>
                             <IconButton size="small" color="primary" onClick={()=>{
                                     formik_project_expense.setFieldValue('bank_name', previousValue.bank_name)
@@ -512,6 +548,44 @@ export default function NewSupplierExpense(){
                             </Stack>
 
                             </Stack>
+                            <TextField label="Mobile No." size="small" variant="outlined" name="mobile_no" fullWidth 
+                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.mobile_no} 
+                            error={
+                            formik_project_expense.touched.mobile_no && Boolean(formik_project_expense.errors.mobile_no)
+                            }
+                            helperText={
+                            formik_project_expense.touched.mobile_no && formik_project_expense.errors.mobile_no
+                            } 
+                            InputProps={{
+                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
+                            }}
+                            />  
+                            <TextField label="Email Address" size="small" variant="outlined" name="email_address" fullWidth 
+                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.email_address} 
+                            error={
+                            formik_project_expense.touched.email_address && Boolean(formik_project_expense.errors.email_address)
+                            }
+                            helperText={
+                            formik_project_expense.touched.email_address && formik_project_expense.errors.email_address
+                            } 
+                            InputProps={{
+                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
+                            }}
+                            />  
+
+                            <TextField label="TRN No." size="small" variant="outlined" name="trn_no" fullWidth 
+                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.trn_no} 
+                            error={
+                            formik_project_expense.touched.trn_no && Boolean(formik_project_expense.errors.trn_no)
+                            }
+                            helperText={
+                            formik_project_expense.touched.trn_no && formik_project_expense.errors.trn_no
+                            } 
+                            InputProps={{
+                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
+                            }}
+                            /> 
+
                             <TextField label="Bank Name" size="small" variant="outlined" name="bank_name" fullWidth 
                             onChange={formik_project_expense.handleChange} value={formik_project_expense.values.bank_name} 
                             error={

@@ -42,5 +42,6 @@ router.route("/insert_vendor_expense").post(middleware.authentication, controlle
 router.route("/update_vendor_expense").post(middleware.authentication, controller.update_vendor_expense)
 router.route("/delete_vendor_expense").post(controller.delete_vendor_expense)
 router.route("/list_vendor_expense").get(controller.list_vendor_expense)
+router.route("/get_supplier_statement").post(controller.get_supplier_statement);
 
 module.exports = router;

@@ -8,7 +8,7 @@ import {
 import { theme } from '../../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-import CustomColumnFilter from './CustomColumnFilter';
+import CustomColumnFilter from './VendorExpenseColumnFilter';
 import { useNavigate } from 'react-router-dom';
 const columns=[
     {
