@@ -535,7 +535,7 @@ useEffect(()=>{
           </List> : null }
         </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 2}}>
+      <Box component="main" sx={{ flexGrow: 1, pt: 2, pr: 2, pb: 2}}>
           { component.element }
       </Box>
     </Box>

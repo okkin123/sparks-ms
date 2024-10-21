@@ -74,8 +74,13 @@ const columns=[
         )
     },
     {
+        accessorKey: 'supplier_name',
+        header: 'SUPPLIER NAME',
+    },
+    {
         accessorKey: 'status',
         header: 'STATUS',
+        size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
         <Chip 
             label={renderedCellValue} 
@@ -86,19 +91,18 @@ const columns=[
     },
     {
         accessorKey: 'project_name',
-        header: 'PROJECT NAME'
+        header: 'PROJECT NAME',
     },
-    {
-        accessorKey: 'supplier_name',
-        header: 'SUPPLIER NAME'
-    },
+
     {
         accessorKey: 'invoice_number',
-        header: 'INVOICE NO.'
+        header: 'INVOICE NO.',
+        size: 'fit-content'
     },
     {
         accessorKey: 'created_by_email',
         header: 'CREATED BY',
+        size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
         <Chip 
             variant='outlined'
@@ -110,15 +114,18 @@ const columns=[
     },
     {
         accessorKey: 'date',
-        header: 'DATE ISSUED'
+        header: 'DATE ISSUED',
+        size: 'fit-content'
     },  
     {
         accessorKey: 'is_vat',
-        header: 'VAT APPLICABLE'
+        header: 'VAT APPLICABLE',
+        size: 'fit-content'
     },
     {
         accessorKey: 'amount_without_vat',
         header: 'AMOUNT w/o VAT',
+        size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
             value={renderedCellValue}
@@ -132,6 +139,7 @@ const columns=[
     {
         accessorKey: 'vat_percentage',
         header: 'VAT %',
+        size: 'fit-content',
         Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
     },
     {
@@ -150,6 +158,7 @@ const columns=[
     {
         accessorKey: 'amount_with_vat',
         header: 'AMOUNT w/ VAT',
+        size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
             value={renderedCellValue}
@@ -162,7 +171,8 @@ const columns=[
     },
     {
         accessorKey: 'currency',
-        header: 'CURRENCY'
+        header: 'CURRENCY',
+        size: 'fit-content'
     },
     
 ];
@@ -222,7 +232,7 @@ export default function ListSupplierExpenseInvoices(){
         validateOnChange: false,
         validationSchema: MakePaymentSchema,
         onSubmit: (values, {validateForm})=>{
-                if(values.file === null){
+                if(values.file === null && (values.mode_of_payment === 'Cheque Deposit' || values.mode_of_payment === 'Online Transfer')){
                     setFileError('Supporting Document is required!')
                     setFileAlert(true)
                 }
@@ -267,9 +277,9 @@ export default function ListSupplierExpenseInvoices(){
                 const fetchedProjectExpenses = result.data.project_expenses.map((element) => ({
                     project_supplier_expense_id: element.project_supplier_expense_id,
                     pe_number: element.pe_number,
+                    supplier_name: element.supplier_name,
                     status: element.STATUS,
                     project_name: element.project_name,
-                    supplier_name: element.supplier_name,
                     invoice_number: element.invoice_number,
                     created_by_email: element.created_by_email,
                     date: dayjs(new Date(element.date_issued)).format('DD-MMM-YYYY'),
@@ -391,7 +401,7 @@ export default function ListSupplierExpenseInvoices(){
             initialState={{
                 density: 'compact',
                 isLoading: loading.table,
-                columnPinning: { left: ['mrt-row-select','pe_number', 'status', 'supplier_name'] }
+                columnPinning: { left: ['mrt-row-select','pe_number', 'supplier_name', 'status'] }
             }}
             state={{
                 rowSelection: rowSelection,
@@ -503,8 +513,9 @@ export default function ListSupplierExpenseInvoices(){
                     <Dialog open={makePayment.open} content={
                         <Stack direction="column" spacing={2}>
                         <Typography varian="subtitle1">MAKE PAYMENT</Typography>
-                        <Chip size="small" color="primary" label={makePayment.supplier_name} />
-                        <Typography variant="body2">Reference Invoice Nos.</Typography>
+                        <Typography variant="body2">Supplier Name: </Typography>
+                        <Chip size="small" label={makePayment.supplier_name} sx={{width: 'fit-content'}} />
+                        <Typography variant="body2">Reference Invoice Nos.: {makePayment.ref_invoice_numbers.length}</Typography>
                         <div style={{height: 100, overflowY: 'auto'}}>
                         <Stack direction="row" gap={1} justifyContent="flex-start" alignItems="center" flexWrap="wrap">{
                             makePayment.ref_invoice_numbers.map((ref_invoice_number)=>(
