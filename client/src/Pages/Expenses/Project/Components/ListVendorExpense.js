@@ -8,7 +8,7 @@ import {
 import { theme } from '../../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-import CustomColumnFilter from './VendorExpenseColumnFilter';
+import VendorExpenseColumnFilter from './VendorExpenseColumnFilter';
 import { useNavigate } from 'react-router-dom';
 const columns=[
     {
@@ -203,43 +203,35 @@ export default function ListVendorExpense(){
     };
 
     const stackRef = useRef(null);
-    const [boxWidth, setBoxWidth] = useState(0);
-  
+    const [box, setBox] = useState({
+        width: 0,
+        height: 0
+    });
+
+
     useEffect(() => {
-      const updateBoxWidth = () => {
+    const updateBox = () => {
         if (stackRef.current) {
-          setBoxWidth(stackRef.current.offsetWidth  );
+        setBox({
+            width: stackRef.current.offsetWidth,
+            height: 500
+        });
         }
-      };
-  
-      updateBoxWidth();
-      window.addEventListener('resize', updateBoxWidth);
-  
-      return () => {
-        window.removeEventListener('resize', updateBoxWidth);
-      };
+    };
+
+    updateBox();
+    window.addEventListener('resize', updateBox);
+
+    return () => {
+        window.removeEventListener('resize', updateBox);
+    };
     }, []);
   
     return(
-        <Stack
-        direction="column"
-        ref={stackRef}
-        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
-        >
-            <CustomColumnFilter 
-            columns={
-                columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
-                || column.accessorKey==='project_name' 
-                || column.accessorKey==='vendor_name')
-            } 
-            onFilterChange={handleFilterChange}
-            total_amount_wo_vat={total_amount_wo_vat}
-            total_vat_amount={total_vat_amount}
-            total_amount_with_vat={total_amount_with_vat}
-            />
-           <Box sx={{
-                width: boxWidth,
-                overflowX: 'auto',
+
+           <Box ref={stackRef}
+            sx={{
+                width: "100%"
             }}>
             <MaterialReactTable
             columns={columns}
@@ -271,29 +263,93 @@ export default function ListVendorExpense(){
             }}
             muiPaginationProps={{
                 rowsPerPageOptions: [10, 20],
-                variant: 'outlined',
+                variant: 'filled',
             }}
             paginationDisplayMode='pages'
-            muiToolbarAlertBannerProps={{
-                    sx: {
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+            muiTableContainerProps={{
+                sx: { maxHeight: box.height, 
+                    maxWidth: box.width,
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                    width: '6px',
+                    height: '6px',
                     },
-                    children: (
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="outlined" size="small" color="success" onClick={handleEditSelectedRows}>
-                            EDIT SELECTED ROWS
-                        </Button>
-                        <LoadingButton variant="outlined" size="small" color="error" loading={loading} loadingIndicator="Deleting..." onClick={handleDeleteSelectedRows}>
-                            DELETE SELECTED ROWS
-                        </LoadingButton>
-                    </Box>
-                    ),
+                    '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '6px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                    }
+                    },
+            }}
+
+            muiTableHeadProps={{
+                sx: {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                },
+            }}
+            muiTablePaperProps={{
+                sx: { borderRadius: 0, 
+                 },
+            }}
+            renderTopToolbarCustomActions={() => (
+                <Stack spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>
+                <VendorExpenseColumnFilter 
+                columns={
+                    columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
+                    || column.accessorKey==='project_name' 
+                    || column.accessorKey==='vendor_name')
+                } 
+                onFilterChange={handleFilterChange}
+                />
+                <Stack direction="row" spacing={2} alignItems="center">
+                <Chip label={<>Total Amount w/o Vat: <NumericFormat
+                    value={total_amount_wo_vat}
+                    displayType={'text'}
+                    thousandSeparator={true}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  /></>} color="secondary" />
+               <Chip label={<>Total Vat Amount: <NumericFormat
+                    value={total_vat_amount}
+                    displayType={'text'}
+                    thousandSeparator={true}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  /></>} color="warning" />
+                <Chip label={<>Total Amount w/ Vat: <NumericFormat
+                    value={total_amount_with_vat}
+                    displayType={'text'}
+                    thousandSeparator={true}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  /></>} color="success" />
+               </Stack>
+               </Stack>
+            )}
+            muiToolbarAlertBannerProps={{
+                sx: {
+                position: 'absolute', left: 0, top: 0, transform: 'translateY(0)', padding: 0
+                },
+                children: (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="outlined" size="small" color="success" onClick={handleEditSelectedRows}>
+                        EDIT SELECTED ROWS
+                    </Button>
+                    <LoadingButton variant="outlined" size="small" color="error" loading={loading} loadingIndicator="Deleting..." onClick={handleDeleteSelectedRows}>
+                        DELETE SELECTED ROWS
+                    </LoadingButton>
+                </Box>
+                ),
                 }}
              />
             </Box>
-        </Stack>
     )
 }

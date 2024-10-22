@@ -333,7 +333,6 @@ export default function ListSupplierExpenseInvoices(){
     const remaining_balance = parseFloat(total_amount_with_vat) - parseFloat(total_payments);
 
     const stackRef = useRef(null);
-    const tableBodyRef = useRef(null);
     const [box, setBox] = useState({
         width: 0,
         height: 0
@@ -460,15 +459,17 @@ export default function ListSupplierExpenseInvoices(){
                     }
                     },
             }}
-            muiTableBodyProps={{
-                ref: tableBodyRef,
-            }}
+
             muiTableHeadProps={{
                 sx: {
                 position: 'sticky',
                 top: 0,
                 zIndex: 1,
                 },
+            }}
+            muiTablePaperProps={{
+                sx: { borderRadius: 0, 
+                 },
             }}
             renderTopToolbarCustomActions={() => (
                 <Stack spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>

@@ -257,9 +257,8 @@ export default function ListSupplierExpensePayments(){
                 enableHiding={false}
                 enableGlobalFilter={false}
                 enableFullScreenToggle={false}
-                enableExpandAll={false} // hide expand all double arrow in column header
                 enableExpanding
-                filterFromLeafRows={true} // apply filtering to all rows instead of just parent rows
+                filterFromLeafRows
                 getSubRows={(row) => row.subRows} // default
                 paginateExpandedRows={false} 
                 enableRowActions
@@ -321,6 +320,9 @@ export default function ListSupplierExpensePayments(){
                         
                     </Box> : null
                 )}
+                muiTablePaperProps={{
+                    sx: { borderRadius: 0 },
+                }}
                 muiTableHeadCellProps={{
                     sx: {
                     backgroundColor: theme.palette.primary.main,

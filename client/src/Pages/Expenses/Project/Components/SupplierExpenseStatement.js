@@ -1,11 +1,94 @@
 import React, {useState, useRef, useEffect} from 'react'
-import {Stack, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,TableFooter} from '@mui/material'
+import {Stack, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,TableFooter, Paper, Box} from '@mui/material'
 import SupplierExpenseStatementColumnFilter from './SupplierExpenseStatementColumnFilter'
 import AxiosInstance from '../../../../AxiosInstance';
 import dayjs from 'dayjs';
 import { theme } from '../../../../Theme';
 import { NumericFormat } from 'react-number-format';
-
+import {
+    MaterialReactTable,
+  } from 'material-react-table';
+import { jsPDF } from 'jspdf'; //or use your library of choice here
+import autoTable from 'jspdf-autotable';
+const columns = [
+    {
+        accessorKey: 'date_issued',
+        header: 'DATE ISSUED',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'project_name',
+        header: 'PROJECT NAME',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'invoice_number',
+        header: 'INVOICE NO.',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'mode_of_payment',
+        header: 'MODE OF PAYMENT',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'date_paid',
+        header: 'DATE PAID',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'cheque_no',
+        header: 'CHEQUE NO.',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'reference_no',
+        header: 'REFERENCE NO.',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'debit',
+        header: 'DEBIT',
+        size: 'fit-content',
+        Cell: ({ renderedCellValue }) => (
+            <NumericFormat
+            value={renderedCellValue}
+            displayType={'text'}
+            thousandSeparator={true}
+            decimalScale={2}
+            fixedDecimalScale={true}
+          />
+        )
+    },
+    {
+        accessorKey: 'credit',
+        header: 'CREDIT',
+        size: 'fit-content',
+        Cell: ({ renderedCellValue }) => (
+            <NumericFormat
+            value={renderedCellValue}
+            displayType={'text'}
+            thousandSeparator={true}
+            decimalScale={2}
+            fixedDecimalScale={true}
+          />
+        )
+    },
+    {
+        accessorKey: 'balance',
+        header: 'BALANCE',
+        size: 'fit-content',
+        Cell: ({ renderedCellValue }) => (
+            <NumericFormat
+            value={renderedCellValue}
+            displayType={'text'}
+            thousandSeparator={true}
+            decimalScale={2}
+            fixedDecimalScale={true}
+          />
+        )
+    }
+]
 export default function SupplierExpenseStatement(){
     const [supplierStatement, setSupplierStatement] = useState([]);
     const [breakDown, setBreakDown] = useState({
@@ -13,18 +96,9 @@ export default function SupplierExpenseStatement(){
         total_credit: 0,
         balance: 0
     })
+    const [loading, setLoading] = useState(false)
     const handleFilter = (filters) => {
-        // const newFilteredData = projectExpenses.filter(row => {
-        //   const columnMatch = filters.column
-        //     ? row[filters.column].toString().toLowerCase().includes(filters.value.toLowerCase())
-        //     : true;
-        //   const dateMatch = filters.fromDate && filters.toDate
-        //     ? dayjs(new Date(row.date)).isBetween(filters.fromDate, filters.toDate, null, '[]')
-        //     : true;
-        //   return columnMatch && dateMatch;
-        // });
-        // setFilteredData(newFilteredData);
-
+        setLoading(true)
         AxiosInstance.post("/project_expense/get_supplier_statement", {supplier_name: filters.value, 
             from_date: filters.from_date, 
             to_date: filters.to_date})
@@ -41,7 +115,7 @@ export default function SupplierExpenseStatement(){
                     reference_no: element.reference_no === null ? '' : element.reference_no,
                     debit: element.debit,
                     credit: element.credit === null ? '': element.credit,
-                    currency: element.currency
+                    balance: parseFloat(element.debit) - (element.credit === null ? 0 : parseFloat(element.credit))
                   })); 
                 
                   setBreakDown(
@@ -64,6 +138,8 @@ export default function SupplierExpenseStatement(){
             {
                 console.log(result.data.message)
             }
+
+            setLoading(false)
         })
         .catch(function(error){
             console.log(error)
@@ -96,150 +172,169 @@ export default function SupplierExpenseStatement(){
       };
       }, []);
 
+
+    const handleExportRows = (rows) => {
+        const doc = new jsPDF({
+            orientation: 'landscape',
+        })
+        const tableData = rows.map((row) => Object.values(row.original));
+        const tableHeaders = columns.map((c) => c.header);
+
+        autoTable(doc, {
+            head: [tableHeaders],
+            body: tableData,
+            theme: 'grid',
+            styles: {
+            fontSize: 8.5,
+            font: 'Verdana, sans-serif',
+            },
+        });
+
+        doc.save('mrt-pdf-example.pdf');
+    };
+
     return(
-        <Stack
-        direction="column"
-        spacing={2}
-        sx={{p:2, width: '100%'}}
+        // <Paper square>
+        <Box
+        sx={{width: '100%'}}
         ref={stackRef}
         >
-            <SupplierExpenseStatementColumnFilter onFilter={handleFilter} />
-            <TableContainer sx={{ maxHeight: box.height, 
-                        maxWidth: box.width,
-                        overflowX: 'auto',
-                        overflowY: 'auto',
-                        '&::-webkit-scrollbar': {
-                        width: '6px',
-                        height: '6px',
-                        },
-                        '&::-webkit-scrollbar-track': {
-                        backgroundColor: '#f1f1f1',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: theme.palette.primary.light,
-                        borderRadius: '6px',
-                        },
-                        '&::-webkit-scrollbar-thumb:hover': {
-                        backgroundColor: '#555',
-                        }
-                        }}>
-                <Table size="small" stickyHeader>
-                    <TableHead sx={{ 
-                                backgroundColor: theme.palette.primary.main, 
-                                '& th': { // Increase specificity
-                                    backgroundColor: theme.palette.primary.main, 
-                                    color: 'white'
-                                }
-                            }}>
-                        <TableRow>
-                            <TableCell>Date Issued</TableCell>
-                            <TableCell>Project Name</TableCell>
-                            <TableCell>Invoice No.</TableCell>
-                            <TableCell>Mode Of Payment</TableCell>
-                            <TableCell>Cheque No.</TableCell>
-                            <TableCell>Reference No.</TableCell>
-                            <TableCell>Date Paid</TableCell>
-                            <TableCell>Debit</TableCell>
-                            <TableCell>Credit</TableCell>
-                            <TableCell>Currency</TableCell>
-                        </TableRow>
-                    </TableHead> 
-                    <TableBody
-                   >
-                        {supplierStatement.map((row)=>(
-                             <TableRow>
-                             <TableCell>{row.date_issued}</TableCell>
-                             <TableCell>{row.project_name}</TableCell>
-                             <TableCell>{row.invoice_number}</TableCell>
-                             <TableCell>{row.mode_of_payment}</TableCell>
-                             <TableCell>{row.cheque_no}</TableCell>
-                             <TableCell>{row.reference_no}</TableCell>
-                             <TableCell>{row.date_paid}</TableCell>
-                             <TableCell>
-                                 <NumericFormat
-                                    value={row.debit}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                />
-                             </TableCell>
-                             <TableCell>
-                                 <NumericFormat
-                                    value={row.credit}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                />
-                             </TableCell>
-                             <TableCell>{row.currency}</TableCell>
-                             </TableRow>
-                        ))}
-                    </TableBody>
-                    <TableFooter sx={{ position: 'sticky', bottom: 0, 'td,th': {
-                        border: 'none',
-                        }}}>
-                        <TableRow>
-                             <TableCell colSpan={7}></TableCell>
-                             <TableCell colSpan={2} sx={{
-                                backgroundColor: theme.palette.success.main, 
-                                color: 'white'
-                                }}>Total Debit</TableCell>
-                            <TableCell sx={{
-                            backgroundColor: theme.palette.success.main, 
-                            color: 'white'
-                            }}>
-                                <NumericFormat
-                                    value={breakDown.debit}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                />
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell colSpan={7}></TableCell>
-                            <TableCell colSpan={2} sx={{
-                            backgroundColor: theme.palette.error.main, 
-                            color: 'white'
-                            }}>Total Credit</TableCell>
-                            <TableCell sx={{
-                            backgroundColor: theme.palette.error.main, 
-                            color: 'white'
-                            }}>
-                                <NumericFormat
-                                    value={breakDown.credit}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                />
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell colSpan={7}></TableCell>
-                            <TableCell colSpan={2} sx={{
-                            backgroundColor: theme.palette.warning.main, 
-                            color: 'white'
-                            }}>Balance</TableCell>
-                            <TableCell sx={{
-                            backgroundColor: theme.palette.warning.main, 
-                            color: 'white'
-                            }}>
-                                <NumericFormat
-                                    value={breakDown.balance}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                />
-                            </TableCell>
-                        </TableRow>
-                    </TableFooter>   
-                </Table>
-            </TableContainer>
-        </Stack>
+         <MaterialReactTable
+            enableColumnFilters={false}
+            enableColumnActions={false}
+            enableDensityToggle={false}
+            enableHiding={false}
+            enableGlobalFilter={false}
+            enableFullScreenToggle={false}
+            enablePagination={false}
+            initialState={{
+                density: 'compact',
+                isLoading: loading
+            }}
+            state={{
+                isLoading: loading
+            }} 
+            muiTableHeadCellProps={{
+                sx:{
+                backgroundColor: theme.palette.primary.main,
+                color: 'white',
+                '& .MuiTableSortLabel-root': {
+                    color: 'white',
+                    '&.Mui-active': {
+                    color: 'white',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                    color: 'white !important',
+                    },
+                },
+                }
+            }}
+            muiSelectAllCheckboxProps={{
+                sx: {
+                color: 'white',
+                '&.Mui-checked': {
+                    color: 'white',
+                },
+                },
+            }}
+            // muiPaginationProps={{
+            //     rowsPerPageOptions: [10, 20, { label: 'All', value: filteredData.length}],
+            //     variant: 'filled',
+            // }}
+            paginationDisplayMode='pages'
+            muiTableContainerProps={{
+                sx: { maxHeight: box.height, 
+                    maxWidth: box.width,
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                    width: '6px',
+                    height: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '6px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                    }
+                    },
+            }}
+
+            muiTableHeadProps={{
+                sx: {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                },
+            }}
+            muiTablePaperProps={{
+                sx: { borderRadius: 0, 
+                 },
+            }}
+            renderTopToolbarCustomActions={({table}) => (
+                <SupplierExpenseStatementColumnFilter onFilter={handleFilter} exportDisabled={table.getPrePaginationRowModel().rows.length === 0} onExport={()=>handleExportRows(table.getPrePaginationRowModel().rows)} />
+                )}
+            renderBottomToolbarCustomActions={() => (
+                 <TableContainer>
+                    <Table size="small">
+                        <TableFooter sx={{ position: 'sticky', bottom: 0, 'td,th': {
+                            border: 'none',
+                            }}}>
+                            <TableRow>
+                                <TableCell align="center" sx={{
+                                    backgroundColor: theme.palette.success.main, 
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                    }}>
+                                        TOTAL DEBIT:&nbsp;
+                                        <NumericFormat
+                                            value={breakDown.debit}
+                                            displayType={'text'}
+                                            thousandSeparator={true}
+                                            decimalScale={2}
+                                            fixedDecimalScale={true}
+                                        />
+                                </TableCell>
+                                <TableCell align="center" sx={{
+                                    backgroundColor: theme.palette.error.main, 
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                    }}>
+                                        TOTAL CREDIT:&nbsp;
+                                    <NumericFormat
+                                        value={breakDown.credit}
+                                        displayType={'text'}
+                                        thousandSeparator={true}
+                                        decimalScale={2}
+                                        fixedDecimalScale={true}
+                                    />
+                                </TableCell>
+                                <TableCell align="center" sx={{
+                                    backgroundColor: theme.palette.warning.main, 
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                    }}>
+                                        REMAINING BALANCE:&nbsp;
+                                    <NumericFormat
+                                        value={breakDown.balance}
+                                        displayType={'text'}
+                                        thousandSeparator={true}
+                                        decimalScale={2}
+                                        fixedDecimalScale={true}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableFooter>   
+                    </Table>
+                </TableContainer>
+    
+                )}
+            columns={columns} data={supplierStatement} />
+        </Box>
+        // </Paper>
     )
 }

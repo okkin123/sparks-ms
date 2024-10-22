@@ -31,8 +31,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import {debounce, throttle} from 'lodash';
-
+import {debounce} from 'lodash';
 
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -42,10 +41,11 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       whiteSpace: 'nowrap',
       fontSize: 12,
       padding: 4,
+      border: '1px solid '+theme.palette.primary.main,
     },
     [`&.${tableCellClasses.body}`]: {
       fontSize: 12,
-      color: theme.palette.primary.dark,
+      color: theme.palette.primary.main,
       whiteSpace: 'nowrap',
       padding: 0,
     },
@@ -55,6 +55,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
       padding: 4,
+      border: '1px solid '+theme.palette.primary.main,
     }
 
   }));
@@ -62,7 +63,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
     // hide last border
     'td,th': {
-      border: '1px solid '+theme.palette.primary.light,
+      border: '1px solid '+theme.palette.primary.main,
     }
   }));
 
@@ -269,16 +270,27 @@ export default function NewVendorExpense(props){
         })
        }
 
-    // eslint-disable-next-line
-    const debouncedHandleChange = useCallback(throttle((index, event) => {
-        const { name, value } = event.target;
-        const updatedExpenses = [...formik_vendor_expense.values.expenses];
-        updatedExpenses[index][name.split('.').pop()] = value;
+ 
+    // const debouncedHandleChange = useCallback(debounce((index, event) => {
+    //     const { name, value } = event.target;
+    //     console.log(`Changing ${name} to ${value}`); // Log the change
+    //     const updatedExpenses = [...formik_vendor_expense.values.expenses];
+    //     updatedExpenses[index][name.split('.').pop()] = value;
       
-        formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
+    //     formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
 
         
-    }, 50), [formik_vendor_expense]);
+    // }, 100), [formik_vendor_expense]);
+
+    
+    // eslint-disable-next-line
+    const debouncedHandleChange = useCallback((index, event) => {
+        const { name, value } = event.target;
+        formik_vendor_expense.setFieldValue(`expenses[${index}].${name.split('.').pop()}`, value);
+      }, [formik_vendor_expense]);
+
+    
+    //const debouncedHandleChange = useCallback(debounce(handleChange, 300), [formik_vendor_expense]);
 
 
 
@@ -302,7 +314,7 @@ export default function NewVendorExpense(props){
           ]);
     }, [formik_vendor_expense]);
 
-     const debouncedHandleAddRecord = useMemo(() => debounce(handleAddRecord, 100), [handleAddRecord]);
+     const debouncedHandleAddRecord = useMemo(() => debounce(handleAddRecord, 300), [handleAddRecord]);
 
 
        useEffect(()=>{
@@ -389,7 +401,7 @@ export default function NewVendorExpense(props){
                         
                             <StyledTableCell align="center">REMOVE</StyledTableCell>
                             <StyledTableCell align="center">SN</StyledTableCell>
-                            <StyledTableCell align="center">VAT APPLICABLE</StyledTableCell>
+                            <StyledTableCell align="center">VAT</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "15%"}}>PROJECT NAME</StyledTableCell>
                             <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>VENDOR NAME</StyledTableCell>
@@ -709,7 +721,7 @@ export default function NewVendorExpense(props){
                         ))}
                     </TableBody>
                     <TableFooter>
-                        <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1 }}>
+                        <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1}}>
                             <StyledTableCell colSpan={8} align="right">GRAND TOTAL:</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${currency}`}</StyledTableCell>
@@ -725,6 +737,7 @@ export default function NewVendorExpense(props){
             <Grid item>
             
             <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_vendor_expense.handleSubmit} loading={loading}>{props.mode === 'EDIT' ? 'Update Expenses ': 'Submit Expenses'}</LoadingButton>
+           
             </Grid>
         </Grid>
     )

@@ -23,6 +23,7 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.12",
     "formik": "^2.4.6",
+    "jspdf": "^2.5.2",
     "material-react-table": "^2.13.1",
     "mui-image": "^1.0.7",
     "pdfjs-dist": "^3.11.174",

@@ -80,8 +80,8 @@ module.exports = {
       
       const updateSupplier = (supplier_id) => {
           dbConnection.query(
-              "UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=? WHERE supplier_id=?",
-              [values.bank_name, values.account_name, values.account_number, values.iban, supplier_id],
+              "UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=?, mobile_no=?, email_address=?, trn_no=? WHERE supplier_id=?",
+              [values.bank_name, values.account_name, values.account_number, values.iban, values.mobile_no, values.email_address, values.trn_no, supplier_id],
               (err4, data4, fields4) => {
                   if (err4) console.log(err4);
               }
@@ -218,7 +218,7 @@ module.exports = {
           data.forEach((item, index) => {
             dbConnection.query(
               "SELECT pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, currency, processed_by, status FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date_paid=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
-              [item.supplier_name, item.mode_of_payment, item.date, item.cheque_no, item.reference_no, item.currency, item.processed_by],
+              [item.supplier_name, item.mode_of_payment, item.date_paid, item.cheque_no, item.reference_no, item.currency, item.processed_by],
               function(err1, data1, fields1) {
                 if (err1) {
                   res.send({
@@ -277,8 +277,8 @@ module.exports = {
     });
   },
   void_expense: (req, res)=>{
-    dbConnection.query("UPDATE tbl_project_supplier_expenses SET is_void=? WHERE project_supplier_expense_id=? AND user_id=?",
-      [true, req.body.project_supplier_expense_id, req.user.user_id],
+    dbConnection.query("UPDATE tbl_project_supplier_expenses SET is_void=? WHERE project_supplier_expense_id=?",
+      [true, req.body.project_supplier_expense_id],
       function(err, data, fields){
         if (err) {
           res.send({
@@ -287,8 +287,8 @@ module.exports = {
           });
         } else {
           res.send({
-            status: data.length > 0 ? "SUCCESS" : "WARNING",
-            message: data.length > 0 ? "This project expense has been voided!" : "You are not authorized to void this expense!"
+            status: "SUCCESS",
+            message: "This project expense has been voided!"
           });
             
         }
@@ -457,7 +457,7 @@ delete_vendor_expense: (req, res)=>{
 },
 list_vendor_expense: (req, res)=>{
   dbConnection.query(
-      "SELECT * FROM vw_project_vendor_expenses ORDER BY date_issued DESC",
+      "SELECT * FROM vw_project_vendor_expenses ORDER BY date DESC",
       function(err, data, fields) {
         if (err) {
           res.send({

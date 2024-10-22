@@ -369,7 +369,7 @@ export default function New(props){
                         
                             <StyledTableCell align="center">REMOVE</StyledTableCell>
                             <StyledTableCell align="center">SN</StyledTableCell>
-                            <StyledTableCell align="center">VAT APPLICABLE</StyledTableCell>
+                            <StyledTableCell align="center">VAT</StyledTableCell>
                             <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>VENDOR NAME</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "10%"}}>LOCATION</StyledTableCell>

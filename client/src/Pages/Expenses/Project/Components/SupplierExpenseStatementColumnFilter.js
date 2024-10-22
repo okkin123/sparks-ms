@@ -5,22 +5,34 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import AxiosInstance from '../../../../AxiosInstance';
+import * as Yup from 'yup';
+import { useFormik } from 'formik';
 
-const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
 
-  const [filters, setFilters] = useState({ value: '', from_date: null, to_date: null });
+const SearchSchema = Yup.object().shape({
+   value: Yup.string()
+    .required('This field is required!'),
+    from_date: Yup.date().required('From Date is required'),
+    to_date: Yup.date().required('To Date is required')
+});
+
+const SupplierExpenseStatementColumnFilter = ({ onFilter, exportDisabled, onExport }) => {
+
   const [supplierNames, setSupplierNames] = useState([]); 
- 
-  const handleFilterChange = (e) => {
-    setFilters({
-      ...filters,
-      [e.target.name]: e.target.value
-    });
-  };
 
-  const handleApplyFilters = () => {
-    onFilter(filters);
-  };
+  const formik_search = useFormik({
+    initialValues: {
+      value: '',
+      from_date: null,
+      to_date: null
+    },
+    validateOnChange: false,
+    validationSchema: SearchSchema,
+    onSubmit: (values, {validateForm})=>{
+      onFilter(values)
+    }
+  })
+
 
   const getSupplierNames = ()=>{
     AxiosInstance.get("/project_expense/get_supplier_details")
@@ -36,6 +48,8 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
     })
     
   }
+
+
   return (
     <React.Fragment>
       <Stack direction="row" spacing={1} alignItems="center">
@@ -46,17 +60,23 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
             handleHomeEndKeys
             onFocus={() => getSupplierNames()}
             options={supplierNames.map((option) => option.supplier_name)}
-            value={filters.value}
-            onChange={(event, value)=>setFilters({...filters, value})}
+            value={formik_search.values.value}
+            onChange={(event, value)=>formik_search.setFieldValue('value', value)}
             renderInput={(params) => (
                 <TextField
                 {...params}
                 label="Supplier Name"
                 name="value"
-                value={filters.value}
+                value={formik_search.values.value}
                 fullWidth
-                onChange={handleFilterChange}
+                onChange={formik_search.handleChange}
                 size="small"
+                error={
+                  formik_search.touched.value && Boolean(formik_search.errors.value)
+                }
+                helperText={
+                  formik_search.touched.value && formik_search.errors.value
+                }
                 />
             )}
             fullWidth
@@ -64,8 +84,8 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
 
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker 
-            value={dayjs(filters.from_date)}
-            onChange={(value)=>setFilters({...filters, from_date: dayjs(new Date(value)).format('YYYY-MM-DD')})}
+            value={dayjs(formik_search.values.from_date)}
+            onChange={(value)=>formik_search.setFieldValue('from_date',  dayjs(new Date(value)).format('YYYY-MM-DD'))}
             slotProps={{
                 textField: {
                     label: 'Date From',
@@ -73,15 +93,15 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
                     name: 'from_date',
                     size: 'small', 
                     fullWidth: true,
-                    error: false
-                    // helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
+                    error: Boolean(formik_search.errors.from_date),
+                    helperText:formik_search.touched.from_date && formik_search.errors.from_date
                 },
                 }} />
         </LocalizationProvider>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker 
-            value={dayjs(filters.to_date)}
-            onChange={(value)=>setFilters({...filters, to_date: dayjs(new Date(value)).format('YYYY-MM-DD')})}
+            value={dayjs(formik_search.values.to_date)}
+            onChange={(value)=>formik_search.setFieldValue('to_date',  dayjs(new Date(value)).format('YYYY-MM-DD'))}
             slotProps={{
                 textField: {
                     label: 'Date To',
@@ -89,13 +109,16 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter}) => {
                     name: 'to_date',
                     size: 'small', 
                     fullWidth: true,
-                    error: false
-                    // helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
+                    error: Boolean(formik_search.errors.to_date),
+                    helperText:formik_search.touched.to_date && formik_search.errors.to_date
                 },
                 }} />
         </LocalizationProvider>
-        <Button variant="contained" color="secondary" onClick={()=>handleApplyFilters()}>
+        <Button size="small" variant="contained" color="secondary" onClick={formik_search.handleSubmit}>
           Search
+        </Button>
+        <Button disabled={exportDisabled} size="small" variant="contained" color="info" fullWidth onClick={onExport}>
+          Export Statement
         </Button>
       </Stack>
 
