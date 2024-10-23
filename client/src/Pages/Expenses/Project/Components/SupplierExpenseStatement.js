@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react'
-import {Stack, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,TableFooter, Paper, Box} from '@mui/material'
+import {TableContainer, Table, TableRow, TableCell, TableFooter, Box} from '@mui/material'
 import SupplierExpenseStatementColumnFilter from './SupplierExpenseStatementColumnFilter'
 import AxiosInstance from '../../../../AxiosInstance';
 import dayjs from 'dayjs';

@@ -24,6 +24,7 @@
     "dayjs": "^1.11.12",
     "formik": "^2.4.6",
     "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "material-react-table": "^2.13.1",
     "mui-image": "^1.0.7",
     "pdfjs-dist": "^3.11.174",
@@ -70,6 +71,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-private-property-in-object": "^7.24.7",
-    "eslint-plugin-react": "^7.35.0"
+    "eslint-plugin-react": "^7.35.0",
+    "lodash.debounce": "^4.0.8"
   }
 }
