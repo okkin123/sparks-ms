@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {Select, MenuItem, TextField, Typography, Stack} from '@mui/material';
-
-const VendorExpenseColumnFilter = ({ columns, onFilterChange }) => {
+const VendorExpenseColumnFilter = ({ columns, onFilterChange, total_amount }) => {
   const [selectedColumn, setSelectedColumn] = useState('project_name');
   const [filterValue, setFilterValue] = useState('');
 
@@ -18,7 +17,7 @@ const VendorExpenseColumnFilter = ({ columns, onFilterChange }) => {
   };
 
   return (
-     <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="subtitle1">
         Search By:
       </Typography>
@@ -47,7 +46,8 @@ const VendorExpenseColumnFilter = ({ columns, onFilterChange }) => {
       {/* <Button variant="contained" color="info" onClick={handleApplyFilters}>
         Search
       </Button> */}
-      </Stack>
+         
+        </Stack>
   );
 };
 

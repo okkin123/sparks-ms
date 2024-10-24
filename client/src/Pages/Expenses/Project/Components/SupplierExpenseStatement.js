@@ -276,7 +276,9 @@ export default function SupplierExpenseStatement(){
                  },
             }}
             renderTopToolbarCustomActions={({table}) => (
+                <Box sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1, display: 'flex', width: '100%' }}>
                 <SupplierExpenseStatementColumnFilter onFilter={handleFilter} exportDisabled={table.getPrePaginationRowModel().rows.length === 0} onExport={()=>handleExportRows(table.getPrePaginationRowModel().rows)} />
+                </Box>
                 )}
             renderBottomToolbarCustomActions={() => (
                  <TableContainer>

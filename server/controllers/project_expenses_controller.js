@@ -317,9 +317,9 @@ module.exports = {
       
 },
 insert_vendor_expense: (req, res)=>{
-  const values = req.body.values;
+  const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
-  detail.ref_invoice_number,
+  req.body.values.ref_invoice_number,
   detail.date,
   detail.vendor_name,
   detail.location,
@@ -354,9 +354,9 @@ insert_vendor_expense: (req, res)=>{
   )
 },
 update_vendor_expense: (req, res)=>{
-  const values = req.body.values;
+  const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
-    detail.ref_invoice_number,
+    req.body.values.ref_invoice_number,
     detail.date,
     detail.vendor_name,
     detail.location,
@@ -457,7 +457,8 @@ delete_vendor_expense: (req, res)=>{
 },
 list_vendor_expense: (req, res)=>{
   dbConnection.query(
-      "SELECT * FROM vw_project_vendor_expenses ORDER BY date DESC",
+      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, created_by_email FROM vw_project_vendor_expenses WHERE created_by_email=? GROUP BY invoice_number, currency ORDER BY date DESC",
+      [req.user.user_email],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -465,10 +466,50 @@ list_vendor_expense: (req, res)=>{
             message: err.sqlMessage
           });
         } else {
-          res.send({
-            status: "SUCCESS",
-            vendor_expenses: data
-          });
+          if(data.length > 0){
+
+            let completedQueries = 0;
+    
+            data.forEach((item, index) => {
+              dbConnection.query(
+                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? ORDER BY date DESC",
+                [item.invoice_number, item.currency],
+                function(err1, data1, fields1) {
+                  if (err1) {
+                    res.send({
+                      status: "ERROR",
+                      message: err1.sqlMessage
+                    });
+                    return;
+                  } else {
+  
+                    data1.forEach((item1, index1)=>{
+                      data1[index1].selected = false;
+                    })
+  
+                    data[index].details = data1;
+                    completedQueries++;
+      
+                    if (completedQueries === data.length) {
+                      res.send({
+                        status: "SUCCESS",
+                        //user_id: req.user.user_id,
+                        vendor_expenses: data
+                      });
+                    }
+                  }
+                }
+              );
+            });
+
+          }else{
+              res.send({
+                status: "SUCCESS",
+                //user_id: req.user.user_id,
+                vendor_expenses: []
+              });
+          }
+
         }
       }
     )

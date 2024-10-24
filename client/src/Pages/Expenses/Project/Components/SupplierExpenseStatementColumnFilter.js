@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {TextField, Stack, Autocomplete, Button} from '@mui/material';
+import {TextField, Autocomplete, Button, Stack} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -51,8 +51,7 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter, exportDisabled, onExpo
 
 
   return (
-    <React.Fragment>
-      <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={2}>
         <Autocomplete
             freeSolo
             selectOnFocus 
@@ -120,10 +119,9 @@ const SupplierExpenseStatementColumnFilter = ({ onFilter, exportDisabled, onExpo
         <Button disabled={exportDisabled} size="small" variant="contained" color="info" fullWidth onClick={onExport}>
           Export Statement
         </Button>
-      </Stack>
 
     
-      </React.Fragment>
+      </Stack>
   )
 };
 
