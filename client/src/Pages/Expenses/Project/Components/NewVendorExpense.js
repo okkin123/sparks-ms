@@ -208,7 +208,7 @@ export default function NewVendorExpense(props){
         severity: "",
         message: ""
       })
-
+    const [updateBtn, setUpdateBtn] = useState(false)
    
 
     const formik_vendor_expense = useFormik({
@@ -243,6 +243,9 @@ export default function NewVendorExpense(props){
                         message: reponse.data.message
                     })
                     handleClearValues();
+                    if(props.mode === 'EDIT'){
+                        setUpdateBtn(true)
+                    }
                 }else{
                     setResponse({
                         open: true,
@@ -416,7 +419,7 @@ export default function NewVendorExpense(props){
         
         return formik_vendor_expense.values.expenses.map((expense, index)=>(
             <StyledTableRow key={index}>
-                <StyledTableCell align='center'>
+                {props.mode !== 'EDIT' && <StyledTableCell align='center'>
                     <IconButton color="error"
                        onClick={() => {
                         const updatedExpenses = formik_vendor_expense.values.expenses.filter((_, i) => i !== index);
@@ -439,7 +442,7 @@ export default function NewVendorExpense(props){
                       }}>
                         <DeleteIcon />
                     </IconButton>
-                </StyledTableCell>
+                </StyledTableCell> }
                 <StyledTableCell align="center">
                     {index+1}
                 </StyledTableCell>
@@ -676,6 +679,7 @@ export default function NewVendorExpense(props){
                     severity={response.severity}
                     >
                     {response.message}
+                    
                     </Alert>
                 </Collapse>
             </Grid>
@@ -746,7 +750,7 @@ export default function NewVendorExpense(props){
                     <TableHead>
                         <StyledTableRow>
                         
-                            <StyledTableCell align="center">REMOVE</StyledTableCell>
+                            {props.mode !== 'EDIT' && <StyledTableCell align="center">REMOVE</StyledTableCell>}
                             <StyledTableCell align="center">SN</StyledTableCell>
                             <StyledTableCell align="center"><FormControlLabel control={<Checkbox
                                         onChange={(event)=>updateAllVat(event.target.checked, vatPercentage, formik_vendor_expense)}
@@ -756,6 +760,7 @@ export default function NewVendorExpense(props){
                                                 color: 'white',
                                             },
                                         }}
+                                        checked={formik_vendor_expense.values.expenses.every((expense)=> expense.is_vat ? true : false)}
                             />} label="VAT" labelPlacement="top" /></StyledTableCell>
                             <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "15%"}}>VENDOR NAME</StyledTableCell>
@@ -772,7 +777,7 @@ export default function NewVendorExpense(props){
                     </TableBody>
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1}}>
-                            <StyledTableCell colSpan={7} align="right">GRAND TOTAL:</StyledTableCell>
+                            <StyledTableCell colSpan={props.mode !== 'EDIT' ? 7 : 6} align="right">GRAND TOTAL:</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
@@ -783,8 +788,13 @@ export default function NewVendorExpense(props){
             </Grid>
             <Grid item>
             
-            <LoadingButton variant='contained' color='success' sx={{float: 'right'}} onClick={formik_vendor_expense.handleSubmit} loading={loading}>{props.mode === 'EDIT' ? 'Update Expenses ': 'Submit Expenses'}</LoadingButton>
-           
+            <LoadingButton variant='contained' 
+                disabled={updateBtn}
+                color='success' 
+                sx={{float: 'right'}} 
+                onClick={formik_vendor_expense.handleSubmit} 
+                loading={loading}>
+                {props.mode === 'EDIT' ? 'Update Expenses ': 'Submit Expenses'}</LoadingButton>
             </Grid>
         </Grid>
     )

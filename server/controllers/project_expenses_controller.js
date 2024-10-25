@@ -421,7 +421,7 @@ update_vendor_expense: (req, res)=>{
   
               res.send({
                 status: "SUCCESS",
-                message: "New vendor expenses for projects are updated successfully!"
+                message: "The selected vendor expenses for projects are updated successfully!"
               });
             });
           }

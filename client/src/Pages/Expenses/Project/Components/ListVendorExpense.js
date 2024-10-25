@@ -12,6 +12,8 @@ import VendorExpenseColumnFilter from './VendorExpenseColumnFilter';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Dialog from '../../../../Components/Dialog'
+
 const columns=[
     {
         accessorKey: 'ref_invoice_number',
@@ -120,6 +122,17 @@ export default function ListVendorExpense(){
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
     const [refresh, setRefresh] = useState(false)
+    const [confirmDialog, setConfirmDialog] = useState({
+        verify: {
+            open: false,
+            project_vendor_expense_id: 0,
+        },
+        delete: {
+            open: false,
+            ref_invoice_number: 0,
+            currency: ""
+        }
+    }) 
     useEffect(()=>{
         setLoading(true)
         AxiosInstance.get("/project_expense/list_vendor_expense")
@@ -192,7 +205,6 @@ export default function ListVendorExpense(){
         }));
 
         if(selectedRows[0].subRows.length > 0){
-            console.log(selectedRows[0].subRows)
             navigate('/', {
                 state: {
                     vendor_expense_edit: true,
@@ -213,31 +225,43 @@ export default function ListVendorExpense(){
         
     };
 
-    const handleDeleteSelectedRows = (ref_invoice_number) => {
-        const selectedRows = vendorExpenses
-        .filter((row) => row.ref_invoice_number === ref_invoice_number)
-        .map((row) => ({
-          ...row,
-          subRows: row.subRows.filter((subRow) => subRow.selected === true),
-        }));
-      
-      console.log(selectedRows);
-      
-        // setLoading(true)
+    const handleDeleteSelectedRows = (ref_invoice_number, currency) => {
+      const selectedRows = vendorExpenses
+      .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+      .map((row) => ({
+        ...row,
+        subRows: row.subRows
+          .filter((subRow) => subRow.selected === true)
+          .map((subRow) => ({
+            ...subRow,
+            is_vat: true,
+            date: dayjs(new Date(subRow.date)).format('YYYY-MM-DD')
+          })),
+      }));
 
-        // AxiosInstance.post("/project_expense/delete_vendor_expense", {values : []})
-        // .then(function(response){
-        //     if(response.data.status === 'SUCCESS'){
-        //         alert(response.data.message)
-        //         setRefresh(!refresh)
-        //     }else{
-        //         console.log(response.data.message)
-        //     }
-        //     setLoading(false)
-        // })
-        // .catch(function(error){
-        //     console.log(error)
-        // })
+      if(selectedRows[0].subRows.length > 0){
+          setLoading(true)
+          AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRows[0].subRows})
+          .then(function(response){
+              if(response.data.status === 'SUCCESS'){
+                 
+                  alert(response.data.message)
+                  setRefresh(!refresh)
+              }else{
+                  console.log(response.data.message)
+              }
+              setLoading(false)
+              setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open:false}})
+          })
+          .catch(function(error){
+              console.log(error)
+          })
+      }else{
+          alert('Please select the expenses you want to delete!')
+      }
+      
+      
+
        
     };
 
@@ -313,7 +337,7 @@ export default function ListVendorExpense(){
                     <IconButton color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
                         <EditIcon />
                     </IconButton>
-                    <IconButton color="error" onClick={()=>handleDeleteSelectedRows(row.original.ref_invoice_number)}>
+                    <IconButton color="error" onClick={()=>setConfirmDialog({...confirmDialog, delete: {open: true, ref_invoice_number:row.original.ref_invoice_number, currency: row.original.currency}})}>
                         <DeleteIcon />
                     </IconButton>
                 </Stack>
@@ -464,6 +488,23 @@ export default function ListVendorExpense(){
                </Box>
             )}
              />
+
+             <Dialog open={confirmDialog.delete.open} content={
+                <Stack direction="column" spacing={2}>
+                    <Typography variant="subtitle1">DELETE</Typography>
+                    <Typography variant="body1">Do you want to delete the selected expense?</Typography>
+                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                        <Button onClick={()=>setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open: false}})}>
+                            No
+                        </Button>
+                        <LoadingButton variant="contained" color="secondary" 
+                            onClick={()=>handleDeleteSelectedRows(confirmDialog.delete.ref_invoice_number, confirmDialog.delete.currency)}
+                            loading={loading}>
+                            Yes
+                        </LoadingButton>
+                    </Stack>
+                </Stack>
+             } />
             </Box>
     )
 }
