@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {Tabs, Tab, Paper} from '@mui/material'
 import ListSupplierExpenseInvoices from './ListSupplierExpenseInvoices';
 import ListSupplierExpensePayments from './ListSupplierExpensePayments';
+import SupplierExpenseStatement from './SupplierExpenseStatement';
 
   function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -48,6 +49,10 @@ export default function ListSupplierExpense(){
          {/* Payments Panel */}
          <TabPanel value={tabValue} index={1}>
           <ListSupplierExpensePayments />
+         </TabPanel>
+
+         <TabPanel value={tabValue} index={2}>
+          <SupplierExpenseStatement />
          </TabPanel>
 
         </React.Fragment>   

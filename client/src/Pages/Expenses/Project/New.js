@@ -36,7 +36,7 @@ export default function New(){
     return(
         <React.Fragment>
             <Toolbar />
-            <Paper>
+            <Paper square>
             <Grid container direction="column" spacing={2} sx={{padding: 2  }}>
               <Grid item>
                 <Typography variant="h6">NEW PROJECT EXPENSE</Typography>

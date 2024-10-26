@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, Chip, Divider} from '@mui/material';
+import{Box, Grid, Paper, Typography, Stack, AppBar, Toolbar, IconButton, TextField, Chip, Divider, Button} from '@mui/material';
 import AxiosInstance from '../../../AxiosInstance';
 import dayjs from 'dayjs';
 
@@ -7,7 +7,7 @@ import PdfViewer from '../../../Components/PdfViewer';
 // import PrintIcon from '@mui/icons-material/Print';
 import NumberFormatCustom from '../../../Components/NumberFormatCustom';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-
+import Dialog from '../../../Components/Dialog';
   
 
 export default function Details(){
@@ -38,8 +38,12 @@ export default function Details(){
         currency: "",
     })
 
-    const [projectSupplierPaymentDetails, setProjectSupplierPaymentDetails] = useState([])
 
+    const [projectSupplierPaymentDetails, setProjectSupplierPaymentDetails] = useState([])
+    const [voidDialog, setVoidDialog] = useState({
+        open: false,
+        project_supplier_expense_id: 0,
+    })
     const [file, setFile] = useState(null)
 
     useEffect(()=>{
@@ -51,7 +55,7 @@ export default function Details(){
                const payments = result.data.project_supplier_payment_details;
                 
                 setProjectSupplierExpensesDetails({
-                    project_expense_id: expenses[0].project_expense_id,
+                    project_supplier_expense_id: expenses[0].project_supplier_expense_id,
                     pe_number: expenses[0].pe_number,
                     invoice_file_name: expenses[0].invoice_file_name,
                     invoice_file_path: expenses[0].invoice_file_path,
@@ -130,10 +134,11 @@ export default function Details(){
       };
   
 
-     function handleVoidExpense(project_expense_id){
-        AxiosInstance.post("/project_expense/void_expense", {project_expense_id : project_expense_id})
+     function handleVoidExpense(project_supplier_expense_id){
+        setVoidDialog({...voidDialog, open: false})
+        AxiosInstance.post("/project_expense/void_expense", {project_supplier_expense_id : project_supplier_expense_id})
         .then(function(response){
-            alert(response.data.status +" "+ response.data.message)
+            alert(response.data.message)
             if(response.data.status === "SUCCESS"){
                 window.location.reload()
             }  
@@ -164,7 +169,7 @@ export default function Details(){
                             {projectSupplierExpenseDetails.status === 'UNPAID' && projectSupplierExpenseDetails.authorized ? <Chip
                                 label="Void" 
                                 size="small"
-                                onClick={()=>handleVoidExpense(projectSupplierExpenseDetails.project_expense_id)}
+                                onClick={()=>setVoidDialog({open: true, project_supplier_expense_id: projectSupplierExpenseDetails.project_supplier_expense_id})}
                             /> : null}
                             
                             <Chip 
@@ -281,6 +286,19 @@ export default function Details(){
             </Paper>
         </Grid>
         </Grid>
+        <Dialog open={voidDialog.open} 
+        content={
+            <Stack direction="column" spacing={2}>
+            <Typography variant="subtitle1">VOID EXPENSE</Typography>
+                <Typography variant="body1">Do you want to void this expense?</Typography>
+                <Stack direction="row" justifyContent="flex-end">
+                    <Button size="small" onClick={()=>setVoidDialog({...voidDialog, open: false})}>No</Button>
+                    <Button size="small" variant="contained" color="secondary" onClick={()=>handleVoidExpense(voidDialog.project_supplier_expense_id)}>Yes</Button>
+                </Stack>
+            </Stack>
+        } />
         </Box>
+
+
     )
 }

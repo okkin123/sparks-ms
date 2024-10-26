@@ -13,9 +13,6 @@ export default function EditVendorExpense(props){
                 <Typography variant="h6">EDIT PROJECT VENDOR EXPENSE</Typography>
               </Grid>
               <Grid item>
-                 <Divider />
-              </Grid>
-              <Grid item>
                 <NewVendorExpense mode="EDIT" initialValues={props.initialValues} />
               </Grid>
             </Grid>

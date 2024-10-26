@@ -4,8 +4,8 @@ import Cookies from "universal-cookie";
 const cookies = new Cookies();
 // Create an Axios instance
 const AxiosFileInstance = axios.create({
-  baseURL: "http://localhost:4000/",
-  //baseURL: "https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/",
+  //baseURL: "http://localhost:4000/",
+  baseURL: "https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/",
   headers: {
     "Content-Type": "multipart/form-data"
   }

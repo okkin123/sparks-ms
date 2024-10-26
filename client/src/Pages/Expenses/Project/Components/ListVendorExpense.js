@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Stack, Box, Button} from '@mui/material'
+import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox} from '@mui/material'
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../../../AxiosInstance';
 import {
@@ -8,32 +8,42 @@ import {
 import { theme } from '../../../../Theme';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
-import CustomColumnFilter from './CustomColumnFilter';
+import VendorExpenseColumnFilter from './VendorExpenseColumnFilter';
 import { useNavigate } from 'react-router-dom';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Dialog from '../../../../Components/Dialog'
+
 const columns=[
     {
         accessorKey: 'ref_invoice_number',
-        header: 'INVOICE NO.'
+        header: 'INVOICE NO.',
+        width: 'fit-content'
     },
     {
         accessorKey: 'project_name',
-        header: 'PROJECT NAME'
+        header: 'PROJECT NAME',
+        width: 'fit-content'
     },
-    {
-        accessorKey: 'vendor_name',
-        header: 'VENDOR NAME'
-    },
-    {
-        accessorKey: 'location',
-        header: 'LOCATION'
-    },
-    {
-        accessorKey: 'description',
-        header: 'DESCRIPTION'
-    },
+    // {
+    //     accessorKey: 'vendor_name',
+    //     header: 'VENDOR NAME',
+    //     width: 'fit-content'
+    // },
+    // {
+    //     accessorKey: 'location',
+    //     header: 'LOCATION',
+    //     width: 'fit-content'
+    // },
+    // {
+    //     accessorKey: 'description',
+    //     header: 'DESCRIPTION',
+    //     width: 'fit-content'
+    // },
     {
         accessorKey: 'created_by',
         header: 'CREATED BY',
+        width: 'fit-content',
         Cell: ({ renderedCellValue }) => (
         <Chip 
             variant='outlined'
@@ -43,48 +53,53 @@ const columns=[
         />
         )
     },
+    // {
+    //     accessorKey: 'date_paid',
+    //     header: 'DATE',
+    //     width: 'fit-content',
+    // },  
+    // {
+    //     accessorKey: 'vat_applicable',
+    //     header: 'VAT APPLICABLE',
+    //     width: 'fit-content',
+    // },
+    // {
+    //     accessorKey: 'amount_without_vat',
+    //     header: 'AMOUNT w/o VAT',
+    //     width: 'fit-content',
+    //     Cell: ({ renderedCellValue }) => (
+    //         <NumericFormat
+    //         value={renderedCellValue}
+    //         displayType={'text'}
+    //         thousandSeparator={true}
+    //         decimalScale={2}
+    //         fixedDecimalScale={true}
+    //       />
+    //     )
+    // },
+    // {
+    //     accessorKey: 'vat_percent',
+    //     header: 'VAT %',
+    //     width: 'fit-content',
+    //     Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
+    // },
+    // {
+    //     accessorKey: 'vat_amount',
+    //     header: 'VAT AMOUNT',
+    //     width: 'fit-content',
+    //     Cell: ({ renderedCellValue }) => (
+    //         <NumericFormat
+    //         value={renderedCellValue}
+    //         displayType={'text'}
+    //         thousandSeparator={true}
+    //         decimalScale={2}
+    //         fixedDecimalScale={true}
+    //       />
+    //     )
+    // },
     {
-        accessorKey: 'date_paid',
-        header: 'DATE'
-    },  
-    {
-        accessorKey: 'vat_applicable',
-        header: 'VAT APPLICABLE'
-    },
-    {
-        accessorKey: 'amount_without_vat',
-        header: 'AMOUNT w/o VAT',
-        Cell: ({ renderedCellValue }) => (
-            <NumericFormat
-            value={renderedCellValue}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          />
-        )
-    },
-    {
-        accessorKey: 'vat_percent',
-        header: 'VAT %',
-        Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
-    },
-    {
-        accessorKey: 'vat_amount',
-        header: 'VAT AMOUNT',
-        Cell: ({ renderedCellValue }) => (
-            <NumericFormat
-            value={renderedCellValue}
-            displayType={'text'}
-            thousandSeparator={true}
-            decimalScale={2}
-            fixedDecimalScale={true}
-          />
-        )
-    },
-    {
-        accessorKey: 'amount_with_vat',
-        header: 'AMOUNT w/ VAT',
+        accessorKey: 'amount',
+        header: 'AMOUNT',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
             value={renderedCellValue}
@@ -107,31 +122,43 @@ export default function ListVendorExpense(){
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
     const [refresh, setRefresh] = useState(false)
+    const [confirmDialog, setConfirmDialog] = useState({
+        verify: {
+            open: false,
+            project_vendor_expense_id: 0,
+        },
+        delete: {
+            open: false,
+            ref_invoice_number: 0,
+            currency: ""
+        }
+    }) 
     useEffect(()=>{
         setLoading(true)
         AxiosInstance.get("/project_expense/list_vendor_expense")
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
                 const fetchVendorExpenses = result.data.vendor_expenses.map((element) => ({
-                    project_vendor_expense_id: element.project_vendor_expense_id,
-                    is_vat: !!element.vat_applicable,
+                    // project_vendor_expense_id: element.project_vendor_expense_id,
+                    // is_vat: !!element.vat_applicable,
                     ref_invoice_number: element.invoice_number,
                     project_name: element.project_name,
-                    vendor_name: element.vendor_name,
-                    location: element.location,
-                    description: element.description,
+                    // vendor_name: element.vendor_name,
+                    // location: element.location,
+                    // description: element.description,
                     created_by: element.created_by_email,
-                    date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
-                    date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
-                    vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
-                    vat_percent: !!element.vat_applicable ? element.vat_percentage+'%' : '',
-                    vat_percentage: !!element.vat_applicable ? element.vat_percentage : 0,
-                    amount_without_vat: element.amount_without_vat,
-                    vat_amount: !!element.vat_applicable ? element.vat_amount: 0.00,
-                    amount_with_vat: element.amount_with_vat,
-                    currency: element.currency
+                    // date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
+                    // date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
+                    // vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
+                    // vat_percent: !!element.vat_applicable ? element.vat_percentage+'%' : '',
+                    // vat_percentage: !!element.vat_applicable ? element.vat_percentage : 0,
+                    // amount_without_vat: element.amount_without_vat,
+                    // vat_amount: !!element.vat_applicable ? element.vat_amount: 0.00,
+                    // amount_with_vat: element.amount_with_vat,
+                    amount: element.amount,
+                    currency: element.currency,
+                    subRows: element.details
                   })); 
-                
                   setVendorExpenses(fetchVendorExpenses)
                   setLoading(false)
             }else{
@@ -159,87 +186,132 @@ export default function ListVendorExpense(){
     );
 
 
-    const total_amount_wo_vat = filteredData.reduce((sum, row) => sum + (row.amount_without_vat || 0), 0);
-    const total_vat_amount = filteredData.reduce((sum, row) => sum + (row.vat_amount || 0), 0);
-    const total_amount_with_vat = filteredData.reduce((sum, row) => sum + (row.amount_with_vat || 0), 0);
+    const total_amount = filteredData.reduce((sum, row) => sum + (row.amount || 0), 0);
     
-    const [rowSelection, setRowSelection] = useState({});
 
-    const handleEditSelectedRows = () => {
-        const selectedRowData = Object.keys(rowSelection).map((rx, x) => {
+    const handleEditVendorExpense = (ref_invoice_number, currency) => {
 
-            return filteredData.find((ry, y) => ry.project_vendor_expense_id === parseInt(rx));
-        });
-       
-        navigate('/', {
-            state: {
-                vendor_expense_edit: true,
-                initialValues: selectedRowData
-            }
-        })
+        const selectedRows = vendorExpenses
+        .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+        .map((row) => ({
+          ...row,
+          subRows: row.subRows
+            .filter((subRow) => subRow.selected === true)
+            .map((subRow) => ({
+              ...subRow,
+              is_vat: true,
+              date: dayjs(new Date(subRow.date)).format('YYYY-MM-DD')
+            })),
+        }));
+
+        if(selectedRows[0].subRows.length > 0){
+            navigate('/', {
+                state: {
+                    vendor_expense_edit: true,
+                    initialValues: {
+                        ref_invoice_number: ref_invoice_number,
+                        project_name: selectedRows[0].project_name,
+                        expenses: selectedRows[0].subRows
+                    }
+                }
+            })
+        }else{
+            alert('Please select the expenses you want to edit!')
+        }
+      
+
+
+   
+        
     };
 
-    const handleDeleteSelectedRows = () => {
-        setLoading(true)
-        const selectedRowData = Object.keys(rowSelection).map((rx, x) => {
+    const handleDeleteSelectedRows = (ref_invoice_number, currency) => {
+      const selectedRows = vendorExpenses
+      .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+      .map((row) => ({
+        ...row,
+        subRows: row.subRows
+          .filter((subRow) => subRow.selected === true)
+          .map((subRow) => ({
+            ...subRow,
+            is_vat: true,
+            date: dayjs(new Date(subRow.date)).format('YYYY-MM-DD')
+          })),
+      }));
 
-            return filteredData.find((ry, y) => ry.project_vendor_expense_id === parseInt(rx));
-        });
+      if(selectedRows[0].subRows.length > 0){
+          setLoading(true)
+          AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRows[0].subRows})
+          .then(function(response){
+              if(response.data.status === 'SUCCESS'){
+                 
+                  alert(response.data.message)
+                  setRefresh(!refresh)
+              }else{
+                  console.log(response.data.message)
+              }
+              setLoading(false)
+              setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open:false}})
+          })
+          .catch(function(error){
+              console.log(error)
+          })
+      }else{
+          alert('Please select the expenses you want to delete!')
+      }
+      
+      
 
-        AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRowData})
-        .then(function(response){
-            if(response.data.status === 'SUCCESS'){
-                alert(response.data.message)
-                setRefresh(!refresh)
-            }else{
-                console.log(response.data.message)
-            }
-            setLoading(false)
-        })
-        .catch(function(error){
-            console.log(error)
-        })
        
     };
 
     const stackRef = useRef(null);
-    const [boxWidth, setBoxWidth] = useState(0);
-  
+    const [box, setBox] = useState({
+        width: 0,
+        height: 0
+    });
+
+
     useEffect(() => {
-      const updateBoxWidth = () => {
+    const updateBox = () => {
         if (stackRef.current) {
-          setBoxWidth(stackRef.current.offsetWidth  );
+        setBox({
+            width: stackRef.current.offsetWidth,
+            height: 500
+        });
         }
-      };
-  
-      updateBoxWidth();
-      window.addEventListener('resize', updateBoxWidth);
-  
-      return () => {
-        window.removeEventListener('resize', updateBoxWidth);
-      };
+    };
+
+    updateBox();
+    window.addEventListener('resize', updateBox);
+
+    return () => {
+        window.removeEventListener('resize', updateBox);
+    };
     }, []);
+
+    const handleCheckboxChange = (ref_invoice_number, project_vendor_expense_id, event) => {
+        setVendorExpenses((vendorExpenses) =>
+          vendorExpenses.map((row) =>
+            row.ref_invoice_number === ref_invoice_number
+              ? {
+                  ...row,
+                  subRows: row.subRows.map((subRow) =>
+                    subRow.project_vendor_expense_id === project_vendor_expense_id
+                      ? { ...subRow, selected: event.target.checked }
+                      : subRow
+                  ),
+                }
+              : row
+          )
+        );
+      };
   
     return(
-        <Stack
-        direction="column"
-        ref={stackRef}
-        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
-        >
-            <CustomColumnFilter 
-            columns={
-                columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
-                || column.accessorKey==='project_name' 
-                || column.accessorKey==='vendor_name')
-            } 
-            onFilterChange={handleFilterChange}
-            total_amount_wo_vat={total_amount_wo_vat}
-            total_vat_amount={total_vat_amount}
-            total_amount_with_vat={total_amount_with_vat}
-            />
-           <Box sx={{
-                width: boxWidth,
-                overflowX: 'auto',
+
+           <Box ref={stackRef}
+            sx={{
+                width: "100%"
             }}>
             <MaterialReactTable
             columns={columns}
@@ -249,20 +321,109 @@ export default function ListVendorExpense(){
             enableDensityToggle={false}
             enableHiding={false}
             enableGlobalFilter={false}
-            enableRowSelection={true}
             enableFullScreenToggle={false}
-            getRowId={(row) => row.project_vendor_expense_id} //give each row a more useful id
-            onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
-            
+            enableExpandAll={false}
+            enableRowActions
             initialState={{
                 density: 'compact',
                 isLoading: loading,
-                columnPinning: { left: ['mrt-row-select','invoice_number', 'project_name']}
+                columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions', 'ref_invoice_number', 'project_name']}
             }}
             state={{
-                rowSelection: rowSelection,
                 isLoading: loading
             }}
+            renderRowActions={({ row }) => (
+                <Stack direction="row">
+                    <IconButton color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton color="error" onClick={()=>setConfirmDialog({...confirmDialog, delete: {open: true, ref_invoice_number:row.original.ref_invoice_number, currency: row.original.currency}})}>
+                        <DeleteIcon />
+                    </IconButton>
+                </Stack>
+            )}
+            muiDetailPanelProps={() => ({
+                sx: (theme) => ({
+                  padding: 0
+                }),
+
+              })}
+              //custom expand button rotation
+              muiExpandButtonProps={({ row, table }) => ({
+                onClick: () => {
+                    table.setExpanded({ [row.id]: !row.getIsExpanded() });
+                    setVendorExpenses((vendorExpenses) =>
+                        vendorExpenses.map((row) => ({
+                          ...row,
+                          subRows: row.subRows.map((subRow) => ({
+                            ...subRow,
+                            selected: false,
+                          })),
+                        }))
+                      )
+                }, 
+                sx: {
+                  transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+                  transition: 'transform 0.2s',
+                },
+              })}
+              //conditionally render detail panel
+              renderDetailPanel={({ row }) => {
+                const subRows = row.original.subRows.filter((subRow)=>subRow.invoice_number === row.original.ref_invoice_number)
+                return subRows.map((subRow, index)=>(
+                 
+                 <Stack direction="column"
+                  >
+                    <Paper square sx={{padding: 1}}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                    <Checkbox size="small" checked={subRow.selected} onChange={(event)=>handleCheckboxChange(subRow.invoice_number, subRow.project_vendor_expense_id, event)} />
+                    <Box  sx={{
+                        display: 'grid',
+                        margin: 'auto',
+                        gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr',
+                        width: '100%',
+                         whiteSpace:'nowrap'
+                    }}>
+                    <Typography variant="body2"><b>Date: </b>{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</Typography>
+                    <Typography variant="body2"><b>Vendor Name: </b>{subRow.vendor_name}</Typography>
+                    <Typography variant="body2"><b>Location: </b>{subRow.location}</Typography>
+                    <Typography variant="body2"><b>Description: </b>{subRow.description}</Typography>
+                    <Typography variant="body2"><b>Amount w/o Vat: </b> 
+                    &nbsp;<NumericFormat
+                        value={subRow.amount_without_vat}
+                        displayType={'text'}
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                    /></Typography>
+                    <Typography variant="body2"><b>Vat Amount:</b> 
+                    &nbsp;<NumericFormat
+                        value={subRow.vat_amount}
+                        displayType={'text'}
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                    /></Typography>
+                    <Typography variant="body2"><b>Amount w/ Vat:</b> 
+                    &nbsp;<NumericFormat
+                        value={subRow.amount_with_vat}
+                        displayType={'text'}
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                    /></Typography>
+                    </Box>
+                    </Stack>
+                    </Paper>
+                  </Stack>
+                ))
+                   
+                  
+              }}
+                
+               
+                //) : null
+            
             muiTableHeadCellProps={{
                 sx: {
                 backgroundColor: theme.palette.primary.main,
@@ -271,29 +432,79 @@ export default function ListVendorExpense(){
             }}
             muiPaginationProps={{
                 rowsPerPageOptions: [10, 20],
-                variant: 'outlined',
+                variant: 'filled',
             }}
             paginationDisplayMode='pages'
-            muiToolbarAlertBannerProps={{
-                    sx: {
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+            muiTableContainerProps={{
+                sx: { maxHeight: box.height, 
+                    maxWidth: box.width,
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                    width: '6px',
+                    height: '6px',
                     },
-                    children: (
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="outlined" size="small" color="success" onClick={handleEditSelectedRows}>
-                            EDIT SELECTED ROWS
-                        </Button>
-                        <LoadingButton variant="outlined" size="small" color="error" loading={loading} loadingIndicator="Deleting..." onClick={handleDeleteSelectedRows}>
-                            DELETE SELECTED ROWS
-                        </LoadingButton>
-                    </Box>
-                    ),
-                }}
+                    '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '6px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                    }
+                    },
+            }}
+
+            muiTableHeadProps={{
+                sx: {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                },
+            }}
+            muiTablePaperProps={{
+                sx: { borderRadius: 0, 
+                 },
+            }}
+            renderTopToolbarCustomActions={() => (
+                <Box sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1, display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <VendorExpenseColumnFilter 
+                columns={
+                    columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
+                    || column.accessorKey==='project_name' 
+                    || column.accessorKey==='vendor_name')
+                } 
+                onFilterChange={handleFilterChange}
+                />
+                   <Chip label={<>Total Amount: <NumericFormat
+                    value={total_amount}
+                    displayType={'text'}
+                    thousandSeparator={true}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                    /></>} color="secondary" />
+               </Box>
+            )}
              />
+
+             <Dialog open={confirmDialog.delete.open} content={
+                <Stack direction="column" spacing={2}>
+                    <Typography variant="subtitle1">DELETE</Typography>
+                    <Typography variant="body1">Do you want to delete the selected expense?</Typography>
+                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                        <Button onClick={()=>setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open: false}})}>
+                            No
+                        </Button>
+                        <LoadingButton variant="contained" color="secondary" 
+                            onClick={()=>handleDeleteSelectedRows(confirmDialog.delete.ref_invoice_number, confirmDialog.delete.currency)}
+                            loading={loading}>
+                            Yes
+                        </LoadingButton>
+                    </Stack>
+                </Stack>
+             } />
             </Box>
-        </Stack>
     )
 }
