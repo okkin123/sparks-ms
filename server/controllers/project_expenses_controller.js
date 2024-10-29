@@ -456,8 +456,10 @@ delete_vendor_expense: (req, res)=>{
   
 },
 list_vendor_expense: (req, res)=>{
+
+
   dbConnection.query(
-      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, created_by_email FROM vw_project_vendor_expenses WHERE created_by_email=? GROUP BY invoice_number, currency ORDER BY date DESC",
+      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, created_by_email, reporting_to FROM vw_project_vendor_expenses GROUP BY invoice_number, currency ORDER BY date DESC",
       [req.user.user_email],
       function(err, data, fields) {
         if (err) {
@@ -493,7 +495,8 @@ list_vendor_expense: (req, res)=>{
                     if (completedQueries === data.length) {
                       res.send({
                         status: "SUCCESS",
-                        //user_id: req.user.user_id,
+                        user_email: req.user.user_email,
+                        user_id: req.user.user_id,
                         vendor_expenses: data
                       });
                     }
@@ -514,6 +517,47 @@ list_vendor_expense: (req, res)=>{
       }
     )
     
+},
+return_vendor_expense: (req, res)=>{
+  dbConnection.query("UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0 WHERE project_vendor_expense_id=?", 
+    [req.body.project_vendor_expense_id],
+    function(err, data, fields){
+      if(err){
+        res.send({
+          status: "ERROR",
+          message: err.sqlMessage
+        });
+      }else{
+        res.send({
+          status: "SUCCESS",
+          message: "The selected vendor expense has been returned!"
+        });
+      }
+    }
+  )
+},
+verify_vendor_expense: (req, res)=>{
+  const values = req.body.values;
+
+  const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
+  const id_placeholders = values.map(() => '?').join(',');
+
+  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=0, is_verified=1 WHERE project_vendor_expense_id IN (${id_placeholders})`,
+    id_details, 
+    function(err, data, fields){
+      if(err){
+        res.send({
+          status: "ERROR",
+          message: err.sqlMessage
+        });
+      }else{
+        res.send({
+          status: "SUCCESS",
+          message: "The selected vendor expenses for projects are verified successfully!"
+        });
+      }
+    }
+  )
 },
 get_supplier_statement: (req, res)=>{
   dbConnection.query("SELECT * FROM vw_project_supplier_statement WHERE supplier_name=? AND (date_issued BETWEEN ? AND ?) ORDER BY date_issued",

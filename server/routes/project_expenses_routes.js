@@ -41,6 +41,8 @@ router.route("/get_vendor_details").post(controller.get_vendor_details)
 router.route("/insert_vendor_expense").post(middleware.authentication, controller.insert_vendor_expense)
 router.route("/update_vendor_expense").post(middleware.authentication, controller.update_vendor_expense)
 router.route("/delete_vendor_expense").post(controller.delete_vendor_expense)
+router.route("/return_vendor_expense").post(controller.return_vendor_expense)
+router.route("/verify_vendor_expense").post(controller.verify_vendor_expense)
 router.route("/list_vendor_expense").get(middleware.authentication, controller.list_vendor_expense)
 router.route("/get_supplier_statement").post(controller.get_supplier_statement);
 
