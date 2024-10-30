@@ -519,8 +519,13 @@ list_vendor_expense: (req, res)=>{
     
 },
 return_vendor_expense: (req, res)=>{
-  dbConnection.query("UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0 WHERE project_vendor_expense_id=?", 
-    [req.body.project_vendor_expense_id],
+  const values = req.body.values;
+
+  const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
+  const id_placeholders = values.map(() => '?').join(',');
+
+  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0 WHERE project_vendor_expense_id IN (${id_placeholders})`,
+    id_details, 
     function(err, data, fields){
       if(err){
         res.send({
@@ -530,7 +535,7 @@ return_vendor_expense: (req, res)=>{
       }else{
         res.send({
           status: "SUCCESS",
-          message: "The selected vendor expense has been returned!"
+           message: "The selected vendor expenses for projects are returned successfully!"
         });
       }
     }

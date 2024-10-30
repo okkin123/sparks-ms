@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox} from '@mui/material'
+import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox, Tooltip} from '@mui/material'
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../../../AxiosInstance';
 import {
@@ -129,6 +129,10 @@ export default function ListVendorExpense(){
             open: false,
             content: null
         },
+        return: {
+            open: false,
+            content: null
+        },
         delete: {
             open: false,
             content: null
@@ -138,6 +142,7 @@ export default function ListVendorExpense(){
         ref_invoice_number: "",
         waiting_for_verification: 0,
         verified: 0,
+        returned: 0
     });
     useEffect(()=>{
         setLoading(true)
@@ -255,8 +260,15 @@ export default function ListVendorExpense(){
               }else{
                   console.log(response.data.message)
               }
+             
               setLoading(false)
               setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open:false}})
+              setVerifications({
+                ref_invoice_number: "",
+                waiting_for_verification: 0,
+                verified: 0,
+                returned: 0
+              })
           })
           .catch(function(error){
               console.log(error)
@@ -290,6 +302,45 @@ export default function ListVendorExpense(){
             }
             setLoading(false)
             setConfirmDialog({...confirmDialog, verify: {...confirmDialog.verify, open:false}})
+            setVerifications({
+                ref_invoice_number: "",
+                waiting_for_verification: 0,
+                verified: 0,
+                returned: 0
+              })
+        })
+        .catch(function(error){
+            console.log(error)
+        })
+    }
+
+    const handleReturnSelectedRows = (ref_invoice_number, currency) => {
+        const selectedRows = vendorExpenses
+        .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+        .map((row) => ({
+          ...row,
+          subRows: row.subRows
+            .filter((subRow) => subRow.selected === true)
+        }));
+
+        setLoading(true)
+        AxiosInstance.post("/project_expense/return_vendor_expense", {values : selectedRows[0].subRows})
+        .then(function(response){
+            if(response.data.status === 'SUCCESS'){
+                 
+                alert(response.data.message)
+                setRefresh(!refresh)
+            }else{
+                console.log(response.data.message)
+            }
+            setLoading(false)
+            setConfirmDialog({...confirmDialog, return: {...confirmDialog.return, open:false}})
+            setVerifications({
+                ref_invoice_number: "",
+                waiting_for_verification: 0,
+                verified: 0,
+                returned: 0
+              })
         })
         .catch(function(error){
             console.log(error)
@@ -325,26 +376,78 @@ export default function ListVendorExpense(){
 
     const handleCheckboxChange = (ref_invoice_number, project_vendor_expense_id, event) => {
         setVendorExpenses((vendorExpenses) => {
-          const updatedVendorExpenses = vendorExpenses.map((row) =>
-            row.ref_invoice_number === ref_invoice_number
-              ? {
-                  ...row,
-                  subRows: row.subRows.map((subRow) =>
-                    subRow.project_vendor_expense_id === project_vendor_expense_id
-                      ? { ...subRow, selected: event.target.checked }
-                      : subRow
-                  ),
+            const updatedVendorExpenses = vendorExpenses.map((row) => {
+                if (row.ref_invoice_number === ref_invoice_number) {
+                  const isAnyUnverifiedChecked = row.subRows.some(
+                    (subRow) =>
+                      subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                      subRow.is_verified === 0 &&
+                      event.target.checked
+                  );
+                  const isAnyVerifiedChecked = row.subRows.some(
+                    (subRow) =>
+                      subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                      subRow.is_verified === 1 &&
+                      event.target.checked
+                  );
+                  const isAnyReturnedChecked = row.subRows.some(
+                    (subRow) =>
+                      subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                      subRow.is_returned === 1 &&
+                      event.target.checked
+                  );
+              
+                  return {
+                    ...row,
+                    subRows: row.subRows.map((subRow) => {
+                      if (isAnyUnverifiedChecked && subRow.is_verified === 1 && subRow.selected) {
+                        return { ...subRow, selected: false };
+                      } else if (isAnyVerifiedChecked && subRow.is_verified === 0 && subRow.selected) {
+                        return { ...subRow, selected: false };
+                      } else if (isAnyReturnedChecked && subRow.is_returned === 0 && subRow.selected) {
+                        return { ...subRow, selected: false };
+                      }
+              
+                      if (
+                        subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                        subRow.is_verified === 0
+                      ) {
+                        return { ...subRow, selected: event.target.checked };
+                      } else if (
+                        subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                        subRow.is_verified === 1 &&
+                        !isAnyReturnedChecked
+                      ) {
+                        return { ...subRow, selected: event.target.checked };
+                      } else if (
+                        subRow.project_vendor_expense_id === project_vendor_expense_id &&
+                        subRow.is_returned === 1
+                      ) {
+                        return { ...subRow, selected: event.target.checked };
+                      }
+                      return subRow;
+                    }),
+                  };
                 }
-              : row
-          );
+                return row;
+              });
+              
       
           // Calculate countVerifications using the updated state
           const countWaitingForVerifications = updatedVendorExpenses
             .filter((row) => row.ref_invoice_number === ref_invoice_number)
             .reduce((count, row) => {
               return count + row.subRows.filter((subRow) =>
-                subRow.project_vendor_expense_id === project_vendor_expense_id &&
                 subRow.is_verified === 0 &&
+                subRow.selected === true
+              ).length;
+            }, 0);
+
+            const countReturned = updatedVendorExpenses
+            .filter((row) => row.ref_invoice_number === ref_invoice_number)
+            .reduce((count, row) => {
+              return count + row.subRows.filter((subRow) =>
+                subRow.is_returned === 1 &&
                 subRow.selected === true
               ).length;
             }, 0);
@@ -354,14 +457,13 @@ export default function ListVendorExpense(){
             .filter((row) => row.ref_invoice_number === ref_invoice_number)
             .reduce((count, row) => {
               return count + row.subRows.filter((subRow) =>
-                subRow.project_vendor_expense_id === project_vendor_expense_id &&
                 subRow.is_verified === 1 &&
                 subRow.selected === true
               ).length;
             }, 0);
       
           
-          setVerifications({ref_invoice_number: ref_invoice_number, waiting_for_verification: countWaitingForVerifications, verified: countVerified});
+          setVerifications({ref_invoice_number: ref_invoice_number, waiting_for_verification: countWaitingForVerifications, returned: countReturned, verified: countVerified});
       
           return updatedVendorExpenses;
         });
@@ -398,10 +500,13 @@ export default function ListVendorExpense(){
             renderRowActions={({ row }) => (
                 <Stack direction="row">
                     {row.original.created_by === row.original.user_email && <>
-                    <IconButton color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={()=>setConfirmDialog(
+                    <Tooltip title="Edit">
+                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.returned > 0 ? false : true}  color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
+                            <EditIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.returned > 0 ? false : true}  color="error" onClick={()=>setConfirmDialog(
                         {...confirmDialog, delete: {open: true, 
                         content: (
                             <Stack direction="column" spacing={2}>
@@ -420,13 +525,35 @@ export default function ListVendorExpense(){
                             </Stack>
                         )}})}>
                         <DeleteIcon />
-                    </IconButton></> }
+                    </IconButton>
+                    </Tooltip></> }
                     {(row.original.reporting_to === null || JSON.parse(row.original.reporting_to).user_id.some((user_id)=>user_id===row.original.user_id)) &&
                     
                     <>
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.verified > 0 ? false : true} color="error" >
-                        <UndoIcon />
-                    </IconButton>
+                    <Tooltip title="Return">
+                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned > 0 ? false : true} color="warning" 
+                         onClick={()=>setConfirmDialog(
+                            {...confirmDialog, return: {open: true, 
+                            content: (
+                                <Stack direction="column" spacing={2}>
+                                    <Typography variant="subtitle1">RETURN</Typography>
+                                    <Typography variant="body1">Do you want to return the selected expense?</Typography>
+                                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                                        <Button onClick={()=>setConfirmDialog({...confirmDialog, return: {...confirmDialog.return, open: false}})}>
+                                            No
+                                        </Button>
+                                        <LoadingButton variant="contained" color="secondary" 
+                                            onClick={()=>handleReturnSelectedRows(row.original.ref_invoice_number, row.original.currency)}
+                                            loading={loading}>
+                                            Yes
+                                        </LoadingButton>
+                                    </Stack>
+                                </Stack>
+                            )}})} >
+                            <UndoIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Verify">
                     <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification > 0 ? false : true} 
                     color="secondary"
                     onClick={()=>setConfirmDialog(
@@ -449,6 +576,7 @@ export default function ListVendorExpense(){
                         )}})} >
                         <CheckIcon />
                     </IconButton>
+                    </Tooltip>
                     </>
                      
                     }
@@ -608,6 +736,7 @@ export default function ListVendorExpense(){
              />
 
              <Dialog open={confirmDialog.delete.open} content={confirmDialog.delete.content} />
+             <Dialog open={confirmDialog.return.open} content={confirmDialog.return.content} />
              <Dialog open={confirmDialog.verify.open} content={confirmDialog.verify.content} />
             </Box>
     )
