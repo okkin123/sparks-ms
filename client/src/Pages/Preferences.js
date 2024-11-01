@@ -12,17 +12,23 @@ import {Toolbar,
         FormHelperText,
         Alert,
         Collapse,
-        Stack
+        Stack,
+        List,
+        ListItem,
+        ListItemText,
+        Paper
 } from '@mui/material';
 
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import ErrorIcon from "@mui/icons-material/Error";
-
+import DeleteIcon from "@mui/icons-material/Delete";
 import AxiosInstance from "../AxiosInstance";
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
+import Dialog from '../Components/Dialog';
+import LoadingButton from "@mui/lab/LoadingButton";
 
 
 const CompanyAddressSchema = Yup.object().shape({
@@ -37,16 +43,14 @@ const TRNSchema = Yup.object().shape({
     .matches(/^\d+$/, 'Only whole numbers are allowed')
   });
 
-const CurrencySchema = Yup.object().shape({
-  currency: Yup.string()
-    .required('Currency value is required!')
-  });
-
-const VATSchema = Yup.object().shape({
-  vat: Yup.string()
+const VatPricingSchema = Yup.object().shape({
+    currency: Yup.string()
+    .required('Currency value is required!'),
+    vat_percentage: Yup.string()
     .required('VAT % value is required!')
     .matches(/^\d+$/, 'Only whole numbers are allowed')
   });
+
 
 const BankAccountSchema = Yup.object().shape({
   benificiary: Yup.string()
@@ -71,11 +75,15 @@ export default function Preferences(){
   const [edit, setEdit] = useState({
     company_address: false,
     trn: false,
-    currency: false,
-    vat: false,
     bank_account: false
   })
 
+  const [vatPrices, setVatPrices] = useState([])
+  const [refresh, setRefresh] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    content: null
+  })
   const [alert, setAlert] = useState({
     company_address: {
       open: false,
@@ -89,13 +97,7 @@ export default function Preferences(){
       message: '',
       severity: ''
     },
-    currency: {
-      open: false,
-      icon: null,
-      message: '',
-      severity: ''
-    },
-    vat: {
+    vat_pricing: {
       open: false,
       icon: null,
       message: '',
@@ -107,6 +109,13 @@ export default function Preferences(){
       message: '',
       severity: ''
     }
+  })
+
+  const [loading, setLoading] = useState(false)
+
+  const [editVatPricing, setEditVatPricing] = useState({
+    mode: false,
+    index: -1
   })
 
   const formik_company_address = useFormik({
@@ -153,6 +162,183 @@ export default function Preferences(){
   })
 
 
+  const handleUpdateVatPricing = (indexToUpdate)=>{
+
+    setLoading(true)
+    if (indexToUpdate >= 0 && indexToUpdate < vatPrices.length) {
+      vatPrices[indexToUpdate].currency = formik_vat_pricing.values.currency;
+      vatPrices[indexToUpdate].vat_percentage = formik_vat_pricing.values.vat_percentage;
+    } 
+
+    AxiosInstance.post("/preferences/setVatPricing", {mode: "EDIT", vat_pricing: JSON.stringify(vatPrices)})
+    .then(function(response){
+      if(response.data.status === "SUCCESS")
+      {
+        formik_vat_pricing.setValues({
+          currency: "",
+          vat_percentage: ""
+        })
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      else
+      {
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      setEditVatPricing({
+        mode: false,
+        index: -1
+      })
+      setRefresh(!refresh)
+      setLoading(false)
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+
+  }
+
+  const handleEditVatPricing = (indexToEdit)=>{
+    const selected_currency = vatPrices[indexToEdit].currency;
+    const selected_vat_percentage = vatPrices[indexToEdit].vat_percentage;
+
+    formik_vat_pricing.setValues({
+      currency: selected_currency,
+      vat_percentage: selected_vat_percentage
+    })
+
+    setEditVatPricing({
+      mode: true,
+      index: indexToEdit
+    })
+  }
+
+  const handleDeleteVatPricing = (indexToRemove)=>{
+
+    if (indexToRemove > -1 && indexToRemove < vatPrices.length) {
+      vatPrices.splice(indexToRemove, 1);
+    }
+
+    AxiosInstance.post("/preferences/setVatPricing", {mode: "DELETE", vat_pricing: JSON.stringify(vatPrices)})
+    .then(function(response){
+      if(response.data.status === "SUCCESS")
+      {
+        setConfirmDialog({...confirmDialog, open: false})
+        formik_vat_pricing.setValues({
+          currency: "",
+          vat_percentage: ""
+        })
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      else
+      {
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      if(editVatPricing.mode)
+      {
+        setEditVatPricing({mode: false, index: -1})
+        formik_vat_pricing.setValues({
+          currency: "",
+          vat_percentage: " "
+        })
+      }
+
+      setRefresh(!refresh)
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+
+  }
+
+  const formik_vat_pricing = useFormik({
+    initialValues:{
+      currency: "",
+      vat_percentage: "",
+    },
+    validateOnChange: false,
+    validationSchema: VatPricingSchema,
+    onSubmit:(values, {validateForm})=>{
+      setLoading(true)
+      vatPrices.push({currency: values.currency, vat_percentage: parseFloat(values.vat_percentage)});
+      AxiosInstance.post("/preferences/setVatPricing", {mode: "", vat_pricing: JSON.stringify(vatPrices)})
+      .then(function(response){
+        if(response.data.status === "SUCCESS")
+        {
+          formik_vat_pricing.setValues({
+            currency: "",
+            vat_percentage: ""
+          })
+          
+          setAlert({
+            ...alert,
+            vat_pricing: {
+                ...alert.vat_pricing,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+           });
+        }
+        else
+        {
+          setAlert({
+            ...alert,
+            vat_pricing: {
+                ...alert.vat_pricing,
+                open: true,
+                icon: (<CheckIcon fontSize="inherit" />),
+                message: response.data.message,
+                severity: 'success'
+            }
+           });
+        }
+        setLoading(false)
+        setRefresh(!refresh)
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+    }
+  })
+
+
   const formik_trn = useFormik({
     initialValues:{
       trn: ""
@@ -182,93 +368,6 @@ export default function Preferences(){
             ...alert,
             trn: {
                 ...alert.trn,
-                open: true,
-                icon: (<ErrorIcon fontSize="inherit" />),
-                message: response.data.message,
-                severity: 'error'
-            }
-           });
-        }
-      })
-      .catch(function(error){
-        console.log(error)
-      })
-    }
-  })
-
-  const formik_currency = useFormik({
-    initialValues:{
-      currency: ""
-    },
-    validateOnChange: false,
-    validationSchema: CurrencySchema,
-    onSubmit:(values, {validateForm})=>{
-      AxiosInstance.post("/preferences/setCurrency", values)
-      .then(function(response){
-        if(response.data.status === "SUCCESS")
-        {
-          setEdit({...edit, currency: false})
-          setAlert({
-            ...alert,
-            currency: {
-                ...alert.currency,
-                open: true,
-                icon: (<CheckIcon fontSize="inherit" />),
-                message: response.data.message,
-                severity: 'success'
-            }
-           });
-        }
-        else
-        {
-          setAlert({
-            ...alert,
-            currency: {
-                ...alert.currency,
-                open: true,
-                icon: (<ErrorIcon fontSize="inherit" />),
-                message: response.data.message,
-                severity: 'error'
-            }
-           });
-        }
-      })
-      .catch(function(error){
-        console.log(error)
-      })
-    }
-  })
-
-
-  const formik_vat = useFormik({
-    initialValues:{
-      vat: ""
-    },
-    validateOnChange: false,
-    validationSchema: VATSchema,
-    onSubmit:(values, {validateForm})=>{
-      AxiosInstance.post("/preferences/setVAT", values)
-      .then(function(response){
-        if(response.data.status === "SUCCESS")
-        {
-          setEdit({...edit, vat: false})
-          setAlert({
-            ...alert,
-            vat: {
-                ...alert.vat,
-                open: true,
-                icon: (<CheckIcon fontSize="inherit" />),
-                message: response.data.message,
-                severity: 'success'
-            }
-           });
-        }
-        else
-        {
-          setAlert({
-            ...alert,
-            vat: {
-                ...alert.vat,
                 open: true,
                 icon: (<ErrorIcon fontSize="inherit" />),
                 message: response.data.message,
@@ -362,29 +461,23 @@ export default function Preferences(){
   },[edit.trn]);
 
   useEffect(()=>{
-    AxiosInstance.get("/preferences/currency")
+    AxiosInstance.get("/preferences/vat_pricing")
     .then(function(result){
-      formik_currency.setFieldValue("currency",result.data.currency);
+
+      setVatPrices((vatPrices)=>{
+        return result.data.vat_pricing.map((element)=>({
+          currency: element.currency,
+          vat_percentage: element.vat_percentage
+        }))
+      });
+
       
     })
     .catch(function(error){
       console.log(error)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[edit.currency]);
-
-  useEffect(()=>{
-    AxiosInstance.get("/preferences/vat")
-    .then(function(result){
-      formik_vat.setFieldValue("vat",result.data.vat);
-      
-    })
-    .catch(function(error){
-      console.log(error)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[edit.vat]);
-
+  },[refresh]);
 
   useEffect(()=>{
     AxiosInstance.get("/preferences/bank_account")
@@ -492,7 +585,7 @@ export default function Preferences(){
                 </Grid>
               </Grid>
 
-
+              
               <Grid item container direction="row" spacing={2} alignItems="center">
                 <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
                     <Typography variant="body1">TRN:</Typography>
@@ -565,40 +658,100 @@ export default function Preferences(){
                     <Button variant="contained" color="secondary" onClick={formik_trn.handleSubmit} disabled={edit.trn ? false : true}>Save TRN</Button>
                 </Grid>
               </Grid>
+
               <Grid item container direction="row" spacing={2} alignItems="center">
                 <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
-                    <Typography variant="body1">CURRENCY:</Typography>
+                    <Typography variant="body1">VAT INCLUSIVE PRICINGS:</Typography>
                 </Grid>
                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-               <FormControl
-                 variant="outlined"
-                 error={
-                   formik_currency.touched.currency && Boolean(formik_currency.errors.currency)
-                 }
-                 size="small"
-                 fullWidth={true}
-               >
-                 <OutlinedInput
-                   name="currency"
-                   value={formik_currency.values.currency}
-                   onChange={formik_currency.handleChange}
-                   disabled={edit.currency ? false : true}
-                   endAdornment={
-                     <InputAdornment position="end">
-                       <IconButton
-                         aria-label="toggle password visibility"
-                         edge="end"
-                         onClick={()=>setEdit({...edit, currency: !edit.currency})}
-                       >
-                        { edit.currency ? (<CloseIcon />) : (<EditIcon />)}   
-                       </IconButton>
-                     </InputAdornment>
-                   }
-                 />
-                 <FormHelperText>
-                   {formik_currency.touched.currency && formik_currency.errors.currency}
-                 </FormHelperText>
-               </FormControl>
+                <Stack direction="column" spacing={2}>
+
+                <Paper square elavation={0}>
+               <List dense>
+                    {
+                      vatPrices.map((vatPrice, index)=>(
+                        <ListItem
+                        selected={editVatPricing.index === index ? true : false}
+                        secondaryAction={
+                          <Stack direction="row" spacing={1}>
+                          <IconButton edge="end" onClick={()=>handleEditVatPricing(index)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton edge="end" onClick={()=>setConfirmDialog({open: true, 
+                            content: (
+                              <Stack direction="column" spacing={2}>
+                                <Typography variant="subtitle1">DELETE</Typography>
+                                <Typography variant="body1">Do you want to delete {vatPrice.currency} currency?</Typography>
+                                  <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                                      <Button onClick={()=>setConfirmDialog({...confirmDialog, open: false})}>
+                                          No
+                                      </Button>
+                                      <Button variant="contained" color="secondary" onClick={()=>handleDeleteVatPricing(index)}>
+                                          Yes
+                                      </Button>
+                                  </Stack>
+                              </Stack>
+                            )
+                          })}>
+                            <DeleteIcon />
+                          </IconButton>
+                          </Stack>
+                        }
+                      >
+                        <ListItemText
+                          primary={(<>{"Currency: "}<b>{vatPrice.currency}</b></>)}
+                          secondary={(<>{"VAT % : "}<b>{vatPrice.vat_percentage}</b></>)}
+                        />
+                      </ListItem>
+                      ))
+                    }
+
+                </List>
+                </Paper>
+                <Stack direction="row" spacing={2}>
+
+                <TextField 
+                name="currency"
+                label="Currency"
+                value={formik_vat_pricing.values.currency}
+                onChange={formik_vat_pricing.handleChange}
+                size="small"
+                error={
+                  formik_vat_pricing.touched.currency && Boolean(formik_vat_pricing.errors.currency)
+                }
+                helperText= {formik_vat_pricing.touched.currency && formik_vat_pricing.errors.currency}
+                fullWidth
+                />
+
+               <TextField 
+                name="vat_percentage"
+                label="VAT %"
+                value={formik_vat_pricing.values.vat_percentage}
+                onChange={formik_vat_pricing.handleChange}
+                size="small"
+                error={
+                  formik_vat_pricing.touched.vat_percentage && Boolean(formik_vat_pricing.errors.vat_percentage)
+                }
+                
+                helperText= {formik_vat_pricing.touched.vat_percentage && formik_vat_pricing.errors.vat_percentage}
+                fullWidth
+                />
+                {!editVatPricing.mode ? <LoadingButton variant="contained" color="secondary" onClick={formik_vat_pricing.handleSubmit} loading={loading}>Save</LoadingButton> :
+                <>
+                <LoadingButton variant="contained" color="success" onClick={()=>handleUpdateVatPricing(editVatPricing.index)} loading={loading}>Update</LoadingButton> 
+                <Button onClick={()=>{
+                  setEditVatPricing({mode: false, index: -1})
+                  formik_vat_pricing.setValues({
+                    currency: "",
+                    vat_percentage: " "
+                  })
+                }}>Cancel</Button>
+                </>
+                }
+                </Stack>
+
+                </Stack>
+
                </Grid>
               </Grid>
               <Grid item container direction="row" spacing={2} alignItems="center">
@@ -606,7 +759,7 @@ export default function Preferences(){
             
                 </Grid>
                 <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                  <Collapse in={alert.currency.open}>
+                  <Collapse in={alert.vat_pricing.open}>
                     <Alert
                       action={
                         <IconButton
@@ -614,102 +767,19 @@ export default function Preferences(){
                           color="inherit"
                           size="small"
                           onClick={() => {
-                            setAlert({...alert, currency: {...alert.currency, open: false, message: ''}});
+                            setAlert({...alert, vat_pricing: {...alert.vat_pricing, open: false, message: ''}});
                           }}
                         >
                           <CloseIcon fontSize="inherit" />
                         </IconButton>
                       }
                       sx={{ mb: 2 }}
-                      icon={alert.currency.icon}
-                      severity={alert.currency.severity}
+                      icon={alert.vat_pricing.icon}
+                      severity={alert.vat_pricing.severity}
                     >
-                      {alert.currency.message}
+                      {alert.vat_pricing.message}
                     </Alert>
                   </Collapse>
-                </Grid>
-              </Grid>
-              <Grid item container direction="row" spacing={2} alignItems="center">
-                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
-            
-                </Grid>
-                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <Button variant="contained" color="secondary" onClick={formik_currency.handleSubmit} disabled={edit.currency ? false : true}>Save Currency</Button>
-                </Grid>
-              </Grid>
-              <Grid item container direction="row" spacing={2} alignItems="center">
-               
-                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
-                    <Typography variant="body1">VAT %:</Typography>
-                </Grid>
-                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                <FormControl
-                  variant="outlined"
-                  error={
-                    formik_vat.touched.vat && Boolean(formik_vat.errors.vat)
-                  }
-                  size="small"
-                  fullWidth={true}
-                >
-                  <OutlinedInput
-                    name="vat"
-                    value={formik_vat.values.vat}
-                    onChange={formik_vat.handleChange}
-                    disabled={edit.vat ? false : true}
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          edge="end"
-                          onClick={()=>setEdit({...edit, vat: !edit.vat})}
-                        >
-                         { edit.vat ? (<CloseIcon />) : (<EditIcon />)}   
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                  />
-                  <FormHelperText>
-                    {formik_vat.touched.vat && formik_vat.errors.vat}
-                  </FormHelperText>
-                </FormControl>
-                </Grid>
-              </Grid>
-
-
-              <Grid item container direction="row" spacing={2} alignItems="center">
-                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
-            
-                </Grid>
-                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                  <Collapse in={alert.vat.open}>
-                    <Alert
-                      action={
-                        <IconButton
-                          aria-label="close"
-                          color="inherit"
-                          size="small"
-                          onClick={() => {
-                            setAlert({...alert, vat: {...alert.vat, open: false, message: ''}});
-                          }}
-                        >
-                          <CloseIcon fontSize="inherit" />
-                        </IconButton>
-                      }
-                      sx={{ mb: 2 }}
-                      icon={alert.vat.icon}
-                      severity={alert.vat.severity}
-                    >
-                      {alert.vat.message}
-                    </Alert>
-                  </Collapse>
-                </Grid>
-              </Grid>
-              <Grid item container direction="row" spacing={2} alignItems="center">
-                <Grid item xl={2} lg={2} md={3} sm={12} xs={12}>
-            
-                </Grid>
-                <Grid item xl={5} lg={5} md={7} sm={12} xs={12}>
-                    <Button variant="contained" color="secondary" onClick={formik_vat.handleSubmit} disabled={edit.vat ? false : true}>Save VAT</Button>
                 </Grid>
               </Grid>
 
@@ -880,6 +950,7 @@ export default function Preferences(){
                 </Grid>
               </Grid>
             </Grid>
+            <Dialog open={confirmDialog.open} content={confirmDialog.content}/>
         </React.Fragment>
     )
 }
