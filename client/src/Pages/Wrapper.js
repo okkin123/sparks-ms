@@ -501,7 +501,8 @@ useEffect(()=>{
 
     </List>
           <Divider />
-          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
+          <List>
+          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
           <ListItem
               disablePadding
               selected={component.manage_users.selected}
@@ -516,8 +517,8 @@ useEffect(()=>{
                 <ListItemText primary="Manage Users" />
               </ListItemButton>
             </ListItem>
-          </List>  : null }
-          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <List>
+           : null }
+          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
             <ListItem
               disablePadding
               selected={component.preferences.selected}
@@ -532,7 +533,7 @@ useEffect(()=>{
                 <ListItemText primary="Preferences" />
               </ListItemButton>
             </ListItem>
-          </List> : null }
+           : null }</List>
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 2}}>

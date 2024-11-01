@@ -28,6 +28,7 @@ import AxiosInstance from "../AxiosInstance";
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import Dialog from '../Components/Dialog';
+import LoadingButton from "@mui/lab/LoadingButton";
 
 
 const CompanyAddressSchema = Yup.object().shape({
@@ -110,6 +111,13 @@ export default function Preferences(){
     }
   })
 
+  const [loading, setLoading] = useState(false)
+
+  const [editVatPricing, setEditVatPricing] = useState({
+    mode: false,
+    index: -1
+  })
+
   const formik_company_address = useFormik({
     initialValues:{
       company_address: ""
@@ -154,22 +162,22 @@ export default function Preferences(){
   })
 
 
-  const handleDeleteVatPricing = (indexToRemove)=>{
+  const handleUpdateVatPricing = (indexToUpdate)=>{
 
-    if (indexToRemove > -1 && indexToRemove < vatPrices.length) {
-      vatPrices.splice(indexToRemove, 1);
-    }
+    setLoading(true)
+    if (indexToUpdate >= 0 && indexToUpdate < vatPrices.length) {
+      vatPrices[indexToUpdate].currency = formik_vat_pricing.values.currency;
+      vatPrices[indexToUpdate].vat_percentage = formik_vat_pricing.values.vat_percentage;
+    } 
 
-    AxiosInstance.post("/preferences/setVatPricing", {vat_pricing: JSON.stringify(vatPrices)})
+    AxiosInstance.post("/preferences/setVatPricing", {mode: "EDIT", vat_pricing: JSON.stringify(vatPrices)})
     .then(function(response){
       if(response.data.status === "SUCCESS")
       {
-        setConfirmDialog({...confirmDialog, open: false})
         formik_vat_pricing.setValues({
           currency: "",
           vat_percentage: ""
         })
-        setRefresh(!refresh)
         setAlert({
           ...alert,
           vat_pricing: {
@@ -194,6 +202,83 @@ export default function Preferences(){
           }
          });
       }
+      setEditVatPricing({
+        mode: false,
+        index: -1
+      })
+      setRefresh(!refresh)
+      setLoading(false)
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+
+  }
+
+  const handleEditVatPricing = (indexToEdit)=>{
+    const selected_currency = vatPrices[indexToEdit].currency;
+    const selected_vat_percentage = vatPrices[indexToEdit].vat_percentage;
+
+    formik_vat_pricing.setValues({
+      currency: selected_currency,
+      vat_percentage: selected_vat_percentage
+    })
+
+    setEditVatPricing({
+      mode: true,
+      index: indexToEdit
+    })
+  }
+
+  const handleDeleteVatPricing = (indexToRemove)=>{
+
+    if (indexToRemove > -1 && indexToRemove < vatPrices.length) {
+      vatPrices.splice(indexToRemove, 1);
+    }
+
+    AxiosInstance.post("/preferences/setVatPricing", {mode: "DELETE", vat_pricing: JSON.stringify(vatPrices)})
+    .then(function(response){
+      if(response.data.status === "SUCCESS")
+      {
+        setConfirmDialog({...confirmDialog, open: false})
+        formik_vat_pricing.setValues({
+          currency: "",
+          vat_percentage: ""
+        })
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      else
+      {
+        setAlert({
+          ...alert,
+          vat_pricing: {
+              ...alert.vat_pricing,
+              open: true,
+              icon: (<CheckIcon fontSize="inherit" />),
+              message: response.data.message,
+              severity: 'success'
+          }
+         });
+      }
+      if(editVatPricing.mode)
+      {
+        setEditVatPricing({mode: false, index: -1})
+        formik_vat_pricing.setValues({
+          currency: "",
+          vat_percentage: " "
+        })
+      }
+
+      setRefresh(!refresh)
     })
     .catch(function(error){
       console.log(error)
@@ -204,13 +289,14 @@ export default function Preferences(){
   const formik_vat_pricing = useFormik({
     initialValues:{
       currency: "",
-      vat_percentage: ""
+      vat_percentage: "",
     },
     validateOnChange: false,
     validationSchema: VatPricingSchema,
     onSubmit:(values, {validateForm})=>{
+      setLoading(true)
       vatPrices.push({currency: values.currency, vat_percentage: parseFloat(values.vat_percentage)});
-      AxiosInstance.post("/preferences/setVatPricing", {vat_pricing: JSON.stringify(vatPrices)})
+      AxiosInstance.post("/preferences/setVatPricing", {mode: "", vat_pricing: JSON.stringify(vatPrices)})
       .then(function(response){
         if(response.data.status === "SUCCESS")
         {
@@ -218,7 +304,7 @@ export default function Preferences(){
             currency: "",
             vat_percentage: ""
           })
-          setRefresh(!refresh)
+          
           setAlert({
             ...alert,
             vat_pricing: {
@@ -243,6 +329,8 @@ export default function Preferences(){
             }
            });
         }
+        setLoading(false)
+        setRefresh(!refresh)
       })
       .catch(function(error){
         console.log(error)
@@ -583,9 +671,10 @@ export default function Preferences(){
                     {
                       vatPrices.map((vatPrice, index)=>(
                         <ListItem
+                        selected={editVatPricing.index === index ? true : false}
                         secondaryAction={
                           <Stack direction="row" spacing={1}>
-                          <IconButton edge="end">
+                          <IconButton edge="end" onClick={()=>handleEditVatPricing(index)}>
                             <EditIcon />
                           </IconButton>
                           <IconButton edge="end" onClick={()=>setConfirmDialog({open: true, 
@@ -609,11 +698,6 @@ export default function Preferences(){
                           </Stack>
                         }
                       >
-                        {/* <ListItemAvatar>
-                          <Avatar>
-                            <FolderIcon />
-                          </Avatar>
-                        </ListItemAvatar> */}
                         <ListItemText
                           primary={(<>{"Currency: "}<b>{vatPrice.currency}</b></>)}
                           secondary={(<>{"VAT % : "}<b>{vatPrice.vat_percentage}</b></>)}
@@ -652,7 +736,18 @@ export default function Preferences(){
                 helperText= {formik_vat_pricing.touched.vat_percentage && formik_vat_pricing.errors.vat_percentage}
                 fullWidth
                 />
-                <Button variant="contained" color="secondary" onClick={formik_vat_pricing.handleSubmit}>Save</Button>
+                {!editVatPricing.mode ? <LoadingButton variant="contained" color="secondary" onClick={formik_vat_pricing.handleSubmit} loading={loading}>Save</LoadingButton> :
+                <>
+                <LoadingButton variant="contained" color="success" onClick={()=>handleUpdateVatPricing(editVatPricing.index)} loading={loading}>Update</LoadingButton> 
+                <Button onClick={()=>{
+                  setEditVatPricing({mode: false, index: -1})
+                  formik_vat_pricing.setValues({
+                    currency: "",
+                    vat_percentage: " "
+                  })
+                }}>Cancel</Button>
+                </>
+                }
                 </Stack>
 
                 </Stack>

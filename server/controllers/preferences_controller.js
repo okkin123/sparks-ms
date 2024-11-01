@@ -99,6 +99,18 @@ module.exports = {
         res.send({vat_pricing: JSON.parse(process.env.VAT_PRICING)})
     },
     setVatPricing: (req, res)=>{
+        let message;
+
+        switch(req.body.mode){
+            case 'EDIT': 
+                message = "updated";
+                break;
+            case 'DELETE': 
+                message = "deleted";
+                break;
+            default: 
+                message = "added"
+        }
 
         try{
             // Define the variable you want to update and its new value
@@ -126,7 +138,7 @@ module.exports = {
 
             res.send({
                 status: "SUCCESS",
-                message: "Vat Pricing has been updated!"
+                message: "Vat Pricing has been "+message+"!"
             })
         }catch (error){
             res.send({
