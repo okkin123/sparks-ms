@@ -89,6 +89,7 @@ const QuotationDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     
   });
+  
 export default function Edit(props){
 
     const quotationNumber = props.quotation_number;

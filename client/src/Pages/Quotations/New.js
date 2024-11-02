@@ -90,7 +90,8 @@ const QuotationDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     project_description: Yup.string()
     .required('This field is required!'),
-    
+    currency: Yup.string()
+    .required('This field is required!'),
   });
 export default function New(){
 
@@ -112,8 +113,8 @@ export default function New(){
       client_name: [],
       attention_to: []
     })
-    const [currency, setCurrency] = useState("");
-    const [vat, setVat] = useState(null);
+    const [vatPrices, setVatPrices] = useState([]);
+    const [selectedVat, setSelectedVat] = useState(0)
     const [error, setError] = useState(false);
 
 
@@ -227,6 +228,8 @@ export default function New(){
         attention_to: "",
         project_name: "",
         project_description: "",
+        currency: "",
+        vat_percentage: 0,
         notes: ""
       },
       validateOnChange: false,
@@ -246,8 +249,6 @@ export default function New(){
             values: values,
             details: quotationDetails,
             amount_without_vat: quotationBreakdown.total_cost_without_vat,
-            currency: currency,
-            vat_percentage: vat
           })
           .then(function(response){
             if(response.data.status === "SUCCESS")
@@ -280,12 +281,12 @@ export default function New(){
 
       setQuotationBreakdown({
         total_cost_without_vat: total_cost_without_vat,
-        vat_amount: total_cost_without_vat * (vat / 100),
-        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * (vat / 100))
+        vat_amount: total_cost_without_vat * (formik_quotation.values.vat_percentage / 100),
+        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * (formik_quotation.values.vat_percentage / 100))
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[quotationDetails, vat])
+    },[quotationDetails, formik_quotation.values.vat_percentage])
 
    useEffect(()=>{
     AxiosInstance.get("/quotation/generateQuotationNumber")
@@ -304,9 +305,14 @@ export default function New(){
     })
 
 
-    AxiosInstance.get("/preferences/currency")
+    AxiosInstance.get("/preferences/vat_pricing")
     .then(function(result){
-         setCurrency(result.data.currency);
+      setVatPrices((vatPrices)=>{
+        return result.data.vat_pricing.map((element)=>({
+          currency: element.currency,
+          vat_percentage: element.vat_percentage
+        }))
+      });
     })
     .catch(function(error){
       console.log(error)
@@ -315,22 +321,6 @@ export default function New(){
 
  // eslint-disable-next-line  
    }, [])
-
-   const handleVatApplicableOnChange = (is_vat)=>{
-    if(is_vat){
-      AxiosInstance.get("/preferences/vat")
-      .then(function(result){
-        setVat(result.data.vat)
-      })
-      .catch(function(error){
-        console.log(error)
-      })
-    }else{
-      setVat(null);
-    }
-    formik_quotation.setFieldValue('is_vat', is_vat)
-
-   }
 
    function handleGetClientDetails(field_name){
     AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name})
@@ -370,12 +360,21 @@ export default function New(){
                       size="small"
                       error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
                     >
-                      <InputLabel>VAT Appicable</InputLabel>
+                      <InputLabel>Vat Appicable</InputLabel>
                       <Select
                       name="is_vat"
                       value={formik_quotation.values.is_vat}
-                      label="VAT Applicable"
-                      onChange={(event)=>handleVatApplicableOnChange(event.target.value)}
+                      label="Vat Applicable"
+                      onChange={(event)=>{
+
+                        formik_quotation.setFieldValue('is_vat', event.target.value)
+                        if(event.target.value){
+                            formik_quotation.setFieldValue('vat_percentage', selectedVat);
+                        }else{
+                            formik_quotation.setFieldValue('vat_percentage', 0);
+                        }
+
+                      }}
                       >
                           <MenuItem value={true}>
                               Yes
@@ -388,28 +387,61 @@ export default function New(){
                       {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
                       </FormHelperText>
                   </FormControl>
+                
+                  <FormControl
+                      fullWidth
+                      size="small"
+                      error={formik_quotation.touched.currency && Boolean(formik_quotation.errors.currency)}
+                    >
+                      <InputLabel>Currency</InputLabel>
+                      <Select
+                      name="currency"
+                      vvalue={JSON.stringify(formik_quotation.values.currency)}
+                      label="Currency"
+                      onChange={(event)=>{
+                        const selectedValue = JSON.parse(event.target.value);
+                        
+                        formik_quotation.setFieldValue('currency', selectedValue.currency);
+                        
+                        if(formik_quotation.values.is_vat){
+                            setSelectedVat(parseInt(selectedValue.vat_percentage))
+                            formik_quotation.setFieldValue('vat_percentage', parseInt(selectedValue.vat_percentage));
+                        }
+                      }}
+                      >
+                        {vatPrices.map((element, index)=>(
+                              <MenuItem key={index} value={JSON.stringify({currency: element.currency, vat_percentage: element.vat_percentage})}>
+                                  {element.currency}
+                              </MenuItem>
+                        ))}
+                   
+                      </Select>
+                      <FormHelperText>
+                      {formik_quotation.touched.currency && formik_quotation.errors.currency}
+                      </FormHelperText>
+                  </FormControl>
                   <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker 
-                    value={dayjs(formik_quotation.values.date)}
-                    onChange={(value)=>formik_quotation.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
-                    slotProps={{
-                        textField: {
-                          label: 'Date',
-                          variant: 'outlined',
-                          name: 'date',
-                          size: 'small', 
-                          fullWidth: true,
-                          error: Boolean(formik_quotation.errors.date),
-                          helperText:formik_quotation.touched.date && formik_quotation.errors.date
-                        },
-                      }} />
-                  </LocalizationProvider>
                  </Stack>
                </Grid>
                <Grid item>
                 
                  <Stack direction="row" spacing={2}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker 
+                      value={dayjs(formik_quotation.values.date)}
+                      onChange={(value)=>formik_quotation.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                      slotProps={{
+                          textField: {
+                            label: 'Date',
+                            variant: 'outlined',
+                            name: 'date',
+                            size: 'small', 
+                            fullWidth: true,
+                            error: Boolean(formik_quotation.errors.date),
+                            helperText:formik_quotation.touched.date && formik_quotation.errors.date
+                          },
+                        }} />
+                    </LocalizationProvider>
                         <Autocomplete
                         freeSolo
                         selectOnFocus
@@ -499,8 +531,7 @@ export default function New(){
                 <Grid item>
                 <Stack 
                   direction="row" 
-                  spacing={2}
-                  sx={{ width: '100%', alignItems: "center"}}
+                  sx={{width: "100%", alignItems: "center"}}
                 >
                   <Button 
                     variant="contained" 
@@ -540,6 +571,7 @@ export default function New(){
                     Quotation Details is empty!
                   </Alert>
                   </Collapse>
+
                 </Stack>
 
                   </Grid>
@@ -626,8 +658,8 @@ export default function New(){
                                     <StyledTableCell align="left">SN</StyledTableCell>
                                     <StyledTableCell sx={{ minWidth: 400 }}>DESCRIPTION</StyledTableCell>
                                     <StyledTableCell align="center">QUANTITY</StyledTableCell>
-                                    <StyledTableCell align="right">UNIT COST {currency}</StyledTableCell>
-                                    <StyledTableCell align="right">TOTAL COST {currency}</StyledTableCell>
+                                    <StyledTableCell align="right">UNIT COST {formik_quotation.values.currency}</StyledTableCell>
+                                    <StyledTableCell align="right">TOTAL COST {formik_quotation.values.currency}</StyledTableCell>
                                     <StyledTableCell align="center">ACTION</StyledTableCell>
                                 </StyledTableRow>
                                 </TableHead>
@@ -725,26 +757,26 @@ export default function New(){
                                 ))}
                                 </TableBody>
                                 {
-                                  vat !== null ? (
+                                  formik_quotation.values.vat_percentage !== 0 ? (
                                     <TableFooter>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right"  >TOTAL COST w/o VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right">VAT {vat}%:</StyledTableCell>
-                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.values.vat_percentage}%:</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   ) : (
                                     <TableFooter>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right"  >TOTAL COST:</StyledTableCell>
-                                      <StyledTableCell align="center">{currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   )
