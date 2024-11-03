@@ -167,7 +167,7 @@ export default function Preferences(){
     setLoading(true)
     if (indexToUpdate >= 0 && indexToUpdate < vatPrices.length) {
       vatPrices[indexToUpdate].currency = formik_vat_pricing.values.currency;
-      vatPrices[indexToUpdate].vat_percentage = formik_vat_pricing.values.vat_percentage;
+      vatPrices[indexToUpdate].vat_percentage = parseFloat(formik_vat_pricing.values.vat_percentage);
     } 
 
     AxiosInstance.post("/preferences/setVatPricing", {mode: "EDIT", vat_pricing: JSON.stringify(vatPrices)})
