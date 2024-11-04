@@ -459,7 +459,7 @@ list_vendor_expense: (req, res)=>{
 
 
   dbConnection.query(
-      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, created_by_email, reporting_to FROM vw_project_vendor_expenses GROUP BY invoice_number, currency ORDER BY date DESC",
+      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, created_by_email, reporting_to FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency ORDER BY date DESC",
       [req.user.user_email],
       function(err, data, fields) {
         if (err) {
@@ -474,7 +474,7 @@ list_vendor_expense: (req, res)=>{
     
             data.forEach((item, index) => {
               dbConnection.query(
-                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? ORDER BY date DESC",
+                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? ORDER BY status DESC",
                 [item.invoice_number, item.currency],
                 function(err1, data1, fields1) {
                   if (err1) {

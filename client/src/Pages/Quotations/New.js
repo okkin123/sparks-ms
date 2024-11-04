@@ -114,9 +114,7 @@ export default function New(){
       attention_to: []
     })
     const [vatPrices, setVatPrices] = useState([]);
-    const [selectedVat, setSelectedVat] = useState(0)
     const [error, setError] = useState(false);
-
 
     const handleEditQuotaionDetails = (index) => {
 
@@ -368,11 +366,18 @@ export default function New(){
                       onChange={(event)=>{
 
                         formik_quotation.setFieldValue('is_vat', event.target.value)
-                        if(event.target.value){
-                            formik_quotation.setFieldValue('vat_percentage', selectedVat);
-                        }else{
-                            formik_quotation.setFieldValue('vat_percentage', 0);
-                        }
+                        const selectedElement = vatPrices.find(element => element.currency === formik_quotation.values.currency);
+                      
+                        if (selectedElement) {
+                          const vatPercentage = selectedElement.vat_percentage;
+                          if(event.target.value){
+                            formik_quotation.setFieldValue('vat_percentage', parseFloat(vatPercentage));
+                          }else{
+                              formik_quotation.setFieldValue('vat_percentage', 0);
+                          }
+
+                        } 
+
 
                       }}
                       >
@@ -396,25 +401,31 @@ export default function New(){
                       <InputLabel>Currency</InputLabel>
                       <Select
                       name="currency"
-                      value={JSON.stringify(formik_quotation.values.currency)}
+                      value={formik_quotation.values.currency}
                       label="Currency"
-                      onChange={(event)=>{
-                        const selectedValue = JSON.parse(event.target.value);
-                        formik_quotation.setFieldValue('currency', selectedValue.currency);
+                      onChange={(event) => {
+                        const selectedCurrency= event.target.value;
+                        formik_quotation.setFieldValue('currency', selectedCurrency);
+                      
                         
-                        if(formik_quotation.values.is_vat){
-                            setSelectedVat(parseInt(selectedValue.vat_percentage))
-                            formik_quotation.setFieldValue('vat_percentage', parseInt(selectedValue.vat_percentage));
-                        }
+                        const selectedElement = vatPrices.find(element => element.currency === selectedCurrency);
+                      
+                        if (selectedElement) {
+                          const vatPercentage = selectedElement.vat_percentage;
+                          if (formik_quotation.values.is_vat) {
+                            formik_quotation.setFieldValue('vat_percentage', parseFloat(vatPercentage));
+                          }
+                        } 
                       }}
-                      >
-                        {vatPrices.map((element, index)=>(
-                              <MenuItem key={index} value={JSON.stringify({currency: element.currency, vat_percentage: element.vat_percentage})}>
-                                  {element.currency}
-                              </MenuItem>
-                        ))}
-                   
-                      </Select>
+                      
+                    >
+                      {vatPrices.map((element, index) => (
+                        <MenuItem key={index} value={element.currency}>
+                          {element.currency}
+                        </MenuItem>
+                      ))}
+                    </Select>
+
                       <FormHelperText>
                       {formik_quotation.touched.currency && formik_quotation.errors.currency}
                       </FormHelperText>
