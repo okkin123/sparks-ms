@@ -396,11 +396,10 @@ export default function New(){
                       <InputLabel>Currency</InputLabel>
                       <Select
                       name="currency"
-                      vvalue={JSON.stringify(formik_quotation.values.currency)}
+                      value={JSON.stringify(formik_quotation.values.currency)}
                       label="Currency"
                       onChange={(event)=>{
                         const selectedValue = JSON.parse(event.target.value);
-                        
                         formik_quotation.setFieldValue('currency', selectedValue.currency);
                         
                         if(formik_quotation.values.is_vat){

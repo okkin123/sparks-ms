@@ -382,6 +382,7 @@ export default function ListVendorExpense(){
                     (subRow) =>
                       subRow.project_vendor_expense_id === project_vendor_expense_id &&
                       subRow.is_verified === 0 &&
+                      subRow.is_returned === 1 &&
                       event.target.checked
                   );
                   const isAnyVerifiedChecked = row.subRows.some(
@@ -410,7 +411,8 @@ export default function ListVendorExpense(){
               
                       if (
                         subRow.project_vendor_expense_id === project_vendor_expense_id &&
-                        subRow.is_verified === 0
+                        subRow.is_verified === 0 &&
+                        !isAnyReturnedChecked
                       ) {
                         return { ...subRow, selected: event.target.checked };
                       } else if (

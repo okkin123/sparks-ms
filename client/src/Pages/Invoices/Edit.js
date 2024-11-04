@@ -607,6 +607,12 @@ export default function Edit(props){
                     size="small"
                     readOnly
                     fullWidth />
+                     <TextField variant='outlined' label="Currency"
+                      name="currency"
+                      value={formik_invoice.values.currency}
+                      size="small"
+                      readOnly
+                      fullWidth/>
                  </Stack>
                </Grid>
                <Grid item>
@@ -860,16 +866,16 @@ export default function Edit(props){
                                 <StyledTableRow>
                                     <StyledTableCell align="left">SN</StyledTableCell>
                                     <StyledTableCell sx={{ minWidth: 400 }}>TOPICS</StyledTableCell>
-                                    <StyledTableCell align="right">AMOUNT {formik_invoice.values.currency}</StyledTableCell>
+                                    <StyledTableCell align="right">AMOUNT ({formik_invoice.values.currency})</StyledTableCell>
                                     {
                                       formik_invoice.values.vat_percentage !== null ? (
                                         <React.Fragment>
                                           <StyledTableCell align="right">VAT {formik_invoice.values.vat_percentage}%</StyledTableCell>
-                                          <StyledTableCell align="right">TOTAL {formik_invoice.values.currency}</StyledTableCell>
+                                          <StyledTableCell align="right">TOTAL ({formik_invoice.values.currency})</StyledTableCell>
                                         </React.Fragment>
                                       ): (
                                         <React.Fragment>
-                                        <StyledTableCell align="right">TOTAL {formik_invoice.values.currency}</StyledTableCell>
+                                        <StyledTableCell align="right">TOTAL ({formik_invoice.values.currency})</StyledTableCell>
                                         </React.Fragment>
                                       )
                                     }
