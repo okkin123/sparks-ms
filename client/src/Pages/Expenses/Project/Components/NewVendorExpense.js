@@ -14,6 +14,11 @@ import { Grid,
     Paper,
     Collapse,
     Alert,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormHelperText,
     FormControlLabel
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -79,8 +84,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 
   const ProjectVendorExpenseSchema = Yup.object().shape({
-     project_name: Yup.string()
-        .required('This field is required!'),
+    project_name: Yup.string()
+    .required('This field is required!'),
+    currency: Yup.string()
+    .required('This field is required!'),
     expenses: Yup.array().of(
       Yup.object().shape({
         date: Yup.date().required('Date is required!'),
@@ -115,6 +122,31 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
 };
 
+const updateAllVatCurrencyChange = (vat_percentage, formik_vendor_expense) => {
+    const vat = parseInt(vat_percentage, 10);
+    if (isNaN(vat)) {
+        console.error('Invalid VAT percentage');
+        return;
+    }
+
+    const updatedExpenses = formik_vendor_expense.values.expenses.map(expense => {
+        if (expense.is_vat) {
+            const amountWithoutVat = parseFloat(expense.amount_without_vat || 0);
+            const vatAmount = (amountWithoutVat * (vat / 100)).toFixed(2);
+            const amountWithVat = (amountWithoutVat + parseFloat(vatAmount)).toFixed(2);
+
+            return {
+                ...expense,
+                vat_percentage: vat,
+                vat_amount: vatAmount,
+                amount_with_vat: amountWithVat,
+            };
+        }
+        return expense; // Return the expense unchanged if is_vat is false
+    });
+
+    formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
+};
 
   const debounceVatApplicableOnChange = debounce((is_vat, vat_percentage, index, formik_vendor_expense)=>{
     const updatedExpenses = [...formik_vendor_expense.values.expenses];
@@ -196,7 +228,7 @@ export default function NewVendorExpense(props){
         description: []
       })
     const [loading, setLoading] = useState(false)
-    const [currency, setCurrency] = useState("");
+    
     const [grandTotal, setGrandTotal] = useState({
         total_amount_without_vat: 0,
         total_vat_amount: 0,
@@ -209,12 +241,14 @@ export default function NewVendorExpense(props){
         message: ""
       })
     const [updateBtn, setUpdateBtn] = useState(false)
-   
+    const [vatPrices, setVatPrices] = useState([]);
 
     const formik_vendor_expense = useFormik({
         initialValues: props.mode === 'EDIT' ? props.initialValues : {
             ref_invoice_number: "",
             project_name: "",
+            currency: "",
+            vat_percentage: 0,
             expenses: 
             [
               {
@@ -234,7 +268,7 @@ export default function NewVendorExpense(props){
           validationSchema: ProjectVendorExpenseSchema,
           onSubmit: (values, { validateForm }) => {
             setLoading(true)
-            AxiosInstance.post(props.mode === 'EDIT' ? "/project_expense/update_vendor_expense" : "/project_expense/insert_vendor_expense", {values : values, currency: currency})
+            AxiosInstance.post(props.mode === 'EDIT' ? "/project_expense/update_vendor_expense" : "/project_expense/insert_vendor_expense", {values : values})
             .then(function(reponse){
                 if(reponse.data.status === 'SUCCESS'){
                     setResponse({
@@ -286,7 +320,6 @@ export default function NewVendorExpense(props){
             // eslint-disable-next-line react-hooks/exhaustive-deps
       },[formik_vendor_expense])
 
-    const [vatPercentage, setVatPercentage] = useState("");
 
     function handleGetInvoiceDetails(){
         AxiosInstance.get("/project_expense/get_invoice_details")
@@ -327,25 +360,21 @@ export default function NewVendorExpense(props){
         })
        }
 
- 
-       useEffect(()=>{
-        AxiosInstance.get("/preferences/vat")
+    useEffect(()=>{
+        AxiosInstance.get("/preferences/vat_pricing")
         .then(function(result){
-
-          setVatPercentage(result.data.vat)
-
+          setVatPrices((vatPrices)=>{
+            return result.data.vat_pricing.map((element)=>({
+              currency: element.currency,
+              vat_percentage: element.vat_percentage
+            }))
+          });
         })
         .catch(function(error){
           console.log(error)
         })
 
-        AxiosInstance.get("/preferences/currency")
-        .then(function(result){
-             setCurrency(result.data.currency);
-        })
-        .catch(function(error){
-          console.log(error)
-        })
+
 
        },[])
 
@@ -371,7 +400,7 @@ export default function NewVendorExpense(props){
         const updatedExpenses = [...formik_vendor_expense.values.expenses];
         updatedExpenses[index].is_vat = is_vat;
         formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-        debounceVatApplicableOnChange(is_vat, vatPercentage, index, formik_vendor_expense)
+        debounceVatApplicableOnChange(is_vat, formik_vendor_expense.values.vat_percentage, index, formik_vendor_expense)
     }
 
     const handleAmountWOVatChange = (index, event, expense) => {
@@ -684,7 +713,7 @@ export default function NewVendorExpense(props){
                 </Collapse>
             </Grid>
              <Grid item>
-                <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+                <Stack direction="row" spacing={2} alignItems="center">
                     <Autocomplete
                     freeSolo
                     selectOnFocus 
@@ -734,6 +763,41 @@ export default function NewVendorExpense(props){
                     fullWidth
                     sx={{width: "65%"}}
                     />
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      error={formik_vendor_expense.touched.currency && Boolean(formik_vendor_expense.errors.currency)}
+                    >
+                      <InputLabel>Currency</InputLabel>
+                        <Select
+                        name="currency"
+                        value={formik_vendor_expense.values.currency}
+                        label="Currency"
+                        onChange={(event) => {
+                            const selectedCurrency= event.target.value;
+                            formik_vendor_expense.setFieldValue('currency', selectedCurrency);
+                        
+                            
+                            const selectedElement = vatPrices.find(element => element.currency === selectedCurrency);
+                        
+                            if (selectedElement) {
+                            const vatPercentage = selectedElement.vat_percentage;
+                            formik_vendor_expense.setFieldValue('vat_percentage', parseFloat(vatPercentage));
+                            updateAllVatCurrencyChange(parseFloat(vatPercentage), formik_vendor_expense)
+                            } 
+                        }}
+                        
+                        >
+                        {vatPrices.map((element, index) => (
+                            <MenuItem key={index} value={element.currency}>
+                            {element.currency}
+                            </MenuItem>
+                        ))}
+                        </Select>
+                      <FormHelperText>
+                      {formik_vendor_expense.touched.currency && formik_vendor_expense.errors.currency}
+                      </FormHelperText>
+                  </FormControl>
                    { props.mode!=='EDIT' && <Button
                         variant="contained"
                         color="secondary"
@@ -753,7 +817,7 @@ export default function NewVendorExpense(props){
                             {props.mode !== 'EDIT' && <StyledTableCell align="center">REMOVE</StyledTableCell>}
                             <StyledTableCell align="center">SN</StyledTableCell>
                             <StyledTableCell align="center"><FormControlLabel control={<Checkbox
-                                        onChange={(event)=>updateAllVat(event.target.checked, vatPercentage, formik_vendor_expense)}
+                                        onChange={(event)=>updateAllVat(event.target.checked, formik_vendor_expense.values.vat_percentage, formik_vendor_expense)}
                                         sx={{
                                             color: 'white',
                                             '&.Mui-checked': {
@@ -766,9 +830,9 @@ export default function NewVendorExpense(props){
                             <StyledTableCell align="left" sx={{width: "15%"}}>VENDOR NAME</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "15%"}}>LOCATION</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "20%"}}>DESCRIPTION</StyledTableCell>
-                            <StyledTableCell align="center">AMOUNT {`(${currency})`}</StyledTableCell>
-                            <StyledTableCell align="center">VAT {`(${vatPercentage}%)`}</StyledTableCell>
-                            <StyledTableCell align="center">TOTAL AMOUNT {`(${currency})`}</StyledTableCell>
+                            <StyledTableCell align="center">AMOUNT {`(${formik_vendor_expense.values.currency})`}</StyledTableCell>
+                            <StyledTableCell align="center">VAT {`(${formik_vendor_expense.values.vat_percentage}%)`}</StyledTableCell>
+                            <StyledTableCell align="center">TOTAL AMOUNT {`(${formik_vendor_expense.values.currency})`}</StyledTableCell>
                             {/* <StyledTableCell align="center">REMARKS</StyledTableCell> */}
                         </StyledTableRow>
                     </TableHead>
@@ -778,9 +842,9 @@ export default function NewVendorExpense(props){
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1}}>
                             <StyledTableCell colSpan={props.mode !== 'EDIT' ? 7 : 6} align="right">GRAND TOTAL:</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${currency}`}</StyledTableCell>
-                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${currency}`}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
+                            <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
                         </StyledTableRow>
                     </TableFooter>
                 </Table>

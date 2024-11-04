@@ -382,32 +382,36 @@ export default function ListVendorExpense(){
                     (subRow) =>
                       subRow.project_vendor_expense_id === project_vendor_expense_id &&
                       subRow.is_verified === 0 &&
-                      subRow.is_returned === 1 &&
+                      subRow.is_returned === 0 && 
                       event.target.checked
                   );
                   const isAnyVerifiedChecked = row.subRows.some(
                     (subRow) =>
                       subRow.project_vendor_expense_id === project_vendor_expense_id &&
                       subRow.is_verified === 1 &&
+                      subRow.is_returned === 0 &&
                       event.target.checked
                   );
                   const isAnyReturnedChecked = row.subRows.some(
                     (subRow) =>
                       subRow.project_vendor_expense_id === project_vendor_expense_id &&
                       subRow.is_returned === 1 &&
+                      subRow.is_verified === 0 &&
                       event.target.checked
                   );
               
                   return {
                     ...row,
                     subRows: row.subRows.map((subRow) => {
-                      if (isAnyUnverifiedChecked && subRow.is_verified === 1 && subRow.selected) {
+                      if (isAnyUnverifiedChecked && (subRow.is_verified === 1 || subRow.is_returned ===1) && subRow.selected) {
                         return { ...subRow, selected: false };
-                      } else if (isAnyVerifiedChecked && subRow.is_verified === 0 && subRow.selected) {
+                      } 
+                      else if (isAnyVerifiedChecked && subRow.is_verified === 0 && subRow.selected) {
                         return { ...subRow, selected: false };
-                      } else if (isAnyReturnedChecked && subRow.is_returned === 0 && subRow.selected) {
+                      } 
+                      else if (isAnyReturnedChecked && subRow.is_returned === 0 && subRow.selected) {
                         return { ...subRow, selected: false };
-                      }
+                      } 
               
                       if (
                         subRow.project_vendor_expense_id === project_vendor_expense_id &&
@@ -415,18 +419,21 @@ export default function ListVendorExpense(){
                         !isAnyReturnedChecked
                       ) {
                         return { ...subRow, selected: event.target.checked };
-                      } else if (
+                      } 
+                      else if (
                         subRow.project_vendor_expense_id === project_vendor_expense_id &&
                         subRow.is_verified === 1 &&
                         !isAnyReturnedChecked
                       ) {
                         return { ...subRow, selected: event.target.checked };
-                      } else if (
+                      } 
+                      else if (
                         subRow.project_vendor_expense_id === project_vendor_expense_id &&
-                        subRow.is_returned === 1
+                        subRow.is_returned === 1 &&
+                        isAnyReturnedChecked
                       ) {
                         return { ...subRow, selected: event.target.checked };
-                      }
+                      } 
                       return subRow;
                     }),
                   };
@@ -533,7 +540,8 @@ export default function ListVendorExpense(){
                     
                     <>
                     <Tooltip title="Return">
-                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned > 0 ? false : true} color="warning" 
+                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned === 0 ? false :
+                        row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) === 0 && verifications.returned > 0 ? false : true} color="warning" 
                          onClick={()=>setConfirmDialog(
                             {...confirmDialog, return: {open: true, 
                             content: (
@@ -556,7 +564,8 @@ export default function ListVendorExpense(){
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Verify">
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification > 0 ? false : true} 
+                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
+                        row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
                     color="secondary"
                     onClick={()=>setConfirmDialog(
                         {...confirmDialog, verify: {open: true, 
