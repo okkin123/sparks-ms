@@ -459,8 +459,8 @@ list_vendor_expense: (req, res)=>{
 
 
   dbConnection.query(
-      "SELECT invoice_number, project_name, SUM(amount_with_vat) as amount, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, created_by_email ORDER BY date DESC",
-      [req.user.user_email],
+      "SELECT invoice_number, status, COUNT(CASE WHEN status = 'WAITING FOR VERIFICATION' THEN 1 END) as waiting_count, COUNT(CASE WHEN status = 'RETURNED' THEN 1 END) as returned_count, COUNT(CASE WHEN status = 'VERIFIED' THEN 1 END) as verified_count, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE status=? AND created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status ORDER BY invoice_number DESC",
+      [req.body.status, req.user.user_email],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -474,8 +474,8 @@ list_vendor_expense: (req, res)=>{
     
             data.forEach((item, index) => {
               dbConnection.query(
-                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND created_by_email=? ORDER BY status DESC",
-                [item.invoice_number, item.currency, item.created_by_email],
+                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END ORDER BY date",
+                [item.invoice_number, item.currency, item.status, req.user.user_email],
                 function(err1, data1, fields1) {
                   if (err1) {
                     res.send({
@@ -523,7 +523,7 @@ return_vendor_expense: (req, res)=>{
 
   const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
   const id_placeholders = values.map(() => '?').join(',');
-
+  console.log(id_details)
   dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0 WHERE project_vendor_expense_id IN (${id_placeholders})`,
     id_details, 
     function(err, data, fields){
