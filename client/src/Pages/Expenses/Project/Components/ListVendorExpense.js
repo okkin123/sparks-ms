@@ -116,6 +116,21 @@ const columns=[
         accessorKey: 'currency',
         header: 'CURRENCY'
     },
+    {
+      accessorKey: 'reporting_to_email',
+      header: 'ASSIGNED TO',
+      width: 'fit-content',
+      Cell: ({ renderedCellValue, row }) => {
+        const emails = JSON.parse(renderedCellValue).email_address;
+        return (
+          <div>
+            {emails.map((email, index) => (
+              <Chip key={index} size="small" variant='outlined' label={email === null ? row.original.created_by : email} color={index % 2 === 0  ? 'secondary' : 'warning'} />
+            ))}
+          </div>
+        );
+      }
+  },
     
 ];
 
@@ -160,6 +175,7 @@ export default function ListVendorExpense(){
                     // description: element.description,
                     created_by: element.created_by_email,
                     reporting_to: element.reporting_to,
+                    reporting_to_email: element.reporting_to_email,
                     // date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
                     // date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
                     // vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
@@ -170,6 +186,7 @@ export default function ListVendorExpense(){
                     // amount_with_vat: element.amount_with_vat,
                     amount: element.amount,
                     currency: element.currency,
+                    vat_percentage: element.vat_percentage,
                     subRows: element.details,
                     user_email: result.data.user_email,
                     user_id: result.data.user_id
@@ -220,12 +237,15 @@ export default function ListVendorExpense(){
         }));
 
         if(selectedRows[0].subRows.length > 0){
+           console.log(selectedRows[0])
             navigate('/', {
                 state: {
                     vendor_expense_edit: true,
                     initialValues: {
                         ref_invoice_number: ref_invoice_number,
                         project_name: selectedRows[0].project_name,
+                        currency: selectedRows[0].currency,
+                        vat_percentage: selectedRows[0].vat_percentage,
                         expenses: selectedRows[0].subRows
                     }
                 }
