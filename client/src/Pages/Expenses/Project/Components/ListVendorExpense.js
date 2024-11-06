@@ -20,26 +20,7 @@ const columns=[
     {
         accessorKey: 'ref_invoice_number',
         header: 'INVOICE NO.',
-        width: 'fit-content',
-        Cell: ({ renderedCellValue, row}) => (
-          <Stack direction="row" spacing={1}>
-          <span>{renderedCellValue}</span>
-          <Stack direction="row" spacing={3}>
-          {row.original.waiting_count > 0 && <Badge
-            color="error"
-            badgeContent={row.original.waiting_count}
-          />}
-          {row.original.returned_count > 0 && <Badge
-            color="error"
-            badgeContent={row.original.returned_count}
-          />}
-          {row.original.verified_count > 0 && <Badge
-            color="error"
-            badgeContent={row.original.verified_count}
-          />}
-          </Stack>
-        </Stack>
-          )
+        width: 'fit-content'
     },
     {
         accessorKey: 'project_name',
@@ -203,7 +184,7 @@ export default function ListVendorExpense(){
     }) 
     const [verifications, setVerifications] = useState({
         ref_invoice_number: "",
-        created_by: "",
+        status: "",
         waiting_for_verification: 0,
         verified: 0,
         returned: 0
@@ -212,6 +193,11 @@ export default function ListVendorExpense(){
       waiting_for_verification: true,
       returned: false,
       verified: false
+    })
+
+    const [countStatus, setCountStatus] = useState({
+      waiting_for_verification: 0,
+      returned: 0
     })
     useEffect(()=>{
       handleListVendorExpenses("WAITING FOR VERIFICATION")
@@ -226,39 +212,49 @@ export default function ListVendorExpense(){
         setSelectedStatus({waiting_for_verification: false, returned: false, verified: true})
       }
       setLoading(true)
-      AxiosInstance.post("/project_expense/list_vendor_expense", {status: status})
+      AxiosInstance.get("/project_expense/list_vendor_expense")
       .then(function(result){
           if(result.data.status === 'SUCCESS'){
               const fetchVendorExpenses = result.data.vendor_expenses
+              .filter((element)=>element.status==="RETURNED" && element.report_to===null ? element.status===status : 
+              element.status==="RETURNED" && element.report_to!==null ? element.created_by_email === result.data.user_email && element.status===status : element.status===status)
               .map((element) => ({
-                  // project_vendor_expense_id: element.project_vendor_expense_id,
-                  // is_vat: !!element.vat_applicable,
                   status: element.status,
-                  waiting_count: element.waiting_count,
-                  returned_count: element.returned_count,
-                  verified_count: element.verified_count,
                   ref_invoice_number: element.invoice_number,
                   project_name: element.project_name,
-                  // vendor_name: element.vendor_name,
-                  // location: element.location,
-                  // description: element.description,
                   created_by: element.created_by_email,
                   reporting_to: element.reporting_to,
                   reporting_to_email: element.reporting_to_email,
-                  // date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
-                  // date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
-                  // vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
-                  // vat_percent: !!element.vat_applicable ? element.vat_percentage+'%' : '',
-                  // vat_percentage: !!element.vat_applicable ? element.vat_percentage : 0,
                   amount_without_vat: element.amount_without_vat,
                   vat_amount: element.vat_amount,
                   amount_with_vat: element.amount_with_vat,
                   currency: element.currency,
                   vat_percentage: element.vat_percentage,
-                  subRows: element.details,
+                  subRows: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status),
+                  waiting_count: element.details.filter((detail)=>detail.status==="WAITING FOR VERIFICATION").length,
+                  returned_count: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status).length,
                   user_email: result.data.user_email,
                   user_id: result.data.user_id,
                 })); 
+     
+                const waitingStatus = result.data.vendor_expenses
+                .filter(element => element.status === "WAITING FOR VERIFICATION")
+                .map(element => ({
+                    count: element.details.filter(detail => detail.status === "WAITING FOR VERIFICATION").length
+                }));
+
+                const returnedStatus = result.data.vendor_expenses
+                .filter(element => element.status === "RETURNED")
+                .map(element => ({
+                    count: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status).length
+                }));
+
+                const waiting_for_verification_count = waitingStatus.reduce((acc, curr) => acc + curr.count, 0);
+                const returned_count = returnedStatus.reduce((acc, curr) => acc + curr.count, 0);
+
+                
+                setCountStatus({waiting_for_verification: waiting_for_verification_count, returned: returned_count})
+
                 setVendorExpenses(fetchVendorExpenses)
                 setLoading(false)
           }else{
@@ -392,7 +388,6 @@ export default function ListVendorExpense(){
             setConfirmDialog({...confirmDialog, verify: {...confirmDialog.verify, open:false}})
             setVerifications({
                 ref_invoice_number: "",
-                created_by: "",
                 waiting_for_verification: 0,
                 verified: 0,
                 returned: 0
@@ -464,7 +459,7 @@ export default function ListVendorExpense(){
     };
     }, []);
 
-    const handleCheckboxChange = (ref_invoice_number, created_by, project_vendor_expense_id, event) => {
+    const handleCheckboxChange = (ref_invoice_number, status, project_vendor_expense_id, event) => {
 
         setVendorExpenses((vendorExpenses) => {
             const updatedVendorExpenses = vendorExpenses.map((row) => {
@@ -563,7 +558,7 @@ export default function ListVendorExpense(){
             }, 0);
       
           
-          setVerifications({ref_invoice_number: ref_invoice_number, created_by: created_by, waiting_for_verification: countWaitingForVerifications, returned: countReturned, verified: countVerified});
+          setVerifications({ref_invoice_number: ref_invoice_number, status: status, waiting_for_verification: countWaitingForVerifications, returned: countReturned, verified: countVerified});
       
           return updatedVendorExpenses;
         });
@@ -599,14 +594,14 @@ export default function ListVendorExpense(){
             }}
             renderRowActions={({ row }) => (
                 <Stack direction="row">
-                    {row.original.created_by === row.original.user_email && <>
+                    {(row.original.created_by === row.original.user_email && selectedStatus.returned) && <>
                     <Tooltip title="Edit">
-                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.created_by === verifications.created_by && verifications.returned > 0 ? false : true}  color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
+                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && verifications.returned > 0 ? false : true}  color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
                             <EditIcon />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.created_by === verifications.created_by && verifications.returned > 0 ? false : true}  color="error" onClick={()=>setConfirmDialog(
+                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && verifications.returned  > 0 ? false : true}  color="error" onClick={()=>setConfirmDialog(
                         {...confirmDialog, delete: {open: true, 
                         content: (
                             <Stack direction="column" spacing={2}>
@@ -627,12 +622,12 @@ export default function ListVendorExpense(){
                         <DeleteIcon />
                     </IconButton>
                     </Tooltip></> }
-                    {(row.original.reporting_to === null || JSON.parse(row.original.reporting_to).user_id.some((user_id)=>user_id===row.original.user_id)) &&
+                    {((row.original.reporting_to === null || JSON.parse(row.original.reporting_to).user_id.some((user_id)=>user_id===row.original.user_id)) && (selectedStatus.waiting_for_verification || selectedStatus.verified)) &&
                     
                     <>
                     <Tooltip title="Return">
-                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.created_by === verifications.created_by && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned === 0 ? false :
-                        row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) === 0 && verifications.returned > 0 ? false : true} color="warning" 
+                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned === 0 ? false :
+                        row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && (verifications.verified || verifications.waiting_for_verification) === 0 && verifications.returned > 0 ? false : true} color="warning" 
                          onClick={()=>setConfirmDialog(
                             {...confirmDialog, return: {open: true, 
                             content: (
@@ -655,8 +650,8 @@ export default function ListVendorExpense(){
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Verify">
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.created_by === verifications.created_by && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
-                        row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
+                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
+                        row.original.ref_invoice_number===verifications.ref_invoice_number && row.original.status === verifications.status && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
                     color="secondary"
                     onClick={()=>setConfirmDialog(
                         {...confirmDialog, verify: {open: true, 
@@ -756,7 +751,7 @@ export default function ListVendorExpense(){
                                             <Checkbox
                                                 size="small"
                                                 checked={subRow.selected}
-                                                onChange={(event) => handleCheckboxChange(subRow.invoice_number, subRow.created_by_email, subRow.project_vendor_expense_id, event)}
+                                                onChange={(event) => handleCheckboxChange(subRow.invoice_number, subRow.status, subRow.project_vendor_expense_id, event)}
                                             />
                                         )}
                                         <Box
@@ -871,8 +866,16 @@ export default function ListVendorExpense(){
                   onFilterChange={handleFilterChange}
                   />
                   <Stack direction="row" spacing={2}>
+                  <Badge
+                    color="error"
+                    badgeContent={countStatus.waiting_for_verification}>
                   <Chip variant={selectedStatus.waiting_for_verification ? "filled" : "outlined"} label="WAITING FOR VERIFICATION" color="info" onClick={()=>handleListVendorExpenses("WAITING FOR VERIFICATION")} />
+                  </Badge>
+                  <Badge
+                    color="error"
+                    badgeContent={countStatus.returned}>
                   <Chip variant={selectedStatus.returned ? "filled" : "outlined"} label="RETURNED" color="warning" onClick={()=>handleListVendorExpenses("RETURNED")} />
+                  </Badge>
                   <Chip variant={selectedStatus.verified ? "filled" : "outlined"} label="VERIFIED" color="secondary" onClick={()=>handleListVendorExpenses("VERIFIED")} />
                   </Stack>
                </Box>

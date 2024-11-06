@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Box, Chip, IconButton, Typography, Stack, Button} from '@mui/material'
+import {Box, Chip, IconButton, Typography, Stack, Button, Tooltip} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
@@ -273,11 +273,14 @@ export default function ListSupplierExpensePayments(){
                 }}
                 renderRowActions={({ row }) => (
                     row.original.status !== 'VOIDED' ? <Box>
-                        {row.original.filepath &&<IconButton color="secondary" onClick={()=>downloadFile(row.original.filename, row.original.filepath)}>
+                        {row.original.filepath &&
+                        <Tooltip title="Download">
+                        <IconButton color="secondary" onClick={()=>downloadFile(row.original.filename, row.original.filepath)}>
                         <DownloadIcon />
-                        </IconButton>}
+                        </IconButton>
+                        </Tooltip>}
                         {
-                         row.original.canVoid ? <IconButton color="error" onClick={() => setVoidDialog({
+                         row.original.canVoid ?  <Tooltip title="Void"><IconButton color="error" onClick={() => setVoidDialog({
                             open: true,
                             content: (<React.Fragment>
                               <Stack direction="row" gap={1} justifyContent="flex-start" alignItems="flex-start" flexWrap="wrap">
@@ -316,7 +319,7 @@ export default function ListSupplierExpensePayments(){
                               supporting_doc_name: row.original.filename
                         })}>
                         <RemoveCircleIcon />
-                        </IconButton> : null }
+                        </IconButton></Tooltip> : null }
                         
                     </Box> : null
                 )}

@@ -459,8 +459,8 @@ list_vendor_expense: (req, res)=>{
 
 
   dbConnection.query(
-      "SELECT invoice_number, status, COUNT(CASE WHEN status = 'WAITING FOR VERIFICATION' THEN 1 END) as waiting_count, COUNT(CASE WHEN status = 'RETURNED' THEN 1 END) as returned_count, COUNT(CASE WHEN status = 'VERIFIED' THEN 1 END) as verified_count, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE status=? AND created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status ORDER BY invoice_number DESC",
-      [req.body.status, req.user.user_email],
+      "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status ORDER BY invoice_number DESC",
+      [req.user.user_email],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -469,6 +469,8 @@ list_vendor_expense: (req, res)=>{
           });
         } else {
           if(data.length > 0){
+
+            
 
             let completedQueries = 0;
     
