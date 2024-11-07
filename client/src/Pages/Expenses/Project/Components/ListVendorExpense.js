@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox, Tooltip, Badge} from '@mui/material'
+import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox, Tooltip, Badge, Table, TableHead, TableContainer, TableCell, TableRow, TableBody} from '@mui/material'
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../../../AxiosInstance';
 import {
@@ -208,7 +208,7 @@ export default function ListVendorExpense(){
         setSelectedStatus({waiting_for_verification: true, returned: false, verified: false})
       }else if(status==="RETURNED"){
         setSelectedStatus({waiting_for_verification: false, returned: true, verified: false})
-      }else{
+      }else if(status==="VERIFIED"){
         setSelectedStatus({waiting_for_verification: false, returned: false, verified: true})
       }
       setLoading(true)
@@ -216,8 +216,9 @@ export default function ListVendorExpense(){
       .then(function(result){
           if(result.data.status === 'SUCCESS'){
               const fetchVendorExpenses = result.data.vendor_expenses
-              .filter((element)=>element.status==="RETURNED" && element.report_to===null ? element.status===status : 
-              element.status==="RETURNED" && element.report_to!==null ? element.created_by_email === result.data.user_email && element.status===status : element.status===status)
+              // .filter((element)=>element.status==="RETURNED" && element.reporting_to===null ? element.status===status : 
+              // element.status==="RETURNED" && element.reporting_to!==null ? element.created_by_email === result.data.user_email && element.status===status : element.status===status)
+              .filter((element)=>element.status === status)
               .map((element) => ({
                   status: element.status,
                   ref_invoice_number: element.invoice_number,
@@ -230,23 +231,33 @@ export default function ListVendorExpense(){
                   amount_with_vat: element.amount_with_vat,
                   currency: element.currency,
                   vat_percentage: element.vat_percentage,
-                  subRows: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status),
-                  waiting_count: element.details.filter((detail)=>detail.status==="WAITING FOR VERIFICATION").length,
-                  returned_count: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status).length,
+                  // subRows: element.details.filter((detail) => {
+                  //     if (detail.status === "RETURNED") {
+                  //         return detail.created_by_email === element.created_by_email;
+                  //     } else if (detail.status !== "RETURNED" && detail.reporting_to !== null) {
+                  //         return detail.created_by_email === element.created_by_email;
+                  //     }
+                  //     return true; // Return everything for other cases
+                  // }),
+                  subRows: element.details.filter((detail)=>{
+                    if(detail.reporting_to !== null){
+                      return detail.created_by_email===result.data.user_email
+                    }
+                    return true;
+                  }),
                   user_email: result.data.user_email,
                   user_id: result.data.user_id,
                 })); 
-     
                 const waitingStatus = result.data.vendor_expenses
                 .filter(element => element.status === "WAITING FOR VERIFICATION")
                 .map(element => ({
-                    count: element.details.filter(detail => detail.status === "WAITING FOR VERIFICATION").length
+                    count: element.details.filter(detail => detail.created_by_email===result.data.user_email).length
                 }));
 
                 const returnedStatus = result.data.vendor_expenses
                 .filter(element => element.status === "RETURNED")
                 .map(element => ({
-                    count: element.details.filter((detail)=>detail.status==="RETURNED" ? detail.created_by_email===result.data.user_email:detail.status===status).length
+                    count: element.details.filter((detail)=>detail.created_by_email===result.data.user_email).length
                 }));
 
                 const waiting_for_verification_count = waitingStatus.reduce((acc, curr) => acc + curr.count, 0);
@@ -333,18 +344,16 @@ export default function ListVendorExpense(){
       }));
 
       if(selectedRows[0].subRows.length > 0){
-          setLoading(true)
           AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRows[0].subRows})
           .then(function(response){
               if(response.data.status === 'SUCCESS'){
                  
                   alert(response.data.message)
-                  setRefresh(!refresh)
+                  handleListVendorExpenses("RETURNED")
               }else{
                   console.log(response.data.message)
               }
              
-              setLoading(false)
               setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open:false}})
               setVerifications({
                 ref_invoice_number: "",
@@ -374,17 +383,15 @@ export default function ListVendorExpense(){
             .filter((subRow) => subRow.selected === true)
         }));
 
-        setLoading(true)
         AxiosInstance.post("/project_expense/verify_vendor_expense", {values : selectedRows[0].subRows})
         .then(function(response){
             if(response.data.status === 'SUCCESS'){
                  
                 alert(response.data.message)
-                setRefresh(!refresh)
+                handleListVendorExpenses("VERIFIED")
             }else{
                 console.log(response.data.message)
             }
-            setLoading(false)
             setConfirmDialog({...confirmDialog, verify: {...confirmDialog.verify, open:false}})
             setVerifications({
                 ref_invoice_number: "",
@@ -407,7 +414,6 @@ export default function ListVendorExpense(){
             .filter((subRow) => subRow.selected === true)
         }));
 
-        setLoading(true)
         AxiosInstance.post("/project_expense/return_vendor_expense", {values : selectedRows[0].subRows})
         .then(function(response){
             if(response.data.status === 'SUCCESS'){
@@ -417,7 +423,6 @@ export default function ListVendorExpense(){
             }else{
                 console.log(response.data.message)
             }
-            setLoading(false)
             setConfirmDialog({...confirmDialog, return: {...confirmDialog.return, open:false}})
             setVerifications({
                 ref_invoice_number: "",
@@ -717,97 +722,84 @@ export default function ListVendorExpense(){
                 const subRows = row.original.subRows.filter(subRow => subRow.invoice_number === row.original.ref_invoice_number);
             
                 return (
-                    <Stack direction="column">
-                        <Paper square sx={{ padding: 1 }}>
-                            <Stack direction="row" alignItems="center" spacing={2}>
-                            <Typography variant="body2"><b>SELECT </b></Typography>
-                                <Box
-                                    sx={{
-                                        display: 'grid',
-                                        margin: 'auto',
-                                        gridTemplateColumns: 'repeat(8, 1fr)',
-                                        width: '100%',
-                                        whiteSpace: 'nowrap',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <Typography variant="body2"><b>CREATED BY </b></Typography>
-                                    <Typography variant="body2"><b>DATE</b></Typography>
-                                    <Typography variant="body2"><b>VENDOR NAME </b></Typography>
-                                    <Typography variant="body2"><b>LOCATION </b></Typography>
-                                    <Typography variant="body2"><b>DESCRIPTION </b></Typography>
-                                    <Typography variant="body2"><b>AMOUNT w/o VAT </b></Typography>
-                                    <Typography variant="body2"><b>VAT AMOUNT </b></Typography>
-                                    <Typography variant="body2"><b>AMOUNT w/ VAT: </b></Typography>
-                                </Box>
-                            </Stack>
-                        </Paper>
-            
-                        {subRows.map((subRow, index) => (
-                            <Stack key={index} direction="column">
-                                <Paper square sx={{ padding: 1 }}>
-                                    <Stack direction="row" alignItems="center" spacing={2}>
-                                        {(subRow.is_verified === 0 || subRow.is_returned === 0) && (
-                                            <Checkbox
-                                                size="small"
-                                                checked={subRow.selected}
-                                                onChange={(event) => handleCheckboxChange(subRow.invoice_number, subRow.status, subRow.project_vendor_expense_id, event)}
-                                            />
-                                        )}
-                                        <Box
-                                            sx={{
-                                                display: 'grid',
-                                                margin: 'auto',
-                                                gridTemplateColumns: 'repeat(8, 1fr)',
-                                                width: '100%',
-                                                whiteSpace: 'nowrap',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Chip
-                                                size="small"
-                                                variant="outlined"
-                                                color={subRow.is_verified === 1 ? "secondary" : subRow.is_returned === 1 ? "warning" : "info"}
-                                                label={subRow.created_by_email}
-                                                sx={{ mr: 2 }}
-                                            />
-                                            <Typography variant="body2">{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</Typography>
-                                            <Typography variant="body2">{subRow.vendor_name}</Typography>
-                                            <Typography variant="body2">{subRow.location}</Typography>
-                                            <Typography variant="body2">{subRow.description}</Typography>
-                                            <Typography variant="body2">
-                                                <NumericFormat
-                                                    value={subRow.amount_without_vat}
-                                                    displayType={'text'}
-                                                    thousandSeparator={true}
-                                                    decimalScale={2}
-                                                    fixedDecimalScale={true}
-                                                />
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                <NumericFormat
-                                                    value={subRow.vat_amount}
-                                                    displayType={'text'}
-                                                    thousandSeparator={true}
-                                                    decimalScale={2}
-                                                    fixedDecimalScale={true}
-                                                />
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                <NumericFormat
-                                                    value={subRow.amount_with_vat}
-                                                    displayType={'text'}
-                                                    thousandSeparator={true}
-                                                    decimalScale={2}
-                                                    fixedDecimalScale={true}
-                                                />
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                </Paper>
-                            </Stack>
-                        ))}
-                    </Stack>
+                  <Paper square sx={{ padding: 1 }}>
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableCell>SELECT</TableCell>
+                            <TableCell>CREATED BY</TableCell>
+                            <TableCell>DATE</TableCell>
+                            <TableCell>VENDOR NAME</TableCell>
+                            <TableCell>LOCATION</TableCell>
+                            <TableCell>DESCRIPTION</TableCell>
+                            <TableCell>AMOUNT w/o VAT</TableCell>
+                            <TableCell>VAT AMOUNT</TableCell>
+                            <TableCell>AMOUNT w/ VAT</TableCell>
+                            {row.original.status==="VERIFIED" ? <TableCell>VERIFIED BY</TableCell> : row.original.status==="RETURNED" ? <TableCell>RETURNED BY</TableCell>:null}
+                          </TableHead>
+                          <TableBody>
+                          {subRows.map((subRow, index) => (
+                              <TableRow>
+                              <TableCell>{(subRow.is_verified === 0 || subRow.is_returned === 0) && (
+                                      <Checkbox
+                                          size="small"
+                                          checked={subRow.selected}
+                                          onChange={(event) => handleCheckboxChange(subRow.invoice_number, subRow.status, subRow.project_vendor_expense_id, event)}
+                                      />
+                                  )}</TableCell>
+                                   <TableCell><Chip
+                                        size="small"
+                                        label={subRow.created_by_email}
+                                    /></TableCell>
+                                      <TableCell>{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</TableCell>
+                                      <TableCell>{subRow.vendor_name}</TableCell>
+                                      <TableCell>{subRow.location}</TableCell>
+                                      <TableCell>{subRow.description}</TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.amount_without_vat}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.vat_amount}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.amount_with_vat}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                    {subRow.is_verified===1 ? 
+                                    <TableCell><Chip
+                                      size="small"
+                                      color="secondary"
+                                      label={subRow.returned_or_verified_by}
+                                    /></TableCell>
+                                    : subRow.is_returned===1 ? 
+                                    <TableCell><Chip
+                                      size="small"
+                                      color="warning"
+                                      label={subRow.returned_or_verified_by}
+                                    /></TableCell>
+                                    :null}
+                                    </TableRow> ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                  </Paper>
                 );
             }}            
                 

@@ -457,10 +457,10 @@ delete_vendor_expense: (req, res)=>{
 },
 list_vendor_expense: (req, res)=>{
 
-
   dbConnection.query(
-      "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status ORDER BY invoice_number DESC",
-      [req.user.user_email],
+      //"SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status, created_by_email ORDER BY invoice_number DESC",
+      "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses GROUP BY invoice_number, currency, status ORDER BY invoice_number DESC",
+      //[req.user.user_email],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -475,9 +475,12 @@ list_vendor_expense: (req, res)=>{
             let completedQueries = 0;
     
             data.forEach((item, index) => {
+             
+
               dbConnection.query(
-                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END ORDER BY date",
-                [item.invoice_number, item.currency, item.status, req.user.user_email],
+                //"SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email = CASE WHEN reporting_to IS NOT NULL THEN ? ELSE created_by_email END ORDER BY date",
+                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? ORDER BY date",
+                [item.invoice_number, item.currency, item.status],
                 function(err1, data1, fields1) {
                   if (err1) {
                     res.send({
@@ -549,8 +552,8 @@ verify_vendor_expense: (req, res)=>{
   const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
   const id_placeholders = values.map(() => '?').join(',');
 
-  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=0, is_verified=1 WHERE project_vendor_expense_id IN (${id_placeholders})`,
-    id_details, 
+  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=0, is_verified=1, returned_or_verified_by=? WHERE project_vendor_expense_id IN (${id_placeholders})`,
+    [req.user.user_id, ...id_details], 
     function(err, data, fields){
       if(err){
         res.send({
