@@ -245,7 +245,7 @@ export default function NewVendorExpense(props){
 
     const formik_vendor_expense = useFormik({
         initialValues: props.mode === 'EDIT' ? props.initialValues : {
-            ref_invoice_number: "",
+            invoice_number: "",
             project_name: "",
             currency: "",
             vat_percentage: 0,
@@ -380,7 +380,7 @@ export default function NewVendorExpense(props){
 
 
        function handleClearValues(){
-        formik_vendor_expense.setFieldValue("ref_invoice_number", "")
+        formik_vendor_expense.setFieldValue("invoice_number", "")
         formik_vendor_expense.setFieldValue("project_name", "")
         formik_vendor_expense.setFieldValue('expenses',[{
                 is_vat: false,
@@ -727,20 +727,20 @@ export default function NewVendorExpense(props){
                         projectName: option.project_name
                     }))}
                     value={
-                        formik_vendor_expense.values.ref_invoice_number
+                        formik_vendor_expense.values.invoice_number
                         ? {
-                            label: `${formik_vendor_expense.values.ref_invoice_number} - ${formik_vendor_expense.values.project_name}`,
-                            value: formik_vendor_expense.values.ref_invoice_number,
+                            label: `${formik_vendor_expense.values.invoice_number} - ${formik_vendor_expense.values.project_name}`,
+                            value: formik_vendor_expense.values.invoice_number,
                             projectName: formik_vendor_expense.values.project_name
                         }
                         : null
                     }
                     onChange={(event, newValue) => {
                         if (newValue) {
-                            formik_vendor_expense.setFieldValue('ref_invoice_number', newValue.value)
+                            formik_vendor_expense.setFieldValue('invoice_number', newValue.value)
                             formik_vendor_expense.setFieldValue('project_name', newValue.projectName)
                         } else {
-                            formik_vendor_expense.setFieldValue('ref_invoice_number', '')
+                            formik_vendor_expense.setFieldValue('invoice_number', '')
                             formik_vendor_expense.setFieldValue('project_name', '')
                         }
                     }}
