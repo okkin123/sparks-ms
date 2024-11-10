@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox, Tooltip} from '@mui/material'
+import {Typography, Chip, Stack, Box, Button, Paper, IconButton, Checkbox, Tooltip, Badge, Table, TableHead, TableContainer, TableCell, TableRow, TableBody} from '@mui/material'
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../../../AxiosInstance';
 import {
@@ -18,7 +18,7 @@ import Dialog from '../../../../Components/Dialog'
 
 const columns=[
     {
-        accessorKey: 'ref_invoice_number',
+        accessorKey: 'invoice_number',
         header: 'INVOICE NO.',
         width: 'fit-content'
     },
@@ -46,14 +46,32 @@ const columns=[
         accessorKey: 'created_by',
         header: 'CREATED BY',
         width: 'fit-content',
-        Cell: ({ renderedCellValue }) => (
-        <Chip 
-            variant='outlined'
-            label={renderedCellValue} 
-            size="small"
-            color="info" 
-        />
-        )
+        Cell: ({ renderedCellValue, row }) => {
+          const { status, user_reporting_to, user_email, created_by } = row.original;
+        
+          if (user_reporting_to === null && status==="VERIFIED") return null;
+        
+          const variant = status === "VERIFIED" || status === "RETURNED" 
+            ? "filled" 
+            : status === "WAITING FOR VERIFICATION" && user_email === created_by 
+            ? "filled" 
+            : "outlined";
+        
+          const color = status === "VERIFIED" 
+            ? "secondary" 
+            : status === "RETURNED" 
+            ? "warning" 
+            : "info";
+        
+          return (
+            <Chip 
+              label={renderedCellValue} 
+              size="small"
+              variant={variant}
+              color={color}
+            />
+          );
+        }
     },
     // {
     //     accessorKey: 'date_paid',
@@ -100,8 +118,37 @@ const columns=[
     //     )
     // },
     {
-        accessorKey: 'amount',
-        header: 'AMOUNT',
+      accessorKey: 'amount_without_vat',
+      header: 'AMOUNT w/o VAT',
+      width: 'fit-content',
+      Cell: ({ renderedCellValue }) => (
+          <NumericFormat
+          value={renderedCellValue}
+          displayType={'text'}
+          thousandSeparator={true}
+          decimalScale={2}
+          fixedDecimalScale={true}
+        />
+      )
+  },
+  {
+    accessorKey: 'vat_amount',
+    header: 'VAT AMOUNT',
+    width: 'fit-content',
+    Cell: ({ renderedCellValue }) => (
+        <NumericFormat
+        value={renderedCellValue}
+        displayType={'text'}
+        thousandSeparator={true}
+        decimalScale={2}
+        fixedDecimalScale={true}
+      />
+    )
+},
+    {
+        accessorKey: 'amount_with_vat',
+        header: 'AMOUNT w/ VAT',
+        width: 'fit-content',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
             value={renderedCellValue}
@@ -114,18 +161,19 @@ const columns=[
     },
     {
         accessorKey: 'currency',
-        header: 'CURRENCY'
+        header: 'CURRENCY',
+        width: 'fit-content',
     },
     {
       accessorKey: 'reporting_to_email',
-      header: 'ASSIGNED TO',
+      header: 'VERIFIER',
       width: 'fit-content',
       Cell: ({ renderedCellValue, row }) => {
         const emails = JSON.parse(renderedCellValue).email_address;
         return (
           <div>
             {emails.map((email, index) => (
-              <Chip key={index} size="small" variant='outlined' label={email === null ? row.original.created_by : email} color={index % 2 === 0  ? 'secondary' : 'warning'} />
+              <Chip key={index} size="small" label={email === null ? row.original.created_by : email} />
             ))}
           </div>
         );
@@ -154,53 +202,110 @@ export default function ListVendorExpense(){
         }
     }) 
     const [verifications, setVerifications] = useState({
-        ref_invoice_number: "",
+        invoice_number: "",
+        created_by: "",
+        status: "",
         waiting_for_verification: 0,
         verified: 0,
         returned: 0
     });
+    const [selectedStatus, setSelectedStatus] = useState({
+      waiting_for_verification: true,
+      returned: false,
+      verified: false
+    })
+
+    const [countStatus, setCountStatus] = useState({
+      waiting_for_verification: 0,
+      returned: 0
+    })
     useEffect(()=>{
-        setLoading(true)
-        AxiosInstance.get("/project_expense/list_vendor_expense")
-        .then(function(result){
-            if(result.data.status === 'SUCCESS'){
-                const fetchVendorExpenses = result.data.vendor_expenses
-                .map((element) => ({
-                    // project_vendor_expense_id: element.project_vendor_expense_id,
-                    // is_vat: !!element.vat_applicable,
-                    ref_invoice_number: element.invoice_number,
-                    project_name: element.project_name,
-                    // vendor_name: element.vendor_name,
-                    // location: element.location,
-                    // description: element.description,
-                    created_by: element.created_by_email,
-                    reporting_to: element.reporting_to,
-                    reporting_to_email: element.reporting_to_email,
-                    // date_paid: dayjs(new Date(element.date)).format('DD-MMM-YYYY'),
-                    // date: dayjs(new Date(element.date)).format('YYYY-MM-DD'),
-                    // vat_applicable: !!element.vat_applicable ? 'Yes' : 'No',
-                    // vat_percent: !!element.vat_applicable ? element.vat_percentage+'%' : '',
-                    // vat_percentage: !!element.vat_applicable ? element.vat_percentage : 0,
-                    // amount_without_vat: element.amount_without_vat,
-                    // vat_amount: !!element.vat_applicable ? element.vat_amount: 0.00,
-                    // amount_with_vat: element.amount_with_vat,
-                    amount: element.amount,
-                    currency: element.currency,
-                    vat_percentage: element.vat_percentage,
-                    subRows: element.details,
-                    user_email: result.data.user_email,
-                    user_id: result.data.user_id
-                  })); 
-                  setVendorExpenses(fetchVendorExpenses)
-                  setLoading(false)
-            }else{
-                console.log(result.data.message)
-            }
-        })
-        .catch(function(error){
-            console.log(error)
-        })
+      handleListVendorExpenses("WAITING FOR VERIFICATION")
     },[refresh])
+
+    const handleListVendorExpenses = (status)=>{
+      if(status === "WAITING FOR VERIFICATION"){
+        setSelectedStatus({waiting_for_verification: true, returned: false, verified: false})
+      }else if(status==="RETURNED"){
+        setSelectedStatus({waiting_for_verification: false, returned: true, verified: false})
+      }else if(status==="VERIFIED"){
+        setSelectedStatus({waiting_for_verification: false, returned: false, verified: true})
+      }
+      setLoading(true)
+      AxiosInstance.get("/project_expense/list_vendor_expense")
+      .then(function(result){
+          if(result.data.status === 'SUCCESS'){
+              const fetchVendorExpenses = result.data.vendor_expenses
+              .filter((element)=>(element.status==="RETURNED" || (element.status==="WAITING FOR VERIFICATION" && result.data.reporting_to!==null) || (element.status==="VERIFIED" && result.data.reporting_to!==null)) ? element.created_by_email === result.data.user_email && element.status === status
+              : element.status==="WAITING FOR VERIFICATION" && element.reporting_to !== null && result.data.reporting_to===null ? JSON.parse(element.reporting_to).user_id.filter((user_id)=>user_id===result.data.user_id) && element.status===status
+              : element.status === status)
+              .map((element) => ({
+                  status: element.status,
+                  invoice_number: element.invoice_number,
+                  project_name: element.project_name,
+                  created_by: element.created_by_email,
+                  reporting_to: element.reporting_to,
+                  reporting_to_email: element.reporting_to_email,
+                  amount_without_vat: element.amount_without_vat,
+                  vat_amount: element.vat_amount,
+                  amount_with_vat: element.amount_with_vat,
+                  currency: element.currency,
+                  vat_percentage: element.vat_percentage,
+                  subRows: element.details,
+                  user_reporting_to: result.data.reporting_to,
+                  user_email: result.data.user_email,
+                  user_id: result.data.user_id,
+                })); 
+
+
+                // Merging logic
+                const verifiedVendorExpenses = Object.values(fetchVendorExpenses.reduce((acc, curr) => {
+                  const key = curr.invoice_number; // Use invoice number as key
+                  if (!acc[key]) {
+                    acc[key] = { ...curr }; // Initialize if not exists
+                  } else {
+                    // If exists, sum the amounts
+                    acc[key].amount_without_vat += curr.amount_without_vat;
+                    acc[key].vat_amount += curr.vat_amount;
+                    acc[key].amount_with_vat += curr.amount_with_vat;
+                    acc[key].subRows = acc[key].subRows.concat(curr.subRows);
+                    // You can also merge other fields if necessary
+                  }
+                  return acc;
+                }, {}));
+                const waitingStatus = result.data.vendor_expenses
+                .filter(element => element.status === "WAITING FOR VERIFICATION")
+                .map(element => ({
+                    count: element.details.filter(detail => detail.created_by_email===result.data.user_email).length
+                }));
+
+                const returnedStatus = result.data.vendor_expenses
+                .filter(element => element.status === "RETURNED")
+                .map(element => ({
+                    count: element.details.filter((detail)=>detail.created_by_email===result.data.user_email).length
+                }));
+
+                const waiting_for_verification_count = waitingStatus.reduce((acc, curr) => acc + curr.count, 0);
+                const returned_count = returnedStatus.reduce((acc, curr) => acc + curr.count, 0);
+
+                
+                setCountStatus({waiting_for_verification: waiting_for_verification_count, returned: returned_count})
+                
+                if(result.data.reporting_to === null && status==="VERIFIED"){
+                  setVendorExpenses(verifiedVendorExpenses)
+                }else{
+                  setVendorExpenses(fetchVendorExpenses)
+                }
+                
+                setLoading(false)
+          }else{
+              console.log(result.data.message)
+          }
+      })
+      .catch(function(error){
+          console.log(error)
+      })
+    }
 
     const [columnFilters, setColumnFilters] = useState({});
 
@@ -218,13 +323,12 @@ export default function ListVendorExpense(){
     );
 
 
-    const total_amount = filteredData.reduce((sum, row) => sum + (row.amount || 0), 0);
-    
+   
 
-    const handleEditVendorExpense = (ref_invoice_number, currency) => {
+    const handleEditVendorExpense = (invoice_number, currency) => {
 
         const selectedRows = vendorExpenses
-        .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+        .filter((row) => row.invoice_number === invoice_number && row.currency === currency)
         .map((row) => ({
           ...row,
           subRows: row.subRows
@@ -242,7 +346,7 @@ export default function ListVendorExpense(){
                 state: {
                     vendor_expense_edit: true,
                     initialValues: {
-                        ref_invoice_number: ref_invoice_number,
+                        invoice_number: invoice_number,
                         project_name: selectedRows[0].project_name,
                         currency: selectedRows[0].currency,
                         vat_percentage: selectedRows[0].vat_percentage,
@@ -260,9 +364,9 @@ export default function ListVendorExpense(){
         
     };
 
-    const handleDeleteSelectedRows = (ref_invoice_number, currency) => {
+    const handleDeleteSelectedRows = (invoice_number, created_by, currency) => {
       const selectedRows = vendorExpenses
-      .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+      .filter((row) => row.invoice_number === invoice_number && row.created_by === created_by && row.currency === currency)
       .map((row) => ({
         ...row,
         subRows: row.subRows
@@ -270,21 +374,20 @@ export default function ListVendorExpense(){
       }));
 
       if(selectedRows[0].subRows.length > 0){
-          setLoading(true)
           AxiosInstance.post("/project_expense/delete_vendor_expense", {values : selectedRows[0].subRows})
           .then(function(response){
               if(response.data.status === 'SUCCESS'){
                  
                   alert(response.data.message)
-                  setRefresh(!refresh)
+                  handleListVendorExpenses("RETURNED")
               }else{
                   console.log(response.data.message)
               }
              
-              setLoading(false)
               setConfirmDialog({...confirmDialog, delete: {...confirmDialog.delete, open:false}})
               setVerifications({
-                ref_invoice_number: "",
+                invoice_number: "",
+                created_by: "",
                 waiting_for_verification: 0,
                 verified: 0,
                 returned: 0
@@ -301,29 +404,27 @@ export default function ListVendorExpense(){
     };
 
         
-    const handleVerifySelectedRows = (ref_invoice_number, currency) => {
+    const handleVerifySelectedRows = (invoice_number,created_by, currency) => {
         const selectedRows = vendorExpenses
-        .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+        .filter((row) => row.invoice_number === invoice_number && row.created_by === created_by && row.currency === currency)
         .map((row) => ({
           ...row,
           subRows: row.subRows
             .filter((subRow) => subRow.selected === true)
         }));
 
-        setLoading(true)
         AxiosInstance.post("/project_expense/verify_vendor_expense", {values : selectedRows[0].subRows})
         .then(function(response){
             if(response.data.status === 'SUCCESS'){
                  
                 alert(response.data.message)
-                setRefresh(!refresh)
+                handleListVendorExpenses("VERIFIED")
             }else{
                 console.log(response.data.message)
             }
-            setLoading(false)
             setConfirmDialog({...confirmDialog, verify: {...confirmDialog.verify, open:false}})
             setVerifications({
-                ref_invoice_number: "",
+                invoice_number: "",
                 waiting_for_verification: 0,
                 verified: 0,
                 returned: 0
@@ -334,16 +435,15 @@ export default function ListVendorExpense(){
         })
     }
 
-    const handleReturnSelectedRows = (ref_invoice_number, currency) => {
+    const handleReturnSelectedRows = (invoice_number, created_by, currency) => {
         const selectedRows = vendorExpenses
-        .filter((row) => row.ref_invoice_number === ref_invoice_number && row.currency === currency)
+        .filter((row) => row.invoice_number === invoice_number && row.created_by === created_by && row.currency === currency)
         .map((row) => ({
           ...row,
           subRows: row.subRows
             .filter((subRow) => subRow.selected === true)
         }));
 
-        setLoading(true)
         AxiosInstance.post("/project_expense/return_vendor_expense", {values : selectedRows[0].subRows})
         .then(function(response){
             if(response.data.status === 'SUCCESS'){
@@ -353,10 +453,10 @@ export default function ListVendorExpense(){
             }else{
                 console.log(response.data.message)
             }
-            setLoading(false)
             setConfirmDialog({...confirmDialog, return: {...confirmDialog.return, open:false}})
             setVerifications({
-                ref_invoice_number: "",
+                invoice_number: "",
+                created_by: "",
                 waiting_for_verification: 0,
                 verified: 0,
                 returned: 0
@@ -394,10 +494,11 @@ export default function ListVendorExpense(){
     };
     }, []);
 
-    const handleCheckboxChange = (ref_invoice_number, project_vendor_expense_id, event) => {
+    const handleCheckboxChange = (invoice_number, created_by, status, project_vendor_expense_id, event) => {
+
         setVendorExpenses((vendorExpenses) => {
             const updatedVendorExpenses = vendorExpenses.map((row) => {
-                if (row.ref_invoice_number === ref_invoice_number) {
+                if (row.invoice_number === invoice_number) {
                   const isAnyUnverifiedChecked = row.subRows.some(
                     (subRow) =>
                       subRow.project_vendor_expense_id === project_vendor_expense_id &&
@@ -464,26 +565,26 @@ export default function ListVendorExpense(){
       
           // Calculate countVerifications using the updated state
           const countWaitingForVerifications = updatedVendorExpenses
-            .filter((row) => row.ref_invoice_number === ref_invoice_number)
+            .filter((row) => row.invoice_number === invoice_number)
             .reduce((count, row) => {
               return count + row.subRows.filter((subRow) =>
                 subRow.is_verified === 0 &&
-                subRow.selected === true
+                subRow.selected === true 
               ).length;
             }, 0);
 
             const countReturned = updatedVendorExpenses
-            .filter((row) => row.ref_invoice_number === ref_invoice_number)
+            .filter((row) => row.invoice_number === invoice_number)
             .reduce((count, row) => {
               return count + row.subRows.filter((subRow) =>
                 subRow.is_returned === 1 &&
-                subRow.selected === true
+                subRow.selected === true 
               ).length;
             }, 0);
 
 
             const countVerified = updatedVendorExpenses
-            .filter((row) => row.ref_invoice_number === ref_invoice_number)
+            .filter((row) => row.invoice_number === invoice_number)
             .reduce((count, row) => {
               return count + row.subRows.filter((subRow) =>
                 subRow.is_verified === 1 &&
@@ -492,7 +593,7 @@ export default function ListVendorExpense(){
             }, 0);
       
           
-          setVerifications({ref_invoice_number: ref_invoice_number, waiting_for_verification: countWaitingForVerifications, returned: countReturned, verified: countVerified});
+          setVerifications({invoice_number: invoice_number, created_by: created_by, status: status, waiting_for_verification: countWaitingForVerifications, returned: countReturned, verified: countVerified});
       
           return updatedVendorExpenses;
         });
@@ -521,21 +622,21 @@ export default function ListVendorExpense(){
             initialState={{
                 density: 'compact',
                 isLoading: loading,
-                columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions', 'ref_invoice_number', 'project_name']}
+                columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions', 'invoice_number', 'project_name']}
             }}
             state={{
                 isLoading: loading
             }}
             renderRowActions={({ row }) => (
                 <Stack direction="row">
-                    {row.original.created_by === row.original.user_email && <>
+                    {(row.original.created_by === row.original.user_email && selectedStatus.returned) && <>
                     <Tooltip title="Edit">
-                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.returned > 0 ? false : true}  color="success" onClick={()=>handleEditVendorExpense(row.original.ref_invoice_number, row.original.currency)}>
+                        <IconButton disabled={row.original.invoice_number===verifications.invoice_number && row.original.status === verifications.status && verifications.returned > 0 ? false : true}  color="success" onClick={()=>handleEditVendorExpense(row.original.invoice_number, row.original.currency)}>
                             <EditIcon />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.returned > 0 ? false : true}  color="error" onClick={()=>setConfirmDialog(
+                    <IconButton disabled={row.original.invoice_number===verifications.invoice_number && row.original.status === verifications.status && verifications.returned  > 0 ? false : true}  color="error" onClick={()=>setConfirmDialog(
                         {...confirmDialog, delete: {open: true, 
                         content: (
                             <Stack direction="column" spacing={2}>
@@ -546,7 +647,7 @@ export default function ListVendorExpense(){
                                         No
                                     </Button>
                                     <LoadingButton variant="contained" color="secondary" 
-                                        onClick={()=>handleDeleteSelectedRows(confirmDialog.delete.ref_invoice_number, confirmDialog.delete.currency)}
+                                        onClick={()=>handleDeleteSelectedRows(row.original.invoice_number, row.original.created_by, row.original.currency)}
                                         loading={loading}>
                                         Yes
                                     </LoadingButton>
@@ -556,12 +657,12 @@ export default function ListVendorExpense(){
                         <DeleteIcon />
                     </IconButton>
                     </Tooltip></> }
-                    {(row.original.reporting_to === null || JSON.parse(row.original.reporting_to).user_id.some((user_id)=>user_id===row.original.user_id)) &&
+                    {((row.original.reporting_to === null || JSON.parse(row.original.reporting_to).user_id.some((user_id)=>user_id===row.original.user_id)) && (selectedStatus.waiting_for_verification || selectedStatus.verified)) &&
                     
                     <>
                     <Tooltip title="Return">
-                        <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned === 0 ? false :
-                        row.original.ref_invoice_number===verifications.ref_invoice_number && (verifications.verified || verifications.waiting_for_verification) === 0 && verifications.returned > 0 ? false : true} color="warning" 
+                        <IconButton disabled={(row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && (verifications.verified || verifications.waiting_for_verification) > 0 && verifications.returned === 0 ? false :
+                        (row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && (verifications.verified || verifications.waiting_for_verification) === 0 && verifications.returned > 0 ? false : true} color="warning" 
                          onClick={()=>setConfirmDialog(
                             {...confirmDialog, return: {open: true, 
                             content: (
@@ -573,7 +674,7 @@ export default function ListVendorExpense(){
                                             No
                                         </Button>
                                         <LoadingButton variant="contained" color="secondary" 
-                                            onClick={()=>handleReturnSelectedRows(row.original.ref_invoice_number, row.original.currency)}
+                                            onClick={()=>handleReturnSelectedRows(row.original.invoice_number, row.original.created_by, row.original.currency)}
                                             loading={loading}>
                                             Yes
                                         </LoadingButton>
@@ -584,8 +685,8 @@ export default function ListVendorExpense(){
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Verify">
-                    <IconButton disabled={row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
-                        row.original.ref_invoice_number===verifications.ref_invoice_number && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
+                    <IconButton disabled={(row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
+                        (row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
                     color="secondary"
                     onClick={()=>setConfirmDialog(
                         {...confirmDialog, verify: {open: true, 
@@ -598,7 +699,7 @@ export default function ListVendorExpense(){
                                         No
                                     </Button>
                                     <LoadingButton variant="contained" color="secondary" 
-                                        onClick={()=>handleVerifySelectedRows(row.original.ref_invoice_number, row.original.currency)}
+                                        onClick={()=>handleVerifySelectedRows(row.original.invoice_number, row.original.created_by, row.original.currency)}
                                         loading={loading}>
                                         Yes
                                     </LoadingButton>
@@ -633,7 +734,13 @@ export default function ListVendorExpense(){
                         }))
                       )
 
-                    setVerifications({ref_invoice_number: "", count: 0})
+                    setVerifications({
+                      invoice_number: "",
+                      created_by: "",
+                      waiting_for_verification: 0,
+                      verified: 0,
+                      returned: 0
+                    })
                 }, 
                 sx: {
                   transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
@@ -642,65 +749,89 @@ export default function ListVendorExpense(){
               })}
               //conditionally render detail panel
               renderDetailPanel={({ row }) => {
-                const subRows = row.original.subRows.filter((subRow)=>subRow.invoice_number === row.original.ref_invoice_number)
-                return subRows.map((subRow, index)=>(
-                 
-                 <Stack direction="column"
-                  >
-                    <Paper square sx={{padding: 1}}>
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                   
-                    {(subRow.is_verified===0 || subRow.is_returned===0) && 
-                    <Checkbox size="small" checked={subRow.selected} onChange={(event)=>handleCheckboxChange(subRow.invoice_number, subRow.project_vendor_expense_id, event)} />}
-                    <Box  sx={{
-                        display: 'grid',
-                        margin: 'auto',
-                        gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
-                        width: '100%',
-                        whiteSpace:'nowrap',
-                        alignItems: 'center'
-                    }}>
-                    <Chip size="small" color={subRow.is_verified===1 ? "secondary" : subRow.is_returned === 1 ? "warning" : "info"} label={subRow.status} sx={{mr: 2}} />   
-                    <Typography variant="body2"><b>Date: </b>{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</Typography>
-                    <Typography variant="body2"><b>Vendor Name: </b>{subRow.vendor_name}</Typography>
-                    <Typography variant="body2"><b>Location: </b>{subRow.location}</Typography>
-                    <Typography variant="body2"><b>Description: </b>{subRow.description}</Typography>
-                    <Typography variant="body2"><b>Amount w/o Vat: </b> 
-                    &nbsp;<NumericFormat
-                        value={subRow.amount_without_vat}
-                        displayType={'text'}
-                        thousandSeparator={true}
-                        decimalScale={2}
-                        fixedDecimalScale={true}
-                    /></Typography>
-                    <Typography variant="body2"><b>Vat Amount:</b> 
-                    &nbsp;<NumericFormat
-                        value={subRow.vat_amount}
-                        displayType={'text'}
-                        thousandSeparator={true}
-                        decimalScale={2}
-                        fixedDecimalScale={true}
-                    /></Typography>
-                    <Typography variant="body2"><b>Amount w/ Vat:</b> 
-                    &nbsp;<NumericFormat
-                        value={subRow.amount_with_vat}
-                        displayType={'text'}
-                        thousandSeparator={true}
-                        decimalScale={2}
-                        fixedDecimalScale={true}
-                    /></Typography>
-                    </Box>
-                    </Stack>
-                    </Paper>
-                  </Stack>
-                ))
-                   
-                  
-              }}
-                
-               
-                //) : null
+                const subRows = row.original.subRows.filter(subRow => subRow.invoice_number === row.original.invoice_number);
             
+                return (
+                  <Paper square sx={{ padding: 1 }}>
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableCell>SELECT</TableCell>
+                            {row.original.user_reporting_to === null && row.original.status==="VERIFIED" ? <TableCell>CREATED BY</TableCell> : null}
+                            <TableCell>DATE</TableCell>
+                            <TableCell>VENDOR NAME</TableCell>
+                            <TableCell>LOCATION</TableCell>
+                            <TableCell>DESCRIPTION</TableCell>
+                            <TableCell>AMOUNT w/o VAT</TableCell>
+                            <TableCell>VAT AMOUNT</TableCell>
+                            <TableCell>AMOUNT w/ VAT</TableCell>
+                            {row.original.status==="VERIFIED" ? <TableCell>VERIFIED BY</TableCell> : row.original.status==="RETURNED" ? <TableCell>RETURNED BY</TableCell>:null}
+                          </TableHead>
+                          <TableBody>
+                          {subRows.map((subRow, index) => (
+                              <TableRow>
+                              <TableCell>{(subRow.is_verified === 0 || subRow.is_returned === 0) && (
+                                      <Checkbox
+                                          size="small"
+                                          checked={subRow.selected}
+                                          onChange={(event) => handleCheckboxChange(subRow.invoice_number, subRow.created_by_email, subRow.status, subRow.project_vendor_expense_id, event)}
+                                      />
+                                  )}</TableCell>
+                                      {row.original.user_reporting_to === null && subRow.is_verified===1 ?<TableCell><Chip color="secondary" label={subRow.created_by_email} size="small" /></TableCell> : null}
+                                      <TableCell>{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</TableCell>
+                                      <TableCell>{subRow.vendor_name}</TableCell>
+                                      <TableCell>{subRow.location}</TableCell>
+                                      <TableCell>{subRow.description}</TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.amount_without_vat}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.vat_amount}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                      <TableCell>
+                                          <NumericFormat
+                                              value={subRow.amount_with_vat}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          />
+                                      </TableCell>
+                                    {subRow.is_verified===1 ? 
+                                    <TableCell><Chip
+                                      size="small"
+                                      variant="outlined"
+                                      color="secondary"
+                                      label={subRow.returned_or_verified_by}
+                                    /></TableCell>
+                                    : subRow.is_returned===1 ? 
+                                    <TableCell><Chip
+                                      size="small"
+                                      color="warning"
+                                      variant="outlined"
+                                      label={subRow.returned_or_verified_by}
+                                    /></TableCell>
+                                    :null}
+                                    </TableRow> ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                  </Paper>
+                );
+            }}            
+                
             muiTableHeadCellProps={{
                 sx: {
                 backgroundColor: theme.palette.primary.main,
@@ -747,21 +878,27 @@ export default function ListVendorExpense(){
             }}
             renderTopToolbarCustomActions={() => (
                 <Box sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1, display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <VendorExpenseColumnFilter 
-                columns={
-                    columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
-                    || column.accessorKey==='project_name' 
-                    || column.accessorKey==='vendor_name')
-                } 
-                onFilterChange={handleFilterChange}
-                />
-                   <Chip label={<>Total Amount: <NumericFormat
-                    value={total_amount}
-                    displayType={'text'}
-                    thousandSeparator={true}
-                    decimalScale={2}
-                    fixedDecimalScale={true}
-                    /></>} color="secondary" />
+                  <VendorExpenseColumnFilter 
+                  columns={
+                      columns.filter((column)=>column.accessorKey==='invoice_number' 
+                      || column.accessorKey==='project_name' 
+                      || column.accessorKey==='vendor_name')
+                  } 
+                  onFilterChange={handleFilterChange}
+                  />
+                  <Stack direction="row" spacing={2}>
+                  <Badge
+                    color="error"
+                    badgeContent={countStatus.waiting_for_verification}>
+                  <Chip variant={selectedStatus.waiting_for_verification ? "filled" : "outlined"} label="WAITING FOR VERIFICATION" color="info" onClick={()=>handleListVendorExpenses("WAITING FOR VERIFICATION")} />
+                  </Badge>
+                  <Badge
+                    color="error"
+                    badgeContent={countStatus.returned}>
+                  <Chip variant={selectedStatus.returned ? "filled" : "outlined"} label="RETURNED" color="warning" onClick={()=>handleListVendorExpenses("RETURNED")} />
+                  </Badge>
+                  <Chip variant={selectedStatus.verified ? "filled" : "outlined"} label="VERIFIED" color="secondary" onClick={()=>handleListVendorExpenses("VERIFIED")} />
+                  </Stack>
                </Box>
             )}
              />

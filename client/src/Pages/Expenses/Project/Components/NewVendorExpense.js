@@ -245,7 +245,7 @@ export default function NewVendorExpense(props){
 
     const formik_vendor_expense = useFormik({
         initialValues: props.mode === 'EDIT' ? props.initialValues : {
-            ref_invoice_number: "",
+            invoice_number: "",
             project_name: "",
             currency: "",
             vat_percentage: 0,
@@ -380,7 +380,7 @@ export default function NewVendorExpense(props){
 
 
        function handleClearValues(){
-        formik_vendor_expense.setFieldValue("ref_invoice_number", "")
+        formik_vendor_expense.setFieldValue("invoice_number", "")
         formik_vendor_expense.setFieldValue("project_name", "")
         formik_vendor_expense.setFieldValue('expenses',[{
                 is_vat: false,
@@ -713,7 +713,8 @@ export default function NewVendorExpense(props){
                 </Collapse>
             </Grid>
              <Grid item>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                    <Stack direction="row" spacing={2} sx={{flexGrow: 1}}>
                     <Autocomplete
                     freeSolo
                     selectOnFocus 
@@ -726,20 +727,20 @@ export default function NewVendorExpense(props){
                         projectName: option.project_name
                     }))}
                     value={
-                        formik_vendor_expense.values.ref_invoice_number
+                        formik_vendor_expense.values.invoice_number
                         ? {
-                            label: `${formik_vendor_expense.values.ref_invoice_number} - ${formik_vendor_expense.values.project_name}`,
-                            value: formik_vendor_expense.values.ref_invoice_number,
+                            label: `${formik_vendor_expense.values.invoice_number} - ${formik_vendor_expense.values.project_name}`,
+                            value: formik_vendor_expense.values.invoice_number,
                             projectName: formik_vendor_expense.values.project_name
                         }
                         : null
                     }
                     onChange={(event, newValue) => {
                         if (newValue) {
-                            formik_vendor_expense.setFieldValue('ref_invoice_number', newValue.value)
+                            formik_vendor_expense.setFieldValue('invoice_number', newValue.value)
                             formik_vendor_expense.setFieldValue('project_name', newValue.projectName)
                         } else {
-                            formik_vendor_expense.setFieldValue('ref_invoice_number', '')
+                            formik_vendor_expense.setFieldValue('invoice_number', '')
                             formik_vendor_expense.setFieldValue('project_name', '')
                         }
                     }}
@@ -751,22 +752,20 @@ export default function NewVendorExpense(props){
                         onChange={formik_vendor_expense.handleChange}
                         value={formik_vendor_expense.values.project_name}
                         variant='outlined'
-                        fullWidth
                         size="small"
                         helperText={
                             formik_vendor_expense.touched.project_name && formik_vendor_expense.errors.project_name
                         }
                         error={Boolean(formik_vendor_expense.errors.project_name)}
-                        sx={{width: "inherit"}}
+        
                         />
                     )}
-                    fullWidth
-                    sx={{width: "65%"}}
+                    sx={{minWidth: 520}}
                     />
                     <FormControl
-                      fullWidth
                       size="small"
                       error={formik_vendor_expense.touched.currency && Boolean(formik_vendor_expense.errors.currency)}
+                      sx={{minWidth: 120}}
                     >
                       <InputLabel>Currency</InputLabel>
                         <Select
@@ -798,6 +797,7 @@ export default function NewVendorExpense(props){
                       {formik_vendor_expense.touched.currency && formik_vendor_expense.errors.currency}
                       </FormHelperText>
                   </FormControl>
+                  </Stack>
                    { props.mode!=='EDIT' && <Button
                         variant="contained"
                         color="secondary"
