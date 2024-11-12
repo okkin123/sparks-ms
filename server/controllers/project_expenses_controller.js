@@ -205,7 +205,7 @@ module.exports = {
   },
   get_supplier_payments: (req, res)=>{
     dbConnection.query(
-      "SELECT supplier_name, mode_of_payment, date_paid, cheque_no, reference_no, SUM(amount) as amount, currency, processed_by, voided_by, status, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments GROUP BY supplier_name, mode_of_payment, date_paid, cheque_no, reference_no, currency, processed_by",
+      "SELECT supplier_name, SUM(amount) as total_amount, currency FROM vw_project_supplier_expense_payments GROUP BY supplier_name, currency",
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -217,8 +217,8 @@ module.exports = {
     
           data.forEach((item, index) => {
             dbConnection.query(
-              "SELECT pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, currency, processed_by, status FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND mode_of_payment=? AND date_paid=? AND cheque_no=? AND reference_no=? AND currency=? AND processed_by=?",
-              [item.supplier_name, item.mode_of_payment, item.date_paid, item.cheque_no, item.reference_no, item.currency, item.processed_by],
+              "SELECT supplier_name, pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, processed_by, status, voided_by FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND currency=? ORDER BY pe_number DESC",
+              [item.supplier_name, item.currency],
               function(err1, data1, fields1) {
                 if (err1) {
                   res.send({

@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Box, Chip, IconButton, Typography, Stack, Button, Tooltip} from '@mui/material'
+import {Box, Chip, IconButton, Typography, Stack, Button, Tooltip, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Checkbox} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
@@ -16,70 +16,10 @@ const columns=[
     {
         accessorKey: 'supplier_name',
         header: 'SUPPLIER_NAME'
-    },  
+    },    
     {
-        accessorKey: 'pe_number',
-        header: 'PE NO.',
-        size: 'fit-content',
-    }, 
-    {
-        accessorKey: 'invoice_number',
-        header: 'INVOICE NO.',
-        size: 'fit-content',
-    }, 
-    {
-        accessorKey: 'project_name',
-        header: 'PROJECT NAME',
-        size: 'fit-content',
-    }, 
-    {
-        accessorKey: 'status',
-        header: 'STATUS',
-        size: 'fit-content',
-        Cell: ({ renderedCellValue }) => (
-            <Chip 
-                label={renderedCellValue} 
-                size="small"
-                color={renderedCellValue === 'PAID' ? 'success' : 'error' }
-            /> 
-            )
-    },  
-    {
-        accessorKey: 'mode_of_payment',
-        header: 'MODE OF PAYMENT',
-        size: 'fit-content',
-        Cell: ({ renderedCellValue }) => (
-        <Chip 
-            label={renderedCellValue} 
-            size="small"
-            color={renderedCellValue === 'Cash' ? 'secondary' : renderedCellValue === 'Online Transfer' ? 'warning' : 'info' }
-        /> 
-        )
-    },  
-    {
-        accessorKey: 'date',
-        header: 'DATE',
-        size: 'fit-content',
-        Cell: ({renderedCellValue}) => {
-            return dayjs(new Date(renderedCellValue)).format('DD-MMM-YYYY')
-        }
-    },  
-    {
-        accessorKey: 'cheque_no',
-        header: 'CHEQUE NO.',
-        size: 'fit-content',
-        Cell: ({ renderedCellValue }) => (
-            renderedCellValue === 0 ? '' : renderedCellValue
-        )
-    },  
-    {
-        accessorKey: 'reference_no',
-        header: 'REFERENCE NO.',
-        size: 'fit-content',
-    },  
-    {
-        accessorKey: 'amount',
-        header: 'AMOUNT',
+        accessorKey: 'total_amount',
+        header: 'TOTAL AMOUNT PAID',
         size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
@@ -96,17 +36,6 @@ const columns=[
         header: 'CURRENCY',
         size: 'fit-content',
     }, 
-    {
-        accessorKey: 'processed_by',
-        header: 'PROCESSED BY',
-        size: 'fit-content',
-    },  
-    {
-        accessorKey: 'voided_by',
-        header: 'VOIDED BY',
-        size: 'fit-content',
-        
-    }
 ];
 
 
@@ -174,19 +103,11 @@ export default function ListSupplierExpensePayments(){
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
                 const fetchedSupplierPayments = result.data.supplier_payments.map((element) => ({
-                    filepath: element.supporting_doc_path,
-                    filename: element.supporting_doc_name,
                     supplier_name: element.supplier_name,
-                    status: element.status,
                     mode_of_payment: element.mode_of_payment,
-                    date: element.date_paid,
-                    cheque_no: element.cheque_no,
-                    reference_no: element.reference_no,
-                    amount: element.amount,
+                    total_amount: element.total_amount,
                     currency: element.currency,
-                    processed_by: element.processed_by,
-                    voided_by: element.voided_by,
-                    canVoid: JSON.parse(element.reporting_to).user_id.includes(result.data.user_id),
+                    //canVoid: JSON.parse(element.reporting_to).user_id.includes(result.data.user_id),
                     subRows: element.details
                   })); 
                 
@@ -257,72 +178,99 @@ export default function ListSupplierExpensePayments(){
                 enableHiding={false}
                 enableGlobalFilter={false}
                 enableFullScreenToggle={false}
-                enableExpanding
-                filterFromLeafRows
-                getSubRows={(row) => row.subRows} // default
-                paginateExpandedRows={false} 
+                enableExpandAll={false}
                 enableRowActions
                 initialState={{
                     density: 'compact',
                     expanded: false,
                     isLoading: loading.table,
-                    columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions', 'supplier_name', 'status'] }
                 }}
                 state={{
-                    isLoading: loading.table
+                    isLoading: loading.table,
+                    columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions']}
                 }}
                 renderRowActions={({ row }) => (
-                    row.original.status !== 'VOIDED' ? <Box>
-                        {row.original.filepath &&
-                        <Tooltip title="Download">
-                        <IconButton color="secondary" onClick={()=>downloadFile(row.original.filename, row.original.filepath)}>
-                        <DownloadIcon />
-                        </IconButton>
-                        </Tooltip>}
-                        {
-                         row.original.canVoid ?  <Tooltip title="Void"><IconButton color="error" onClick={() => setVoidDialog({
-                            open: true,
-                            content: (<React.Fragment>
-                              <Stack direction="row" gap={1} justifyContent="flex-start" alignItems="flex-start" flexWrap="wrap">
-                                 <Chip color="primary" label={<Typography variant="body2">Amount: <b><NumericFormat
-                                    value={row.original.amount}
-                                    displayType={'text'}
-                                    thousandSeparator={true}
-                                    decimalScale={2}
-                                    fixedDecimalScale={true}
-                                    /></b></Typography>} />
-                                  <Chip 
-                                    label={<>Supplier Name: <b>{row.original.supplier_name}</b></>}
-                                    size="small"
-                                  /> 
-                                 <Chip 
-                                    label={<>Mode of Payment: <b>{row.original.mode_of_payment}</b></>}
-                                    size="small"
-                                    color={row.original.mode_of_payment === 'Cash' ? 'secondary' : row.original.mode_of_payment === 'Online Transfer' ? 'warning' : 'info' }
-                                  /> 
-                                   {row.original.mode_of_payment !== 'Cash' ? <Chip 
-                                    label={<>{row.original.mode_of_payment==='Cheque Deposit' ? 'Cheque No.: ' : row.original.mode_of_payment==='Online Transfer' ? 'Reference No.: ' : ''} 
-                                    <b>{row.original.mode_of_payment==='Cheque Deposit' ? row.original.cheque_no : row.original.mode_of_payment==='Online Transfer' ? row.original.reference_no : ''}</b></>}
-                                    size="small"
-                                  /> : null }
-                                  <Chip 
-                                   label={<>Date: <b>{dayjs(new Date(row.original.date)).format('DD-MMM-YYYY')}</b></>}
-                                    size="small"
-                                  /> 
-                                  <Chip 
-                                    label={<>Processed By: <b>{row.original.processed_by}</b></>}
-                                    size="small"
-                                  /> 
-
-                              </Stack></React.Fragment>
-                              ),
-                              supporting_doc_name: row.original.filename
-                        })}>
-                        <RemoveCircleIcon />
-                        </IconButton></Tooltip> : null }
-                        
-                    </Box> : null
+                    <Stack direction="row">
+                        <Tooltip title="Void Payment">
+                            <IconButton color="error">
+                                <RemoveCircleIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download File">
+                            <IconButton color="secondary">
+                                <DownloadIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
                 )}
+                muiDetailPanelProps={() => ({
+                    sx: (theme) => ({
+                      padding: 0
+                    }),
+    
+                  })}
+                  //custom expand button rotation
+                  muiExpandButtonProps={({ row, table }) => ({
+                    onClick: () => {
+                        table.setExpanded({ [row.id]: !row.getIsExpanded() });
+                    }, 
+                    sx: {
+                      transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+                      transition: 'transform 0.2s',
+                    },
+                  })}
+                renderDetailPanel={({ row }) => {
+                    const subRows = row.original.subRows;
+                    return (
+                      <Paper square sx={{ padding: 1 }}>
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableCell>SELECT</TableCell>
+                                <TableCell>STATUS</TableCell>
+                                <TableCell>PE NUMBER</TableCell>
+                                <TableCell>INVOICE NO.</TableCell>
+                                <TableCell>PROJECT NAME</TableCell>
+                                <TableCell>MODE OF PAYMENT</TableCell>
+                                <TableCell>DATE PAID</TableCell>
+                                <TableCell>CHEQUE NO.</TableCell>
+                                <TableCell>REFERENCE NO.</TableCell>
+                                <TableCell>AMOUNT</TableCell>
+                                <TableCell>PROCESSED BY</TableCell>
+                                <TableCell>VOIDED BY</TableCell>
+                              </TableHead>
+                              <TableBody>
+                              {subRows.map((subRow, index) => (
+                                <TableRow>
+                                    <TableCell>
+                                        {subRow.status==="PAID" &&<Checkbox
+                                            size="small"
+                                        />}
+                                    </TableCell>
+                                    <TableCell><Chip size="small" label={subRow.status} color={subRow.status==="PAID" ? "success" : "error"} /></TableCell>
+                                    <TableCell>{subRow.pe_number}</TableCell>
+                                    <TableCell>{subRow.invoice_number}</TableCell>
+                                    <TableCell>{subRow.project_name}</TableCell>
+                                    <TableCell><Chip size="small" label={subRow.mode_of_payment} color={subRow.mode_of_payment==="Cheque Deposit" ? "info" : subRow.mode_of_payment==="Online Transfer" ? "warning" : "secondary"}/></TableCell>
+                                    <TableCell>{dayjs(subRow.date_paid).format('DD-MMM-YYYY')}</TableCell>
+                                    <TableCell>{subRow.cheque_no===0 ? '' : subRow.cheque_no}</TableCell>
+                                    <TableCell>{subRow.reference_no}</TableCell>
+                                    <TableCell><NumericFormat
+                                              value={subRow.amount}
+                                              displayType={'text'}
+                                              thousandSeparator={true}
+                                              decimalScale={2}
+                                              fixedDecimalScale={true}
+                                          /></TableCell>
+                                    <TableCell>{subRow.processed_by}</TableCell>
+                                    <TableCell>{subRow.voided_by}</TableCell>
+                                </TableRow>))}
+                              </TableBody>
+                            </Table>
+                        </TableContainer>
+                        </Paper>
+                    )
+                }}
                 muiTablePaperProps={{
                     sx: { borderRadius: 0 },
                 }}
@@ -404,17 +352,6 @@ export default function ListSupplierExpensePayments(){
                 columns={columns}
                 data={filteredData}
                 />
-                <Dialog open={voidDialog.open} content={
-                    <Stack direction="column" spacing={2}>
-                        <Typography variant="subtitle1">VOID PAYMENT</Typography>
-                        <Typography variant="body1">Do you want to void this payment?</Typography>
-                        {voidDialog.content}
-                        <Stack direction="row" justifyContent="flex-end">
-                            <Button size="small" onClick={()=>setVoidDialog({...voidDialog, open: false})}>No</Button>
-                            <Button size="small" variant="contained" color="secondary" onClick={()=>voidPayment(voidDialog.supporting_doc_name)}>Yes</Button>
-                        </Stack>
-                    </Stack>
-                } />
         </Box>
     )
 }
