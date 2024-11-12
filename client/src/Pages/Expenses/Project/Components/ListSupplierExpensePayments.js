@@ -1,25 +1,127 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Box, Chip, IconButton, Typography, Stack, Button, Tooltip, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Checkbox} from '@mui/material'
+import {Box, Chip, Typography, Stack, Button, Link, Tooltip} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
   } from 'material-react-table';
 import { theme } from '../../../../Theme';
 import dayjs from 'dayjs';
-import SupplierExpenseColumnFilter from './SupplierExpenseColumnFilter';
 import { NumericFormat } from 'react-number-format';
-import DownloadIcon from '@mui/icons-material/Download';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import Dialog from '../../../../Components/Dialog';
+import SupplierExpenseColumnFilter from './SupplierExpenseColumnFilter';
+
 
 const columns=[
     {
         accessorKey: 'supplier_name',
-        header: 'SUPPLIER_NAME'
-    },    
+        header: 'SUPPLIER NAME',
+        size: 'fit-content'
+    },
     {
-        accessorKey: 'total_amount',
-        header: 'TOTAL AMOUNT PAID',
+        accessorKey: 'status',
+        header: 'STATUS',
+        size: 'fit-content',
+        Cell: ({renderedCellValue})=>(
+            <Chip size="small" label={renderedCellValue} color={renderedCellValue==="PAID" ? "success" : "error"} />
+        )
+    },
+    {
+        accessorKey: 'pe_number',
+        header: 'PE NUMBER',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'invoice_number',
+        header: 'INVOICE NO.',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'project_name',
+        header: 'PROJECT NAME',
+        size: 'fit-content',
+    },
+    {
+        accessorKey: 'mode_of_payment',
+        header: 'MODE OF PAYMENT',
+        size: 'fit-content',
+        Cell: ({renderedCellValue})=>(
+            <Chip size="small" label={renderedCellValue} color={renderedCellValue==="Cheque Deposit" ? "info" : renderedCellValue==="Online Transfer" ? "warning" : "secondary"}/>
+        )
+    },
+    {
+        accessorKey: 'date_paid',
+        header: 'DATE PAID',
+        size: 'fit-content',
+        Cell: ({renderedCellValue})=>{
+            return dayjs(renderedCellValue).format('DD-MMM-YYYY')
+        }
+    },
+    {
+        accessorKey: 'cheque_no',
+        header: 'CHEQUE NO.',
+        size: 'fit-content',
+        Cell: ({renderedCellValue, row})=>{
+            return renderedCellValue!==0&&(
+                <Tooltip title="Download File" placement="right">
+                <Link href="#" color="secondary" variant="outlined" onClick={async ()=>{
+                     try {
+                        const response = await AxiosInstance.post(`/project_expense/download_file`, {filepath: row.original.supporting_doc_path}, {
+                          responseType: 'blob',
+                        });
+                    
+                        if (response.status === 200) {
+                          const url = window.URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', row.original.supporting_doc_name);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                        } else {
+                          console.error('Error: File not found or server error');
+                        }
+                      } catch (error) {
+                        console.error('Error downloading the file:', error);
+                      }
+                }}>{renderedCellValue}</Link>
+                </Tooltip>
+            )
+        }
+    },
+    {
+        accessorKey: 'reference_no',
+        header: 'REFERENCE_NO',
+        size: 'fit-content',
+        Cell: ({renderedCellValue, row})=>(
+                <Tooltip title="Download File" placement="right">
+                <Link href="#" color="secondary" variant="outlined" onClick={async ()=>{
+                     try {
+                        const response = await AxiosInstance.post(`/project_expense/download_file`, {filepath: row.original.supporting_doc_path}, {
+                          responseType: 'blob',
+                        });
+                    
+                        if (response.status === 200) {
+                          const url = window.URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', row.original.supporting_doc_name);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                        } else {
+                          console.error('Error: File not found or server error');
+                        }
+                      } catch (error) {
+                        console.error('Error downloading the file:', error);
+                      }
+                }}>{renderedCellValue}</Link>
+                </Tooltip>
+        )
+        
+    },
+    {
+        accessorKey: 'amount',
+        header: 'AMOUNT',
         size: 'fit-content',
         Cell: ({ renderedCellValue }) => (
             <NumericFormat
@@ -28,16 +130,19 @@ const columns=[
             thousandSeparator={true}
             decimalScale={2}
             fixedDecimalScale={true}
-          />
-        )
+          />)
     },
     {
-        accessorKey: 'currency',
-        header: 'CURRENCY',
+        accessorKey: 'processed_by',
+        header: 'PROCESSED BY',
         size: 'fit-content',
-    }, 
-];
-
+    },
+    {
+        accessorKey: 'voided_by',
+        header: 'VOIDED BY',
+        size: 'fit-content',
+    }
+]
 
 
 export default function ListSupplierExpensePayments(){
@@ -48,52 +153,38 @@ export default function ListSupplierExpensePayments(){
     table: false
    })
    const [voidDialog, setVoidDialog] = useState({
-    open: false,
-    content: null,
-    supporting_doc_name: ''
+    open: false
    })
 
    const [refresh, setRefresh] = useState(false)
 
+  function handleVoidPayment(){
 
-   const downloadFile = async (filename, filepath) => {
-    try {
-      const response = await AxiosInstance.post(`/project_expense/download_file`, {filepath: filepath}, {
-        responseType: 'blob',
-      });
-  
-      if (response.status === 200) {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      } else {
-        console.error('Error: File not found or server error');
-      }
-    } catch (error) {
-      console.error('Error downloading the file:', error);
-    }
-  };
 
-  function voidPayment(supporting_doc_name){
-    AxiosInstance.post("/project_expense/void_supplier_payments", {supporting_doc_name: supporting_doc_name})
+    const selectedRowData = Object.keys(rowSelection).map((rx) => {
+        return filteredData.find((ry) => ry.project_supplier_expense_id+''+ry.status === rx && ry.status !== 'VOIDED');
+    }).filter(Boolean); 
+
+
+    if(selectedRowData.length > 0){
+    AxiosInstance.post("/project_expense/void_supplier_payments", {project_supplier_expense_ids: selectedRowData.map(row => row.project_supplier_expense_id)})
     .then(function(response){
-        setVoidDialog({
-            open: false,
-            content: null,
-            supporting_doc_name: ''
-        })
+        
+        setVoidDialog({open:false})
+       
         alert(response.data.message)
         if (response.data.status === 'SUCCESS') {
-            setRefresh(!refresh)
+            
+           setRefresh(!refresh)
         }
     })
     .catch(function(error){
         console.log(error)
     })
+    }else{
+        alert('There is no paid selection! Please try again.')
+    }
+
   }
 
 
@@ -104,15 +195,20 @@ export default function ListSupplierExpensePayments(){
             if(result.data.status === 'SUCCESS'){
                 const fetchedSupplierPayments = result.data.supplier_payments.map((element) => ({
                     supplier_name: element.supplier_name,
-                    mode_of_payment: element.mode_of_payment,
-                    total_amount: element.total_amount,
                     currency: element.currency,
-                    //canVoid: JSON.parse(element.reporting_to).user_id.includes(result.data.user_id),
-                    subRows: element.details
+                    subRows: element.details,
+                    user_id: result.data.user_id
                   })); 
                 
                   setSupplierPayments(fetchedSupplierPayments)
-                  setFilteredData(fetchedSupplierPayments);
+                  
+                  if(active.id > -1){
+                  
+                    setFilteredData(fetchedSupplierPayments[active.id].subRows);
+                    setPaymentDetails(fetchedSupplierPayments[active.id].subRows)
+                  }
+                 
+                  setRowSelection({})
                   setLoading((loading)=>({...loading, table: false}))
             }else{
                 console.log(result.data.message)
@@ -121,33 +217,21 @@ export default function ListSupplierExpensePayments(){
         .catch(function(error){
             console.log(error)
         })
+          // eslint-disable-next-line
     },[refresh])
 
 
-    const handleFilter = (filters) => {
-        const newFilteredData = supplierPayments.filter(row => {
-          const columnMatch = filters.column
-            ? row[filters.column].toString().toLowerCase().includes(filters.value.toLowerCase())
-            : true;
-          const dateMatch = filters.fromDate && filters.toDate
-            ? dayjs(new Date(row.date)).isBetween(filters.fromDate, filters.toDate, null, '[]')
-            : true;
-          return columnMatch && dateMatch;
-        });
-        setFilteredData(newFilteredData);
-      };
-
-
-
-
     const stackRef = useRef(null);
-    const tableBodyRef = useRef(null);
+    const [paymentDetails, setPaymentDetails] = useState([])
+    const [active, setActive] = useState({
+        id: -1,
+        label: ""
+    });
+    const [rowSelection, setRowSelection] = useState({});
     const [box, setBox] = useState({
         width: 0,
         height: 0
     });
-
-
     useEffect(() => {
     const updateBox = () => {
         if (stackRef.current) {
@@ -166,192 +250,157 @@ export default function ListSupplierExpensePayments(){
     };
     }, []);
 
+    const handleFilter = (filters) => {
+        const newFilteredData = paymentDetails.filter(row => {
+          const columnMatch = filters.column
+            ? row[filters.column].toString().toLowerCase().includes(filters.value.toLowerCase())
+            : true;
+          const dateMatch = filters.fromDate && filters.toDate
+            ? dayjs(new Date(row.date_paid)).isBetween(filters.fromDate, filters.toDate, null, '[]')
+            : true;
+          return columnMatch && dateMatch;
+        });
+        setFilteredData(newFilteredData);
+     };
+
     return(
         <Box
         ref={stackRef}
         sx={{ width: '100%'}}
             >
-            <MaterialReactTable
-                enableColumnFilters={false}
-                enableColumnActions={false}
-                enableDensityToggle={false}
-                enableHiding={false}
-                enableGlobalFilter={false}
-                enableFullScreenToggle={false}
-                enableExpandAll={false}
-                enableRowActions
-                initialState={{
-                    density: 'compact',
-                    expanded: false,
-                    isLoading: loading.table,
-                }}
-                state={{
-                    isLoading: loading.table,
-                    columnPinning: { left: ['mrt-row-expand', 'mrt-row-actions']}
-                }}
-                renderRowActions={({ row }) => (
-                    <Stack direction="row">
-                        <Tooltip title="Void Payment">
-                            <IconButton color="error">
-                                <RemoveCircleIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download File">
-                            <IconButton color="secondary">
-                                <DownloadIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-                )}
-                muiDetailPanelProps={() => ({
-                    sx: (theme) => ({
-                      padding: 0
-                    }),
-    
-                  })}
-                  //custom expand button rotation
-                  muiExpandButtonProps={({ row, table }) => ({
-                    onClick: () => {
-                        table.setExpanded({ [row.id]: !row.getIsExpanded() });
-                    }, 
-                    sx: {
-                      transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
-                      transition: 'transform 0.2s',
-                    },
-                  })}
-                renderDetailPanel={({ row }) => {
-                    const subRows = row.original.subRows;
-                    return (
-                      <Paper square sx={{ padding: 1 }}>
-                          <TableContainer>
-                            <Table size="small">
-                              <TableHead>
-                                <TableCell>SELECT</TableCell>
-                                <TableCell>STATUS</TableCell>
-                                <TableCell>PE NUMBER</TableCell>
-                                <TableCell>INVOICE NO.</TableCell>
-                                <TableCell>PROJECT NAME</TableCell>
-                                <TableCell>MODE OF PAYMENT</TableCell>
-                                <TableCell>DATE PAID</TableCell>
-                                <TableCell>CHEQUE NO.</TableCell>
-                                <TableCell>REFERENCE NO.</TableCell>
-                                <TableCell>AMOUNT</TableCell>
-                                <TableCell>PROCESSED BY</TableCell>
-                                <TableCell>VOIDED BY</TableCell>
-                              </TableHead>
-                              <TableBody>
-                              {subRows.map((subRow, index) => (
-                                <TableRow>
-                                    <TableCell>
-                                        {subRow.status==="PAID" &&<Checkbox
-                                            size="small"
-                                        />}
-                                    </TableCell>
-                                    <TableCell><Chip size="small" label={subRow.status} color={subRow.status==="PAID" ? "success" : "error"} /></TableCell>
-                                    <TableCell>{subRow.pe_number}</TableCell>
-                                    <TableCell>{subRow.invoice_number}</TableCell>
-                                    <TableCell>{subRow.project_name}</TableCell>
-                                    <TableCell><Chip size="small" label={subRow.mode_of_payment} color={subRow.mode_of_payment==="Cheque Deposit" ? "info" : subRow.mode_of_payment==="Online Transfer" ? "warning" : "secondary"}/></TableCell>
-                                    <TableCell>{dayjs(subRow.date_paid).format('DD-MMM-YYYY')}</TableCell>
-                                    <TableCell>{subRow.cheque_no===0 ? '' : subRow.cheque_no}</TableCell>
-                                    <TableCell>{subRow.reference_no}</TableCell>
-                                    <TableCell><NumericFormat
-                                              value={subRow.amount}
-                                              displayType={'text'}
-                                              thousandSeparator={true}
-                                              decimalScale={2}
-                                              fixedDecimalScale={true}
-                                          /></TableCell>
-                                    <TableCell>{subRow.processed_by}</TableCell>
-                                    <TableCell>{subRow.voided_by}</TableCell>
-                                </TableRow>))}
-                              </TableBody>
-                            </Table>
-                        </TableContainer>
-                        </Paper>
-                    )
-                }}
-                muiTablePaperProps={{
-                    sx: { borderRadius: 0 },
-                }}
-                muiTableHeadCellProps={{
-                    sx: {
-                    backgroundColor: theme.palette.primary.main,
+        <MaterialReactTable
+            enableColumnFilters={false}
+            enableColumnActions={false}
+            enableDensityToggle={false}
+            enableHiding={false}
+            enableGlobalFilter={false}
+            enableRowSelection={(row)=>{
+                if(row.original.reporting_to!==null && row.original.reporting_to!==undefined){
+                    return JSON.parse(row.original.reporting_to).user_id.includes(supplierPayments[0].user_id)
+                }
+       
+                return false;
+            }}
+            enableFullScreenToggle={false}
+            getRowId={(row) => row.project_supplier_expense_id+''+row.status} //give each row a more useful id
+            onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
+            initialState={{
+                density: 'compact',
+                isLoading: loading.table,
+                columnPinning: { left: ['mrt-row-select','pe_number', 'supplier_name', 'status'] }
+            }}
+            state={{
+                rowSelection: rowSelection,
+                isLoading: loading.table
+            }} 
+            muiTableHeadCellProps={{
+                sx:{
+                backgroundColor: theme.palette.primary.main,
+                color: 'white',
+                '& .MuiTableSortLabel-root': {
                     color: 'white',
-                    '& .MuiTableSortLabel-root': {
-                        color: 'white',
-                        '&.Mui-active': {
-                        color: 'white',
-                        },
-                        '& .MuiTableSortLabel-icon': {
-                        color: 'white !important',
-                        },
-                    },
-                    }
-                }}
-                muiSelectAllCheckboxProps={{
-                    sx: {
+                    '&.Mui-active': {
                     color: 'white',
-                    '&.Mui-checked': {
-                        color: 'white',
                     },
+                    '& .MuiTableSortLabel-icon': {
+                    color: 'white !important',
                     },
-                }}
-                muiPaginationProps={{
-                    rowsPerPageOptions: [10, 20, { label: 'All', value: filteredData.length }],
-                    variant: 'filled',
-                }}
-                paginationDisplayMode='pages'
-                muiTableContainerProps={{
-                    sx: {
-                    maxHeight: box.height,
+                },
+                }
+            }}
+            muiSelectAllCheckboxProps={{
+                sx: {
+                color: 'white',
+                '&.Mui-checked': {
+                    color: 'white',
+                },
+                },
+            }}
+            muiPaginationProps={{
+                rowsPerPageOptions: [10, 20, { label: 'All', value: paymentDetails.length}],
+                variant: 'filled',
+            }}
+            paginationDisplayMode='pages'
+            muiTableContainerProps={{
+                sx: { maxHeight: box.height, 
                     maxWidth: box.width,
                     overflowX: 'auto',
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
-                        width: '6px',
-                        height: '6px',
+                    width: '6px',
+                    height: '6px',
                     },
                     '&::-webkit-scrollbar-track': {
-                        backgroundColor: '#f1f1f1',
+                    backgroundColor: '#f1f1f1',
                     },
                     '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: theme.palette.primary.light,
-                        borderRadius: '6px',
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '6px',
                     },
                     '&::-webkit-scrollbar-thumb:hover': {
-                        backgroundColor: '#555',
+                    backgroundColor: '#555',
                     }
                     },
-                }}
-                muiTableBodyRowProps={({ row }) => ({
-                    sx: {
-                        backgroundColor: !row.original.subRows ? '#ECEFF1': 'white',
-                    },
-                })}
-                muiTableBodyProps={{
-                    ref: tableBodyRef,
-                }}
-                muiTableHeadProps={{
-                    sx: {
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
-                    },
-                }}
-                renderTopToolbarCustomActions={() => (
-                    <SupplierExpenseColumnFilter
+            }}
+
+            muiTableHeadProps={{
+                sx: {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                },
+            }}
+            muiTablePaperProps={{
+                sx: { borderRadius: 0, 
+                 },
+            }}
+            renderTopToolbarCustomActions={() => (
+                <Stack spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>
+                
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        {
+                            supplierPayments.map((supplierPayment, index)=>(
+                                <Chip key={index} color={active.label === supplierPayment.supplier_name+''+supplierPayment.currency ? "primary" : "default"} size="small" label={supplierPayment.supplier_name+' - '+supplierPayment.currency} 
+                                onClick={()=>{setPaymentDetails(supplierPayment.subRows)
+                                    setFilteredData(supplierPayment.subRows);
+                                    setActive({id: index, label: supplierPayment.supplier_name+''+supplierPayment.currency})
+                                }} />
+                            ))
+                        }
+                    </Stack>
+                    {active.label && <SupplierExpenseColumnFilter 
                     columns={
-                        columns.filter((column) =>
-                        column.accessorKey === 'supplier_name' 
-                        )
-                    }
+                        columns.filter((column)=> column.accessorKey==='invoice_number'
+                        || column.accessorKey==='project_name')
+                    } 
                     onFilter={handleFilter}
-                    />
+                    />}
+                </Stack>
                 )}
-                columns={columns}
-                data={filteredData}
-                />
+            muiToolbarAlertBannerProps={{
+                sx: {
+                position: 'absolute', left: 0, top: 0, transform: 'translateY(0)', padding: 0,
+                backgroundColor: '#FFEBEE'
+                },
+                children: (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="contained" size="small" color="error" onClick={()=>setVoidDialog({...voidDialog, open: true})}>
+                        VOID PAYMENT
+                    </Button>
+                </Box>
+                ),
+            }}
+            columns={columns} data={filteredData} />   
+            <Dialog open={voidDialog.open} content={
+                <Stack direction="column" spacing={2}>
+                    <Typography variant="subtitle1">VOID PAYMENT</Typography>
+                    <Typography variant="body1">Are you sure you want to void the selected payment/s?</Typography>
+                    <Stack direction="row" spacing={2} justifyContent="flex-end">
+                        <Button onClick={()=>setVoidDialog({...voidDialog, open: false})}>No</Button>
+                        <Button variant="contained" color="secondary" onClick={()=>handleVoidPayment()}>Yes</Button>
+                    </Stack>
+                </Stack>
+            } />
         </Box>
     )
 }

@@ -217,7 +217,7 @@ module.exports = {
     
           data.forEach((item, index) => {
             dbConnection.query(
-              "SELECT supplier_name, pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, processed_by, status, voided_by FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND currency=? ORDER BY pe_number DESC",
+              "SELECT project_supplier_expense_id, supplier_name, pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, processed_by, status, voided_by, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND currency=? ORDER BY date_paid DESC",
               [item.supplier_name, item.currency],
               function(err1, data1, fields1) {
                 if (err1) {
@@ -247,9 +247,16 @@ module.exports = {
     );
   },
   void_supplier_payments: (req, res)=>{
-    console.log(req.body.supporting_doc_name)
-    dbConnection.query("UPDATE tbl_project_supplier_expense_payments SET voided_by=? WHERE supporting_doc_name=?",
-      [req.user.user_id, req.body.supporting_doc_name],
+
+    const project_supplier_expense_ids = req.body.project_supplier_expense_ids.flatMap(project_supplier_expense_id => [
+      project_supplier_expense_id
+      ]);
+    
+    const placeholders = req.body.project_supplier_expense_ids.map(() => '?').join(',');
+
+
+    dbConnection.query(`UPDATE tbl_project_supplier_expense_payments SET voided_by=? WHERE project_supplier_expense_id IN (${placeholders})`,
+      [req.user.user_id, ...project_supplier_expense_ids],
       function name(err, data, fields) {
         if (err) {
           res.send({

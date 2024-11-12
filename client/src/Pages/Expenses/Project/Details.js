@@ -84,7 +84,7 @@ export default function Details(){
                     mode_of_payment: element.mode_of_payment,
                     cheque_no: element.cheque_no,
                     reference_no: element.reference_no,
-                    date: element.date,
+                    date: element.date_paid,
                     processed_by: element.processed_by,
                     status: element.status,
                     voided_by: element.voided_by
