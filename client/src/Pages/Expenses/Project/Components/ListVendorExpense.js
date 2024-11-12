@@ -273,10 +273,11 @@ export default function ListVendorExpense(){
                   }
                   return acc;
                 }, {}));
+
                 const waitingStatus = result.data.vendor_expenses
                 .filter(element => element.status === "WAITING FOR VERIFICATION")
                 .map(element => ({
-                    count: element.details.filter(detail => detail.created_by_email===result.data.user_email).length
+                    count: result.data.reporting_to !== null ? element.details.filter(detail => detail.created_by_email===result.data.user_email).length : element.details.length
                 }));
 
                 const returnedStatus = result.data.vendor_expenses
@@ -685,8 +686,7 @@ export default function ListVendorExpense(){
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Verify">
-                    <IconButton disabled={(row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && verifications.waiting_for_verification > 0 && verifications.returned === 0 ? false :
-                        (row.original.status==="WAITING FOR VERIFICATION" ? row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by : row.original.invoice_number===verifications.invoice_number) && row.original.status === verifications.status && verifications.waiting_for_verification === 0 && verifications.returned > 0 ? true : true}
+                    {(row.original.status === "WAITING FOR VERIFICATION") && <IconButton disabled={row.original.invoice_number===verifications.invoice_number && row.original.created_by===verifications.created_by && verifications.waiting_for_verification > 0 ? false : true}
                     color="secondary"
                     onClick={()=>setConfirmDialog(
                         {...confirmDialog, verify: {open: true, 
@@ -707,7 +707,7 @@ export default function ListVendorExpense(){
                             </Stack>
                         )}})} >
                         <CheckIcon />
-                    </IconButton>
+                    </IconButton>}
                     </Tooltip>
                     </>
                      
