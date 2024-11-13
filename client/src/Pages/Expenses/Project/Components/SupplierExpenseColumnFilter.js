@@ -9,7 +9,7 @@ import Dialog from '../../../../Components/Dialog';
 const SupplierExpenseColumnFilter = ({ columns, onFilter}) => {
   const [open, setOpen] = useState(false);
 
-  const [filters, setFilters] = useState({ column: 'supplier_name', value: '', fromDate: null, toDate: null });
+  const [filters, setFilters] = useState({ column: 'project_name', value: '', fromDate: null, toDate: null });
 
   const handleFilterChange = (e) => {
     setFilters({
