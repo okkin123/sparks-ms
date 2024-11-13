@@ -27,21 +27,6 @@ const columns=[
         header: 'PROJECT NAME',
         width: 'fit-content'
     },
-    // {
-    //     accessorKey: 'vendor_name',
-    //     header: 'VENDOR NAME',
-    //     width: 'fit-content'
-    // },
-    // {
-    //     accessorKey: 'location',
-    //     header: 'LOCATION',
-    //     width: 'fit-content'
-    // },
-    // {
-    //     accessorKey: 'description',
-    //     header: 'DESCRIPTION',
-    //     width: 'fit-content'
-    // },
     {
         accessorKey: 'created_by',
         header: 'CREATED BY',
@@ -73,50 +58,6 @@ const columns=[
           );
         }
     },
-    // {
-    //     accessorKey: 'date_paid',
-    //     header: 'DATE',
-    //     width: 'fit-content',
-    // },  
-    // {
-    //     accessorKey: 'vat_applicable',
-    //     header: 'VAT APPLICABLE',
-    //     width: 'fit-content',
-    // },
-    // {
-    //     accessorKey: 'amount_without_vat',
-    //     header: 'AMOUNT w/o VAT',
-    //     width: 'fit-content',
-    //     Cell: ({ renderedCellValue }) => (
-    //         <NumericFormat
-    //         value={renderedCellValue}
-    //         displayType={'text'}
-    //         thousandSeparator={true}
-    //         decimalScale={2}
-    //         fixedDecimalScale={true}
-    //       />
-    //     )
-    // },
-    // {
-    //     accessorKey: 'vat_percent',
-    //     header: 'VAT %',
-    //     width: 'fit-content',
-    //     Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
-    // },
-    // {
-    //     accessorKey: 'vat_amount',
-    //     header: 'VAT AMOUNT',
-    //     width: 'fit-content',
-    //     Cell: ({ renderedCellValue }) => (
-    //         <NumericFormat
-    //         value={renderedCellValue}
-    //         displayType={'text'}
-    //         thousandSeparator={true}
-    //         decimalScale={2}
-    //         fixedDecimalScale={true}
-    //       />
-    //     )
-    // },
     {
       accessorKey: 'amount_without_vat',
       header: 'AMOUNT w/o VAT',
@@ -224,6 +165,8 @@ export default function ListVendorExpense(){
     },[refresh])
 
     const handleListVendorExpenses = (status)=>{
+      
+      setLoading(true)
       if(status === "WAITING FOR VERIFICATION"){
         setSelectedStatus({waiting_for_verification: true, returned: false, verified: false})
       }else if(status==="RETURNED"){
@@ -231,7 +174,6 @@ export default function ListVendorExpense(){
       }else if(status==="VERIFIED"){
         setSelectedStatus({waiting_for_verification: false, returned: false, verified: true})
       }
-      setLoading(true)
       AxiosInstance.get("/project_expense/list_vendor_expense")
       .then(function(result){
           if(result.data.status === 'SUCCESS'){
@@ -419,7 +361,7 @@ export default function ListVendorExpense(){
             if(response.data.status === 'SUCCESS'){
                  
                 alert(response.data.message)
-                handleListVendorExpenses("VERIFIED")
+                handleListVendorExpenses("WAITING FOR VERIFICATION")
             }else{
                 console.log(response.data.message)
             }
@@ -890,14 +832,14 @@ export default function ListVendorExpense(){
                   <Badge
                     color="error"
                     badgeContent={countStatus.waiting_for_verification}>
-                  <Chip variant={selectedStatus.waiting_for_verification ? "filled" : "outlined"} label="WAITING FOR VERIFICATION" color="info" onClick={()=>handleListVendorExpenses("WAITING FOR VERIFICATION")} />
+                  <Chip disabled={loading} variant={selectedStatus.waiting_for_verification ? "filled" : "outlined"} label="WAITING FOR VERIFICATION" color="info" onClick={()=>handleListVendorExpenses("WAITING FOR VERIFICATION")} />
                   </Badge>
                   <Badge
                     color="error"
                     badgeContent={countStatus.returned}>
-                  <Chip variant={selectedStatus.returned ? "filled" : "outlined"} label="RETURNED" color="warning" onClick={()=>handleListVendorExpenses("RETURNED")} />
+                  <Chip disabled={loading} variant={selectedStatus.returned ? "filled" : "outlined"} label="RETURNED" color="warning" onClick={()=>handleListVendorExpenses("RETURNED")} />
                   </Badge>
-                  <Chip variant={selectedStatus.verified ? "filled" : "outlined"} label="VERIFIED" color="secondary" onClick={()=>handleListVendorExpenses("VERIFIED")} />
+                  <Chip disabled={loading} variant={selectedStatus.verified ? "filled" : "outlined"} label="VERIFIED" color="secondary" onClick={()=>handleListVendorExpenses("VERIFIED")} />
                   </Stack>
                </Box>
             )}

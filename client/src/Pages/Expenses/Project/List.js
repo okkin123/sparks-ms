@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {Grid, Toolbar, Typography, Divider, AppBar, Tabs, Tab} from '@mui/material'
 import ListSupplierExpense from './Components/ListSupplierExpense';
 import ListVendorExpense from './Components/ListVendorExpense';
+import ListPromoterExpense from './Components/ListPromoterExpense';
 // function createMessageHandler(navigate, invoice_number, quotation_number, setRefresh, refresh) {
 
 //     return function HandleMessage(event) {
@@ -77,6 +78,7 @@ export default function List(){
                   textColor='inherit'>
                       <Tab label="Supplier" />
                       <Tab label="Vendor" />
+                      <Tab label="Promoter" />
                   </Tabs>
               </AppBar>
               </Grid>
@@ -90,6 +92,11 @@ export default function List(){
               <Grid item>
               <TabPanel value={tabValue} index={1}>
                 <ListVendorExpense />
+              </TabPanel>
+              </Grid>
+              <Grid item>
+              <TabPanel value={tabValue} index={2}>
+                <ListPromoterExpense />
               </TabPanel>
               </Grid>
             </Grid>
