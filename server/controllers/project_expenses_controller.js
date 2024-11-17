@@ -465,9 +465,7 @@ delete_vendor_expense: (req, res)=>{
 list_vendor_expense: (req, res)=>{
 
   dbConnection.query(
-      //"SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses WHERE created_by_email = CASE WHEN reporting_to IS NULL THEN ? ELSE created_by_email END GROUP BY invoice_number, currency, status, created_by_email ORDER BY invoice_number DESC",
       "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses GROUP BY invoice_number, currency, status, created_by_email ORDER BY invoice_number DESC",
-      //[req.user.user_email],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -476,16 +474,13 @@ list_vendor_expense: (req, res)=>{
           });
         } else {
           if(data.length > 0){
-
-            
-
+        
             let completedQueries = 0;
     
-            data.forEach((item, index) => {
+          data.forEach((item, index) => {
              
 
               dbConnection.query(
-                //"SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email = CASE WHEN reporting_to IS NOT NULL THEN ? ELSE created_by_email END ORDER BY date",
                 "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email=? ORDER BY date",
                 [item.invoice_number, item.currency, item.status, item.created_by_email],
                 function(err1, data1, fields1) {
@@ -521,7 +516,6 @@ list_vendor_expense: (req, res)=>{
           }else{
               res.send({
                 status: "SUCCESS",
-                //user_id: req.user.user_id,
                 vendor_expenses: []
               });
           }
@@ -595,6 +589,123 @@ get_supplier_statement: (req, res)=>{
       }
     }
   )
-}
+},
+get_promoter_details: (req, res)=>{
+
+  dbConnection.query(
+      "SELECT * FROM tbl_project_promoter_expenses GROUP BY ??",
+      [req.body.field_name],
+      function(err, data, fields) {
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          res.send({
+            status: "SUCCESS",
+            promoter_details: data
+          });
+        }
+      }
+    )
+    
+},
+insert_promoter_expense: (req, res)=>{
+  const values = req.body.values.promoters;
+  const details = values.flatMap(detail => [
+  req.body.values.invoice_number,
+  req.body.values.currency,
+  req.body.values.unit,
+  detail.date_from,
+  detail.date_to,
+  detail.fullname,
+  detail.location,
+  detail.rate,
+  req.user.user_id
+  ]);
+
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
+
+  dbConnection.query(`INSERT INTO tbl_project_promoter_expenses(invoice_number, currency, unit, date_from, date_to, fullname, location, rate, user_id) VALUES ${placeholders}`,
+    details,
+    function(err, data, fields){
+      if (err) {
+        res.send({
+          status: "ERROR",
+          message: err.sqlMessage
+        });
+      } else {
+        res.send({
+          status: "SUCCESS",
+          message: "New promoter expenses for projects are submitted successfuly!"
+        });
+          
+      }
+    }
+  )
+},
+list_promoter_expense: (req, res)=>{
+
+  dbConnection.query(
+      "SELECT * FROM vw_project_promoter_expenses GROUP BY ??",
+      [req.body.field_name],
+      function(err, data, fields) {
+        if (err) {
+          res.send({
+            status: "ERROR",
+            message: err.sqlMessage
+          });
+        } else {
+          if(data.length > 0){
+        
+            let completedQueries = 0;
+    
+          data.forEach((item, index) => {
+              dbConnection.query(
+                "SELECT STATUS, project_name, fullname, location, CONCAT(DATE_FORMAT(date_from, '%Y-%m-%d'), ' to ', DATE_FORMAT(date_to, '%Y-%m-%d')) AS work_period, rate, unit, currency, created_by FROM vw_project_promoter_expenses WHERE ??=? ORDER BY project_promoter_expense_id DESC",
+                [req.body.field_name, item[req.body.field_name]],
+                function(err1, data1, fields1) {
+                  if (err1) {
+                    res.send({
+                      status: "ERROR",
+                      message: err1.sqlMessage
+                    });
+                    return;
+                  } else {
+  
+                    data1.forEach((item1, index1)=>{
+                      data1[index1].selected = false;
+                    })
+  
+                    data[index].details = data1;
+                    completedQueries++;
+      
+                    if (completedQueries === data.length) {
+                      res.send({
+                        status: "SUCCESS",
+                        user_email: req.user.user_email,
+                        user_id: req.user.user_id,
+                        reporting_to: req.user.reporting_to,
+                        promoter_expenses: data
+                      });
+                    }
+                  }
+                }
+              );
+            });
+
+          }else{
+              res.send({
+                status: "SUCCESS",
+                promoter_expenses: []
+              });
+          }
+
+        }
+      }
+    )
+    
+},
 
 }

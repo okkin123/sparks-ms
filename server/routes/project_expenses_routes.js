@@ -45,5 +45,8 @@ router.route("/return_vendor_expense").post(controller.return_vendor_expense)
 router.route("/verify_vendor_expense").post(middleware.authentication, controller.verify_vendor_expense)
 router.route("/list_vendor_expense").get(middleware.authentication, controller.list_vendor_expense)
 router.route("/get_supplier_statement").post(controller.get_supplier_statement);
+router.route("/get_promoter_details").post(controller.get_promoter_details)
+router.route("/insert_promoter_expense").post(middleware.authentication, controller.insert_promoter_expense)
+router.route("/list_promoter_expense").post(middleware.authentication, controller.list_promoter_expense)
 
 module.exports = router;
