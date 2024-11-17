@@ -94,11 +94,21 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
         .required('This field is required!'),
         location: Yup.string()
         .required('This field is required!'),
-        date_from: Yup.date().required('Date From is required!'),
-        date_to: Yup.date().required('Date To is required!'),
+        date_from: Yup.date()
+            .required('Date From is required!')
+            .test('is_less_than_or_equal', 'Date From must be less than or equal to Date To!', function (value) {
+                const { date_to } = this.parent;
+                return value <= date_to; // Check if date_from is less than or equal to date_to
+            }),
+        date_to: Yup.date()
+            .required('Date To is required!')
+            .test('is_greater_than_or_equal', 'Date To must be greater than or equal to Date From!', function (value) {
+                const { date_from } = this.parent;
+                return value >= date_from; // Check if date_to is greater than or equal to date_from
+            }),
         rate: Yup.string()
-        .matches(/^\d*\.?\d*$/, 'Numbers only')
-        .required('Required!')
+        .matches(/^\d*\.?\d*$/, 'Only numbers are allowed!')
+        .required('This field is Required!')
       })
     )
   });

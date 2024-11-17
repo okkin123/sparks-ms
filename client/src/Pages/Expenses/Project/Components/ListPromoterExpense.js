@@ -1,21 +1,22 @@
 import React, {useEffect, useState, useRef} from 'react' 
-import {Box, Typography, Stack, Button, TextField, Autocomplete} from '@mui/material'
+import {Box, Typography, Stack, Button, TextField, Autocomplete, Chip, Select, MenuItem, FormControl, InputLabel} from '@mui/material'
 import AxiosInstance from '../../../../AxiosInstance';
 import {
     MaterialReactTable,
   } from 'material-react-table';
 import { theme } from '../../../../Theme';
-import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
 import Dialog from '../../../../Components/Dialog';
-import SupplierExpenseColumnFilter from './SupplierExpenseColumnFilter';
 
 
 const columns=[
     {
-        accessorKey: 'status',
+        accessorKey: 'STATUS',
         header: 'STATUS',
-        width: 'fit-content'
+        width: 'fit-content',
+        Cell: ({renderedCellValue})=>(
+            <Chip size="small" label={renderedCellValue} color={renderedCellValue==='PAID' ? "success" : renderedCellValue==="VOIDED" ? "error" : "info"} />
+        )
     },
     {
         accessorKey: 'project_name',
@@ -65,6 +66,9 @@ const columns=[
         accessorKey: 'created_by',
         header: 'CREATED BY',
         width: 'fit-content',
+        Cell: ({renderedCellValue})=>(
+            <Chip size="small" label={renderedCellValue} />
+        )
     },
     
 ];
@@ -76,7 +80,8 @@ export default function ListPromoterExpense(){
    const [filteredData, setFilteredData] = useState([]);
    const [selectedPromoter, setSelectedPromoter] = useState({
     id: -1,
-    fullname: "",
+    field_name: "",
+    keyword:"",
     subRows: []
    })
    const [loading, setLoading] = useState({
@@ -87,7 +92,6 @@ export default function ListPromoterExpense(){
     open: false
    })
 
-   const [refresh, setRefresh] = useState(false)
 
   function handleVoidPayment(){
 
@@ -106,7 +110,7 @@ export default function ListPromoterExpense(){
         alert(response.data.message)
         if (response.data.status === 'SUCCESS') {
             
-           setRefresh(!refresh)
+       
         }
     })
     .catch(function(error){
@@ -119,20 +123,22 @@ export default function ListPromoterExpense(){
   }
 
 
-    useEffect(()=>{
+    function ListPromoterExpenses(field_name, id){
         setLoading((loading)=>({...loading, table: true}))
-        AxiosInstance.get("/project_expense/list_promoter_expense")
+        AxiosInstance.post("/project_expense/list_promoter_expense", {field_name: field_name})
         .then(function(result){
             if(result.data.status === 'SUCCESS'){
                 const fetchedPromoterExpenses = result.data.promoter_expenses.map((element) => ({
-                    fullname: element.fullname,
+                    keyword: element[field_name],
                     subRows: element.details,
                     user_id: result.data.user_id
                   })); 
-                
                   setPromoters(fetchedPromoterExpenses)
-                  if(selectedPromoter.id > -1){
-                  
+                 
+                  if(id === -1){
+                    setFilteredData([]);
+                    setPromoterExpenses([])
+                  }else{
                     setFilteredData(fetchedPromoterExpenses[selectedPromoter.id].subRows);
                     setPromoterExpenses(fetchedPromoterExpenses[selectedPromoter.id].subRows)
                   }
@@ -146,10 +152,9 @@ export default function ListPromoterExpense(){
         .catch(function(error){
             console.log(error)
         })
-          // eslint-disable-next-line
-    },[refresh])
+    }
 
-
+    
     const stackRef = useRef(null);
     const [rowSelection, setRowSelection] = useState({});
     const [box, setBox] = useState({
@@ -174,18 +179,6 @@ export default function ListPromoterExpense(){
     };
     }, []);
 
-    const handleFilter = (filters) => {
-        const newFilteredData = promoterExpenses.filter(row => {
-          const columnMatch = filters.column
-            ? row[filters.column].toString().toLowerCase().includes(filters.value.toLowerCase())
-            : true;
-          const dateMatch = filters.fromDate && filters.toDate
-            ? dayjs(new Date(row.date_paid)).isBetween(filters.fromDate, filters.toDate, null, '[]')
-            : true;
-          return columnMatch && dateMatch;
-        });
-        setFilteredData(newFilteredData);
-     };
 
     return(
         <Box
@@ -205,6 +198,7 @@ export default function ListPromoterExpense(){
        
             //     return false;
             // }}
+            layoutMode='grid-no-grow'
             enableRowSelection
             enableFullScreenToggle={false}
             getRowId={(row) => row.project_promoter_expense_id} //give each row a more useful id
@@ -212,7 +206,7 @@ export default function ListPromoterExpense(){
             initialState={{
                 density: 'compact',
                 isLoading: loading.table,
-                //columnPinning: { left: ['mrt-row-select','pe_number', 'supplier_name', 'status'] }
+                columnPinning: { left: ['mrt-row-select','STATUS', 'project_name', 'fullname'] }
             }}
             state={{
                 rowSelection: rowSelection,
@@ -281,13 +275,34 @@ export default function ListPromoterExpense(){
             }}
             renderTopToolbarCustomActions={() => (
                 <Stack direction="row" spacing={2} sx={{paddingTop: 1, paddingLeft: 1, paddingRight: 1}}>
+                    <FormControl
+                      size="small"
+                      sx={{minWidth: 200}}
+                    >
+                      <InputLabel>Search By</InputLabel>
+                        <Select
+                        value={selectedPromoter.field_name}
+                        label="Search By"
+                        onChange={(event) => {
+                            setSelectedPromoter({field_name: event.target.value, id: -1, keyword: ''})
+                            ListPromoterExpenses(event.target.value, -1)
+                        }}
+                        >
+                            <MenuItem value="fullname">
+                                PROMOTER
+                            </MenuItem>
+                            <MenuItem value="project_name">
+                                PROJECT
+                            </MenuItem>
+                    </Select>
+                  </FormControl>
                     <Autocomplete
                         freeSolo
                         selectOnFocus
                         clearOnBlur
                         handleHomeEndKeys
                         options={promoters.map((option, index) => ({
-                            label: option.fullname,
+                            label: option.keyword,
                             value: index,
                             subRows: option.subRows
                         }))}
@@ -296,19 +311,19 @@ export default function ListPromoterExpense(){
                             if (newValue) {
                                 setPromoterExpenses(newValue.subRows);
                                 setFilteredData(newValue.subRows);
-                                setSelectedPromoter({id: newValue.value, fullname: newValue.label })
+                                setSelectedPromoter({...selectedPromoter, id: newValue.value, keyword: newValue.label })
                             }
         
                         }}
                         onInputChange={(event, newInputValue) => {
                             if (newInputValue === '') {
-                                setSelectedPromoter({ id: '', fullname: '' }); // Reset to empty
+                                setSelectedPromoter({...selectedPromoter, id: -1, keyword: '' }); // Reset to empty
                             }
                         }}
                         value={
-                            selectedPromoter.fullname
+                            selectedPromoter.keyword
                             ? {
-                                label: selectedPromoter.fullname,
+                                label: selectedPromoter.keyword,
                                 value: selectedPromoter.id,
                             }
                             : null
@@ -318,18 +333,12 @@ export default function ListPromoterExpense(){
                             {...params}
                             fullWidth
                             size="small"
+                            label="Search Keyword..."
                         />
                         )}
-                        sx={{minWidth: 520}}
+                        sx={{minWidth: 420}}
                         fullWidth
                     />
-                    {/* {active.label && <SupplierExpenseColumnFilter 
-                    columns={
-                        columns.filter((column)=> column.accessorKey==='invoice_number'
-                        || column.accessorKey==='project_name')
-                    } 
-                    onFilter={handleFilter}
-                    />} */}
                 </Stack>
                 )}
             muiToolbarAlertBannerProps={{
@@ -346,6 +355,7 @@ export default function ListPromoterExpense(){
                 ),
             }}
             columns={columns} data={filteredData} />   
+
             <Dialog open={voidDialog.open} content={
                 <Stack direction="column" spacing={2}>
                     <Typography variant="subtitle1">VOID PAYMENT</Typography>

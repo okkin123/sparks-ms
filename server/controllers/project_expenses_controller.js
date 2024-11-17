@@ -648,7 +648,8 @@ insert_promoter_expense: (req, res)=>{
 list_promoter_expense: (req, res)=>{
 
   dbConnection.query(
-      "SELECT fullname FROM vw_project_promoter_expenses GROUP BY fullname ORDER BY fullname",
+      "SELECT * FROM vw_project_promoter_expenses GROUP BY ??",
+      [req.body.field_name],
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -662,8 +663,8 @@ list_promoter_expense: (req, res)=>{
     
           data.forEach((item, index) => {
               dbConnection.query(
-                "SELECT * FROM vw_project_promoter_expenses WHERE fullname=? ORDER BY project_promoter_expense_id",
-                [item.fullname],
+                "SELECT STATUS, project_name, fullname, location, CONCAT(DATE_FORMAT(date_from, '%Y-%m-%d'), ' to ', DATE_FORMAT(date_to, '%Y-%m-%d')) AS work_period, rate, unit, currency, created_by FROM vw_project_promoter_expenses WHERE ??=? ORDER BY project_promoter_expense_id DESC",
+                [req.body.field_name, item[req.body.field_name]],
                 function(err1, data1, fields1) {
                   if (err1) {
                     res.send({
