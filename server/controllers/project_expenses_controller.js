@@ -156,8 +156,8 @@ module.exports = {
                 }else {
                   res.send({
                     status: "SUCCESS",
-                    //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
-                    file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
+                    file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
+                    //file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
                     user_id: req.user.user_id,
                     project_supplier_expense_details: data,
                     project_supplier_payment_details: data1,
@@ -205,7 +205,7 @@ module.exports = {
   },
   get_supplier_payments: (req, res)=>{
     dbConnection.query(
-      "SELECT supplier_name, SUM(amount) as total_amount, currency FROM vw_project_supplier_expense_payments GROUP BY supplier_name, currency",
+      "SELECT supplier_name, SUM(amount) as total_amount FROM vw_project_supplier_expense_payments GROUP BY supplier_name",
       function(err, data, fields) {
         if (err) {
           res.send({
@@ -217,8 +217,8 @@ module.exports = {
     
           data.forEach((item, index) => {
             dbConnection.query(
-              "SELECT project_supplier_expense_id, supplier_name, pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, processed_by, status, voided_by, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments WHERE supplier_name=? AND currency=? ORDER BY date_paid DESC",
-              [item.supplier_name, item.currency],
+              "SELECT project_supplier_expense_id, supplier_name, pe_number, invoice_number, project_name, mode_of_payment, date_paid, cheque_no, reference_no, amount, currency, processed_by, status, voided_by, supporting_doc_name, supporting_doc_path, reporting_to FROM vw_project_supplier_expense_payments WHERE supplier_name=? ORDER BY date_paid DESC",
+              [item.supplier_name],
               function(err1, data1, fields1) {
                 if (err1) {
                   res.send({

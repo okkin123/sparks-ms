@@ -24,6 +24,14 @@ const columns=[
         width: 'fit-content'
     },
     {
+        accessorKey: 'created_by',
+        header: 'CREATED BY',
+        width: 'fit-content',
+        Cell: ({renderedCellValue})=>(
+            <Chip size="small" label={renderedCellValue} />
+        )
+    },
+    {
         accessorKey: 'fullname',
         header: 'FULLNAME',
         width: 'fit-content'
@@ -62,14 +70,7 @@ const columns=[
         header: 'CURRENCY',
         width: 'fit-content'
     },
-    {
-        accessorKey: 'created_by',
-        header: 'CREATED BY',
-        width: 'fit-content',
-        Cell: ({renderedCellValue})=>(
-            <Chip size="small" label={renderedCellValue} />
-        )
-    },
+
     
 ];
 
@@ -198,7 +199,6 @@ export default function ListPromoterExpense(){
        
             //     return false;
             // }}
-            layoutMode='grid-no-grow'
             enableRowSelection
             enableFullScreenToggle={false}
             getRowId={(row) => row.project_promoter_expense_id} //give each row a more useful id
@@ -206,7 +206,7 @@ export default function ListPromoterExpense(){
             initialState={{
                 density: 'compact',
                 isLoading: loading.table,
-                columnPinning: { left: ['mrt-row-select','STATUS', 'project_name', 'fullname'] }
+                columnPinning: { left: ['mrt-row-select','STATUS', 'project_name', 'created_by', 'fullname'] }
             }}
             state={{
                 rowSelection: rowSelection,
@@ -344,12 +344,17 @@ export default function ListPromoterExpense(){
             muiToolbarAlertBannerProps={{
                 sx: {
                 position: 'absolute', left: 0, top: 0, transform: 'translateY(0)', padding: 0,
-                backgroundColor: '#FFEBEE'
                 },
                 children: (
                 <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="contained" size="small" color="secondary">
+                        Initiate Payment 
+                    </Button>
+                    <Button variant="contained" size="small" color="success" onClick={()=>setVoidDialog({...voidDialog, open: true})}>
+                        Edit 
+                    </Button>
                     <Button variant="contained" size="small" color="error" onClick={()=>setVoidDialog({...voidDialog, open: true})}>
-                        VOID PAYMENT
+                        Delete 
                     </Button>
                 </Box>
                 ),

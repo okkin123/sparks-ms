@@ -133,6 +133,11 @@ const columns=[
           />)
     },
     {
+        accessorKey: 'currency',
+        header: 'CURRENCY',
+        size: 'fit-content',
+    },
+    {
         accessorKey: 'processed_by',
         header: 'PROCESSED BY',
         size: 'fit-content',
@@ -195,7 +200,6 @@ export default function ListSupplierExpensePayments(){
             if(result.data.status === 'SUCCESS'){
                 const fetchedSupplierPayments = result.data.supplier_payments.map((element) => ({
                     supplier_name: element.supplier_name,
-                    currency: element.currency,
                     subRows: element.details,
                     user_id: result.data.user_id
                   })); 
@@ -360,7 +364,7 @@ export default function ListSupplierExpensePayments(){
                     <Stack direction="row" spacing={2} alignItems="center">
                         {
                             supplierPayments.map((supplierPayment, index)=>(
-                                <Chip key={index} color={active.label === supplierPayment.supplier_name+''+supplierPayment.currency ? "primary" : "default"} size="small" label={supplierPayment.supplier_name+' - '+supplierPayment.currency} 
+                                <Chip key={index} color={active.label === supplierPayment.supplier_name ? "primary" : "default"} size="small" label={supplierPayment.supplier_name} 
                                 onClick={()=>{setPaymentDetails(supplierPayment.subRows)
                                     setFilteredData(supplierPayment.subRows);
                                     setActive({id: index, label: supplierPayment.supplier_name+''+supplierPayment.currency})
