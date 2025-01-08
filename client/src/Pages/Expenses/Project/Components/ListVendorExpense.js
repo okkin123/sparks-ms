@@ -700,9 +700,6 @@ export default function ListVendorExpense(){
                           <TableHead>
                             <TableCell>SELECT</TableCell>
                             {row.original.user_reporting_to === null && row.original.status==="VERIFIED" ? <TableCell>CREATED BY</TableCell> : null}
-                            <TableCell>DATE</TableCell>
-                            <TableCell>VENDOR NAME</TableCell>
-                            <TableCell>LOCATION</TableCell>
                             <TableCell>DESCRIPTION</TableCell>
                             <TableCell>AMOUNT w/o VAT</TableCell>
                             <TableCell>VAT AMOUNT</TableCell>
@@ -720,9 +717,7 @@ export default function ListVendorExpense(){
                                       />
                                   )}</TableCell>
                                       {row.original.user_reporting_to === null && subRow.is_verified===1 ?<TableCell><Chip color="secondary" label={subRow.created_by_email} size="small" /></TableCell> : null}
-                                      <TableCell>{dayjs(new Date(subRow.date)).format('DD-MMM-YYYY')}</TableCell>
-                                      <TableCell>{subRow.vendor_name}</TableCell>
-                                      <TableCell>{subRow.location}</TableCell>
+                             
                                       <TableCell>{subRow.description}</TableCell>
                                       <TableCell>
                                           <NumericFormat
@@ -823,8 +818,7 @@ export default function ListVendorExpense(){
                   <VendorExpenseColumnFilter 
                   columns={
                       columns.filter((column)=>column.accessorKey==='invoice_number' 
-                      || column.accessorKey==='project_name' 
-                      || column.accessorKey==='vendor_name')
+                      || column.accessorKey==='project_name')
                   } 
                   onFilterChange={handleFilterChange}
                   />

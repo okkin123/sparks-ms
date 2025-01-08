@@ -318,7 +318,7 @@ module.exports = {
                     })
                     res.send({
                         status: "SUCCESS",
-                        message: "Quotation #: " + values.invoice_number + " has been "+ values.status.toLowerCase() +" !"
+                        message: "Invoices #: " + values.invoice_number + " has been "+ values.status.toLowerCase() +" !"
                     });
                 }
             }

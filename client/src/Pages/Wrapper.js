@@ -473,7 +473,7 @@ useEffect(()=>{
               <ListItemButton
                 selected={component.aenew.selected}
                 onClick={() => {
-                  handleSelect('aenew', <AENew />);
+                  handleSelect('aenew', <AENew mode="NEW" />);
                 }}
                 sx={{ pl: 8 }}
               >

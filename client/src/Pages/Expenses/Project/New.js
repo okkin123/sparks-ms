@@ -2,7 +2,6 @@ import {Grid, Box, AppBar, Divider,Tabs, Tab, Toolbar, Paper, Typography} from '
 import React, {useState} from 'react';
 import NewSupplierExpense from './Components/NewSupplierExpense';
 import NewVendorExpense from './Components/NewVendorExpense';
-import NewPromoterExpense from './Components/NewPromoterExpense';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -52,7 +51,6 @@ export default function New(){
                   textColor='inherit'>
                       <Tab label="Supplier" />
                       <Tab label="Vendor" />
-                      <Tab label="Promoter" />
                   </Tabs>
               </AppBar>
               </Grid>
@@ -63,9 +61,6 @@ export default function New(){
               </TabPanel>
               <TabPanel value={tabValue} index={1}>
                 <NewVendorExpense mode="NEW" />
-              </TabPanel>
-              <TabPanel value={tabValue} index={2}>
-                <NewPromoterExpense mode="NEW" />
               </TabPanel>
             
             </Grid>

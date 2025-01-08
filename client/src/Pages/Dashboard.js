@@ -1,12 +1,12 @@
 import React from "react";
 import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
 
 export default function Dashboard() {
   return (
     <React.Fragment>
       <Toolbar />
-      <Typography variant="subtitle1">Welcome to Dashboard</Typography>
+      <Alert severity="info">Dashboard page is under maintenance... Coming Soon!</Alert>
     </React.Fragment>
   );
 }

@@ -223,78 +223,16 @@ export default function List(){
           </Grid>
 
           <Grid item>
-        <Stack
-        direction="column"
-        ref={stackRef}
-        sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
-        >
-            <CustomColumnFilter 
-            columns={
-                columns.filter((column)=>column.accessorKey==='ref_invoice_number' 
-                || column.accessorKey==='project_name' 
-                || column.accessorKey==='vendor_name')
-            } 
-            onFilterChange={handleFilterChange}
-            total_amount_wo_vat={total_amount_wo_vat}
-            total_vat_amount={total_vat_amount}
-            total_amount_with_vat={total_amount_with_vat}
-            />
+            <Stack
+            direction="column"
+            ref={stackRef}
+            sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw' }}
+            >
            <Box sx={{
                 width: boxWidth,
                 overflowX: 'auto',
             }}>
-            <MaterialReactTable
-            columns={columns}
-            data={filteredData}
-            enableColumnFilters={false}
-            enableColumnActions={false}
-            enableDensityToggle={false}
-            enableHiding={false}
-            enableGlobalFilter={false}
-            enableRowSelection={true}
-            enableFullScreenToggle={false}
-            getRowId={(row) => row.admin_expense_id} //give each row a more useful id
-            onRowSelectionChange={setRowSelection} //connect internal row selection state to your own
-            
-            initialState={{
-                density: 'compact',
-                isLoading: loading,
-                columnPinning: { left: ['mrt-row-select']}
-            }}
-            state={{
-                rowSelection: rowSelection,
-                isLoading: loading
-            }}
-            muiTableHeadCellProps={{
-                sx: {
-                backgroundColor: theme.palette.primary.main,
-                color: 'white'
-                }
-            }}
-            muiPaginationProps={{
-                rowsPerPageOptions: [10, 20],
-                variant: 'outlined',
-            }}
-            paginationDisplayMode='pages'
-            muiToolbarAlertBannerProps={{
-                    sx: {
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    },
-                    children: (
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="outlined" size="small" color="success" onClick={handleEditSelectedRows}>
-                            EDIT SELECTED ROWS
-                        </Button>
-                        <LoadingButton variant="outlined" size="small" color="error" loading={loading} loadingIndicator="Deleting..." onClick={handleDeleteSelectedRows}>
-                            DELETE SELECTED ROWS
-                        </LoadingButton>
-                    </Box>
-                    ),
-                }}
-             />
+
             </Box>
         </Stack>
         </Grid>

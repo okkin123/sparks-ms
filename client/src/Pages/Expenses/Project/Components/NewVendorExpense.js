@@ -90,11 +90,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     .required('This field is required!'),
     expenses: Yup.array().of(
       Yup.object().shape({
-        date: Yup.date().required('Date is required!'),
-        vendor_name: Yup.string()
-        .required('This field is required!'),
-        location: Yup.string()
-        .required('This field is required!'),
         description: Yup.string()
         .required('This field is required!'),
         amount_without_vat: Yup.string()
@@ -223,8 +218,8 @@ export default function NewVendorExpense(props){
 
     const [invoiceDetails, setInvoiceDetails] = useState([])
     const [vendorDetails, setVendorDetails] = useState({
-        vendor_name: [],
-        location: [],
+        // vendor_name: [],
+        // location: [],
         description: []
       })
     const [loading, setLoading] = useState(false)
@@ -253,9 +248,6 @@ export default function NewVendorExpense(props){
             [
               {
                 is_vat: false,
-                date: "",
-                vendor_name: "",
-                location: "",
                 description: "",
                 amount_without_vat: "",
                 vat_percentage: 0,
@@ -481,7 +473,7 @@ export default function NewVendorExpense(props){
                      checked={expense.is_vat} 
                      color="default" />
                 </StyledTableCell>
-                <StyledTableCell>
+                {/* <StyledTableCell>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker 
                         value={dayjs(expense.date)}
@@ -506,51 +498,6 @@ export default function NewVendorExpense(props){
                             },
                             }} />
                     </LocalizationProvider>
-                </StyledTableCell>
-                <StyledTableCell>
-                    <Autocomplete
-                        freeSolo
-                        selectOnFocus
-                        clearOnBlur={false}
-                        handleHomeEndKeys
-                        onFocus={() => handleGetVendorDetails('vendor_name')}
-                        options={vendorDetails.vendor_name.map((option) => option)}
-                        value={expense.vendor_name}
-                        onChange={(event, value) => {
-                        const updatedExpenses = [...formik_vendor_expense.values.expenses];
-                        updatedExpenses[index] = {
-                            ...updatedExpenses[index],
-                            vendor_name: value,
-                        };
-                        formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-                        }}
-                        renderInput={(params) => (
-                        <CustomInput
-                            {...params}
-                            name={`expenses[${index}].vendor_name`}
-                            fullWidth
-                            size="small"
-                            value={expense.vendor_name}
-                            onChange={(event) => handleChange(index, event)}
-                            sx={{ width: '100%' }}
-                            helperText={
-                                formik_vendor_expense.touched.expenses?.[index]?.vendor_name && formik_vendor_expense.errors.expenses?.[index]?.vendor_name
-                            }
-                            error={Boolean(formik_vendor_expense.errors.expenses?.[index]?.vendor_name)}
-                        />
-                        )}
-                        sx={{ width: '100%' }}
-                        componentsProps={{
-                        paper: {
-                            sx: {
-                            '& .MuiAutocomplete-listbox': {
-                                fontSize: 13,
-                            },
-                            },
-                        },
-                        }}
-                        fullWidth
-                    />
                 </StyledTableCell>
                 <StyledTableCell>
                     <Autocomplete
@@ -597,7 +544,7 @@ export default function NewVendorExpense(props){
                         }}
                         fullWidth
                     />
-                </StyledTableCell>
+                </StyledTableCell> */}
                 <StyledTableCell align="left">
                 <Autocomplete
                         freeSolo
@@ -826,10 +773,10 @@ export default function NewVendorExpense(props){
                                         }}
                                         checked={formik_vendor_expense.values.expenses.every((expense)=> expense.is_vat ? true : false)}
                             />} label="VAT" labelPlacement="top" /></StyledTableCell>
-                            <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
+                            {/* <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "15%"}}>VENDOR NAME</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: "15%"}}>LOCATION</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: "20%"}}>DESCRIPTION</StyledTableCell>
+                            <StyledTableCell align="left" sx={{width: "15%"}}>LOCATION</StyledTableCell> */}
+                            <StyledTableCell align="left" sx={{width: "30%"}}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">AMOUNT {`(${formik_vendor_expense.values.currency})`}</StyledTableCell>
                             <StyledTableCell align="center">VAT {`(${formik_vendor_expense.values.vat_percentage}%)`}</StyledTableCell>
                             <StyledTableCell align="center">TOTAL AMOUNT {`(${formik_vendor_expense.values.currency})`}</StyledTableCell>
@@ -841,7 +788,7 @@ export default function NewVendorExpense(props){
                     </TableBody>
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1}}>
-                            <StyledTableCell colSpan={props.mode !== 'EDIT' ? 7 : 6} align="right">GRAND TOTAL:</StyledTableCell>
+                            <StyledTableCell colSpan={props.mode !== 'EDIT' ? 4 : 2} align="right">GRAND TOTAL:</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>

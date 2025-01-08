@@ -1,4 +1,4 @@
-import {Autocomplete, Divider, AppBar, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton, Checkbox, FormControlLabel} from '@mui/material';
+import {Autocomplete, Divider, AppBar, FormControl, FormHelperText, Grid, InputLabel, MenuItem, Select, Stack, TextField, Toolbar, Typography, Alert, Collapse, IconButton} from '@mui/material';
 import React, {useState, useEffect} from 'react';
 import PdfViewer from '../../../../Components/PdfViewer';
 import FileUpload from '../../../../Components/FileUpload';
@@ -14,7 +14,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import LoadingButton from '@mui/lab/LoadingButton';
 
-import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 
 const ProjectExpenseSchema = Yup.object().shape({
@@ -30,25 +29,9 @@ const ProjectExpenseSchema = Yup.object().shape({
   .required('This field is required!'),
   amount_without_vat: Yup.string()
     .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
-    .required('This field is required!'),
-  bank_name: Yup.string()
-  .required('This field is required!'),
-  account_number: Yup.string()
-    .matches(/^\d+$/, 'Only whole numbers are allowed!')
-    .required('This field is required!'),
-  iban: Yup.string()
-    .required('This field is required!'),
-  mobile_no: Yup.string()
-    .matches(/^\d+$/, 'Only whole numbers are allowed')
-    .min(10, 'Mobile number must be at least 10 digits')
-    .required('This field is required!'),
-  email_address: Yup.string()
-    .email("Invalid email")
-    .required("This field is required!"),
-  trn_no: Yup.number()
-    .integer('Only whole numbers are allowed')
-    .required('This field is required!'),
+    .required('This field is required!')
 });
+
 
 
 export default function NewSupplierExpense(){
@@ -56,23 +39,13 @@ export default function NewSupplierExpense(){
     const [loading, setLoading] = useState(false);
     const [supplierDetails, setSupplierDetails] = useState([]);
     const [invoiceDetails, setInvoiceDetails] = useState([])
-
+    const [vatPrices, setVatPrices] = useState([])
     const [response, setResponse] = useState({
       open: false,
       severity: "",
       message: ""
     })
-    const [isEditing, setIsEditing] = useState(false)
     const [fileAlert, setFileAlert] = useState(false)
-    const [previousValue, setPreviousValue] = useState({
-      mobile_no: "",
-      email_address: "",
-      trn_no: "",
-      bank_name: "",
-      account_name: "",
-      account_number: "",
-      iban: ""
-    })
   
 
     const handleFileUpload = (file) => {
@@ -84,13 +57,18 @@ export default function NewSupplierExpense(){
       };
 
     useEffect(()=>{
-      AxiosInstance.get("/preferences/currency")
+      AxiosInstance.get("/preferences/vat_pricing")
       .then(function(result){
-           formik_project_expense.setFieldValue('currency', result.data.currency);
+        setVatPrices((vatPrices)=>{
+          return result.data.vat_pricing.map((element)=>({
+            currency: element.currency,
+            vat_percentage: element.vat_percentage
+          }))
+        });
       })
       .catch(function(error){
         console.log(error)
-      }) 
+      })
 
       // eslint-disable-next-line  
     }, [])
@@ -109,14 +87,6 @@ export default function NewSupplierExpense(){
         amount_with_vat: "",
         vat_percentage: 0,
         currency: "",
-        bank_name: "",
-        account_name: "",
-        set_account_name: false,
-        account_number: "",
-        iban: "",
-        mobile_no: "",
-        email_address: "",
-        trn_no: ""
       },
       validateOnChange: false,
       validationSchema: ProjectExpenseSchema,
@@ -181,14 +151,7 @@ export default function NewSupplierExpense(){
           if(result.data.status === 'SUCCESS'){
             setSupplierDetails((supplierDetails)=>[
               ...result.data.suppliers.map(element => ({
-                supplier_name: element.supplier_name,
-                bank_name: element.bank_name,
-                account_name: element.account_name,
-                account_number: element.account_number,
-                iban: element.iban,
-                mobile_no: element.mobile_no,
-                email_address: element.email_address,
-                trn_no: element.trn_no
+                supplier_name: element.supplier_name
               }))
             ])
   
@@ -241,14 +204,6 @@ export default function NewSupplierExpense(){
         amount_with_vat: "",
         vat_percentage: "",
         currency: formik_project_expense.values.currency,
-        bank_name: "",
-        account_name: "",
-        set_account_name: false,
-        account_number: "",
-        iban: "",
-        mobile_no: "",
-        email_address: "",
-        trn_no: ""
       })
       setFile(null);
       setFileAlert(false)
@@ -339,6 +294,61 @@ export default function NewSupplierExpense(){
                                 )}
                                 fullWidth
                                 />
+                                                      <Autocomplete
+                                freeSolo
+                                selectOnFocus
+                                clearOnBlur
+                                handleHomeEndKeys
+                                onFocus={() => handleGetSupplierDetails()}
+                                options={supplierDetails.map((option) => ({
+                                label: option.supplier_name,
+                                value: option.supplier_name
+                                }))}
+                                value={formik_project_expense.values.supplier_name}
+                                onChange={(event, newValue) => {
+                                if (newValue) {
+                                    formik_project_expense.setFieldValue('supplier_name', newValue.value);
+                                } 
+                                }}
+                                renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Supplier Name"
+                                    name="supplier_name"
+                                    value={formik_project_expense.values.supplier_name}
+                                    onChange={(event)=>{
+                                        formik_project_expense.setFieldValue('supplier_name', event.target.value)
+                                        
+                                    }}
+                                    fullWidth
+                                    size="small"
+                                    error={
+                                    formik_project_expense.touched.supplier_name && Boolean(formik_project_expense.errors.supplier_name)
+                                    }
+                                    helperText={
+                                    formik_project_expense.touched.supplier_name && formik_project_expense.errors.supplier_name
+                                    }
+                                />
+                                )}
+                                fullWidth
+                            />
+ 
+                           <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker 
+                            value={dayjs(formik_project_expense.values.date_issued)}
+                            onChange={(value)=>formik_project_expense.setFieldValue('date_issued', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                            slotProps={{
+                                textField: {
+                                    label: 'Date Issued',
+                                    variant: 'outlined',
+                                    name: 'date_issued',
+                                    size: 'small', 
+                                    fullWidth: true,
+                                    error: Boolean(formik_project_expense.errors.date_issued),
+                                    helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
+                                },
+                                }} />
+                            </LocalizationProvider>
                             <Stack direction="row" spacing={2}>
                             <FormControl
                                 fullWidth
@@ -362,22 +372,43 @@ export default function NewSupplierExpense(){
                                 {formik_project_expense.touched.is_vat && formik_project_expense.errors.is_vat}
                                 </FormHelperText>
                             </FormControl>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker 
-                            value={dayjs(formik_project_expense.values.date_issued)}
-                            onChange={(value)=>formik_project_expense.setFieldValue('date_issued', dayjs(new Date(value)).format('YYYY-MM-DD'))}
-                            slotProps={{
-                                textField: {
-                                    label: 'Date Issued',
-                                    variant: 'outlined',
-                                    name: 'date_issued',
-                                    size: 'small', 
-                                    fullWidth: true,
-                                    error: Boolean(formik_project_expense.errors.date_issued),
-                                    helperText:formik_project_expense.touched.date_issued && formik_project_expense.errors.date_issued
-                                },
-                                }} />
-                            </LocalizationProvider>
+                            <FormControl
+                              size="small"
+                              error={formik_project_expense.touched.currency && Boolean(formik_project_expense.errors.currency)}
+                              fullWidth
+                            >
+                              <InputLabel>Currency</InputLabel>
+                                <Select
+                                name="currency"
+                                value={formik_project_expense.values.currency}
+                                label="Currency"
+                                onChange={(event) => {
+                                    const selectedCurrency= event.target.value;
+                                    formik_project_expense.setFieldValue('currency', selectedCurrency);
+                                
+                                    
+                                    const selectedElement = vatPrices.find(element => element.currency === selectedCurrency);
+                                
+                                    if (selectedElement) {
+                                    const vatPercentage = selectedElement.vat_percentage;
+                                    const amount_without_vat = +formik_project_expense.values.amount_without_vat || 0;
+                                    formik_project_expense.setFieldValue('vat_percentage', parseFloat(vatPercentage));
+                                    formik_project_expense.setFieldValue('vat_amount', (amount_without_vat * (parseFloat(vatPercentage) / 100)).toFixed(2))
+                                    formik_project_expense.setFieldValue('amount_with_vat', (amount_without_vat + (amount_without_vat * (parseFloat(vatPercentage) / 100))).toFixed(2) )
+                                    } 
+                                }}
+                                
+                                >
+                                {vatPrices.map((element, index) => (
+                                    <MenuItem key={index} value={element.currency}>
+                                    {element.currency}
+                                    </MenuItem>
+                                ))}
+                                </Select>
+                              <FormHelperText>
+                              {formik_project_expense.touched.currency && formik_project_expense.errors.currency}
+                              </FormHelperText>
+                          </FormControl>
                             </Stack>
                             <Stack direction="row" spacing={2}>
                             <TextField variant='outlined' label="Invoice Number"
@@ -442,215 +473,8 @@ export default function NewSupplierExpense(){
                                 </Stack>
                                 ) : null } 
 
-                            <Autocomplete
-                                freeSolo
-                                selectOnFocus
-                                clearOnBlur
-                                handleHomeEndKeys
-                                onFocus={() => handleGetSupplierDetails()}
-                                options={supplierDetails.map((option) => ({
-                                label: option.supplier_name,
-                                value: option.supplier_name,
-                                bank_name: option.bank_name,
-                                account_name: option.account_name,
-                                account_number: option.account_number,
-                                iban: option.iban,
-                                mobile_no: option.mobile_no,
-                                email_address: option.email_address,
-                                trn_no: option.trn_no
-                                }))}
-                                value={formik_project_expense.values.supplier_name}
-                                onChange={(event, newValue) => {
 
-                                    //formik_project_expense.setFieldValue('account_name', );
-                    
 
-                                if (newValue) {
-                                    formik_project_expense.setFieldValue('mobile_no', newValue.mobile_no);
-                                    formik_project_expense.setFieldValue('email_address', newValue.email_address);
-                                    formik_project_expense.setFieldValue('trn_no', newValue.trn_no);
-                                    formik_project_expense.setFieldValue('supplier_name', newValue.value);
-                                    formik_project_expense.setFieldValue('bank_name', newValue.bank_name);
-                                    formik_project_expense.setFieldValue('account_name', newValue.account_name);
-                                    formik_project_expense.setFieldValue('account_number', newValue.account_number);
-                                    formik_project_expense.setFieldValue('iban', newValue.iban);
-
-                                    
-                                    setPreviousValue({
-                                    mobile_no: newValue.mobile_no,
-                                    email_address: newValue.email_address,
-                                    trn_no: newValue.trn_no,
-                                    bank_name: newValue.bank_name,
-                                    account_name: newValue.account_name,
-                                    account_number: newValue.account_number,
-                                    iban: newValue.iban
-                                    })
-                                } else {
-                                    formik_project_expense.setFieldValue('mobile_no', '');
-                                    formik_project_expense.setFieldValue('email_address', '');
-                                    formik_project_expense.setFieldValue('trn_no', '');
-                                    formik_project_expense.setFieldValue('supplier_name', '');
-                                    formik_project_expense.setFieldValue('bank_name', '');
-                                    formik_project_expense.setFieldValue('account_name', '');
-                                    formik_project_expense.setFieldValue('account_number', '');
-                                    formik_project_expense.setFieldValue('iban', '');
-                                    setPreviousValue({
-                                    mobile_no: "",
-                                    email_address: "",
-                                    trn_no: "",
-                                    bank_name: "",
-                                    account_name: "",
-                                    account_number: "",
-                                    iban: ""
-                                    })
-                                }
-                                }}
-                                renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Supplier Name"
-                                    name="supplier_name"
-                                    value={formik_project_expense.values.supplier_name}
-                                    onChange={(event)=>{
-                                        formik_project_expense.setFieldValue('supplier_name', event.target.value)
-                                    
-                                        if(formik_project_expense.values.set_account_name){
-                                            formik_project_expense.setFieldValue('account_name', event.target.value)
-                                        }
-                                        
-                                    }}
-                                    fullWidth
-                                    size="small"
-                                    error={
-                                    formik_project_expense.touched.supplier_name && Boolean(formik_project_expense.errors.supplier_name)
-                                    }
-                                    helperText={
-                                    formik_project_expense.touched.supplier_name && formik_project_expense.errors.supplier_name
-                                    }
-                                />
-                                )}
-                                fullWidth
-                            />
-                            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="body2">Details:</Typography>
-                            <Stack direction="row" spacing={1}>
-                            <IconButton size="small" color="primary" onClick={()=>{
-                                    formik_project_expense.setFieldValue('bank_name', previousValue.bank_name)
-                                    formik_project_expense.setFieldValue('account_number', previousValue.account_number)
-                                    formik_project_expense.setFieldValue('iban', previousValue.iban)
-                                    setIsEditing(false)
-                            }} sx={{display: isEditing ? 'block':'none'}}>
-                                <CloseIcon />
-                            </IconButton> 
-                            <IconButton size="small" color="success" onClick={()=>setIsEditing(true)} sx={{display: supplierExists(formik_project_expense.values.supplier_name) && !isEditing ? 'block':'none'}}>
-                                <EditIcon />
-                            </IconButton>
-                            </Stack>
-
-                            </Stack>
-                            <TextField label="Mobile No." size="small" variant="outlined" name="mobile_no" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.mobile_no} 
-                            error={
-                            formik_project_expense.touched.mobile_no && Boolean(formik_project_expense.errors.mobile_no)
-                            }
-                            helperText={
-                            formik_project_expense.touched.mobile_no && formik_project_expense.errors.mobile_no
-                            } 
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}
-                            />  
-                            <TextField label="Email Address" size="small" variant="outlined" name="email_address" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.email_address} 
-                            error={
-                            formik_project_expense.touched.email_address && Boolean(formik_project_expense.errors.email_address)
-                            }
-                            helperText={
-                            formik_project_expense.touched.email_address && formik_project_expense.errors.email_address
-                            } 
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}
-                            />  
-
-                            <TextField label="TRN No." size="small" variant="outlined" name="trn_no" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.trn_no} 
-                            error={
-                            formik_project_expense.touched.trn_no && Boolean(formik_project_expense.errors.trn_no)
-                            }
-                            helperText={
-                            formik_project_expense.touched.trn_no && formik_project_expense.errors.trn_no
-                            } 
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}
-                            /> 
-
-                            <TextField label="Bank Name" size="small" variant="outlined" name="bank_name" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.bank_name} 
-                            error={
-                            formik_project_expense.touched.bank_name && Boolean(formik_project_expense.errors.bank_name)
-                            }
-                            helperText={
-                            formik_project_expense.touched.bank_name && formik_project_expense.errors.bank_name
-                            } 
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}
-                            />  
-                            <Stack direction="column">
-                            <TextField label="Account Name." size="small" variant="outlined" name="account_name" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.account_name} 
-                            error={
-                            formik_project_expense.touched.account_name && Boolean(formik_project_expense.errors.account_name)
-                            }
-                            helperText={
-                            formik_project_expense.touched.account_name && formik_project_expense.errors.account_name
-                            }
-                            InputProps={{
-                            readOnly: (supplierExists(formik_project_expense.values.supplier_name) && !isEditing) ||formik_project_expense.values.set_account_name,
-                            }}
-                            />  
-                            <FormControlLabel control={<Checkbox name="set_account_name" size="small"
-                            checked={formik_project_expense.values.set_account_name} 
-                            inputProps={{
-                            disabled: supplierExists(formik_project_expense.values.supplier_name) && !isEditing
-                            }}
-                            onChange={(event)=>{
-                            
-                            formik_project_expense.setFieldValue('set_account_name', event.target.checked)
-                            if(event.target.checked === true){
-                                formik_project_expense.setFieldValue('account_name', formik_project_expense.values.supplier_name)
-                            }else{
-                                formik_project_expense.setFieldValue('account_name', '')
-                            }
-                            
-                            }}  />} label="Set as the same as supplier name." />
-                            </Stack>
-                            <TextField label="Account No." size="small" variant="outlined" name="account_number" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.account_number} 
-                            error={
-                            formik_project_expense.touched.account_number && Boolean(formik_project_expense.errors.account_number)
-                            }
-                            helperText={
-                            formik_project_expense.touched.account_number && formik_project_expense.errors.account_number
-                            }
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}
-                            />  
-                            <TextField label="IBAN" size="small" variant="outlined" name="iban" fullWidth 
-                            onChange={formik_project_expense.handleChange} value={formik_project_expense.values.iban} 
-                            error={
-                            formik_project_expense.touched.iban && Boolean(formik_project_expense.errors.iban)
-                            }
-                            helperText={
-                            formik_project_expense.touched.iban && formik_project_expense.errors.iban
-                            }
-                            InputProps={{
-                            readOnly: supplierExists(formik_project_expense.values.supplier_name) && !isEditing,
-                            }}  
-                            />  
                         
                             </React.Fragment>: null }
                       </Stack>

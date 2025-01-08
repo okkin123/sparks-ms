@@ -59,35 +59,27 @@ module.exports = {
               callback
           );
       };
-      
+    
       const checkSupplier = (callback) => {
-          dbConnection.query(
-              "SELECT * FROM tbl_suppliers WHERE supplier_name=?",
-              [values.supplier_name],
-              callback
-          );
-      };
-      
+        dbConnection.query(
+            "SELECT * FROM tbl_suppliers WHERE supplier_name=?",
+            [values.supplier_name],
+            callback
+        );
+    };
+
       const insertSupplier = () => {
           dbConnection.query(
-              "INSERT INTO tbl_suppliers(supplier_name, bank_name, account_name, account_number, iban, mobile_no, email_address, trn_no) VALUES(?,?,?,?,?,?,?,?)",
-              [values.supplier_name, values.bank_name, values.account_name, values.account_number, values.iban, values.mobile_no, values.email_address, values.trn_no],
+              "INSERT INTO tbl_suppliers(supplier_name) VALUES(?)",
+              [values.supplier_name],
               (err2, data2, fields2) => {
                   if (err2) console.log(err2);
               }
           );
       };
       
-      const updateSupplier = (supplier_id) => {
-          dbConnection.query(
-              "UPDATE tbl_suppliers SET bank_name=?, account_name=?, account_number=?, iban=?, mobile_no=?, email_address=?, trn_no=? WHERE supplier_id=?",
-              [values.bank_name, values.account_name, values.account_number, values.iban, values.mobile_no, values.email_address, values.trn_no, supplier_id],
-              (err4, data4, fields4) => {
-                  if (err4) console.log(err4);
-              }
-          );
-      };
       
+
       insertExpense((err, data, fields) => {
           if (err) {
               res.send({
@@ -95,13 +87,12 @@ module.exports = {
                   message: err.sqlMessage
               });
           } else {
-              checkSupplier((err3, data3, fields3) => {
+               checkSupplier((err3, data3, fields3) => {
                   if (data3.length === 0) {
                       insertSupplier();
-                  } else {
-                      updateSupplier(data3[0].supplier_id);
                   }
               });
+    
               res.send({
                   status: "SUCCESS",
                   message: "New project expense has been added!"
@@ -157,7 +148,8 @@ module.exports = {
                   res.send({
                     status: "SUCCESS",
                     //file_url: `https://reimagined-invention-4rw965xj75ghq599-4000.app.github.dev/supplier_invoices/${data[0].invoice_file_path}`,
-                    file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
+                    //file_url: `https://4000-okkin123-sparksms-em0guxdrsgp.ws-us116.gitpod.io/${data[0].invoice_file_path}`,
+                    file_url: `http://localhost:4000/${data[0].invoice_file_path}`,
                     user_id: req.user.user_id,
                     project_supplier_expense_details: data,
                     project_supplier_payment_details: data1,
@@ -327,9 +319,6 @@ insert_vendor_expense: (req, res)=>{
   const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
   req.body.values.invoice_number,
-  detail.date,
-  detail.vendor_name,
-  detail.location,
   detail.description,
   detail.is_vat,
   detail.vat_percentage,
@@ -340,9 +329,9 @@ insert_vendor_expense: (req, res)=>{
   req.user.user_id
   ]);
 
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?,?,?)').join(',');
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
 
-  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, date, vendor_name, location, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
+  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
     details,
     function(err, data, fields){
       if (err) {
@@ -364,9 +353,6 @@ update_vendor_expense: (req, res)=>{
   const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
     req.body.values.invoice_number,
-    detail.date,
-    detail.vendor_name,
-    detail.location,
     detail.description,
     detail.is_vat,
     detail.vat_percentage,
@@ -377,7 +363,7 @@ update_vendor_expense: (req, res)=>{
     req.user.user_id
   ]);
   
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?,?,?)').join(',');
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
   
   const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
   const id_placeholders = values.map(() => '?').join(',');
@@ -404,7 +390,7 @@ update_vendor_expense: (req, res)=>{
         }
   
         dbConnection.query(
-          `INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, date, vendor_name, location, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
+          `INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
           details,
           function(err2, data2, fields2) {
             if (err2) {
@@ -481,7 +467,7 @@ list_vendor_expense: (req, res)=>{
              
 
               dbConnection.query(
-                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email=? ORDER BY date",
+                "SELECT * FROM vw_project_vendor_expenses WHERE invoice_number=? AND currency=? AND status=? AND created_by_email=?",
                 [item.invoice_number, item.currency, item.status, item.created_by_email],
                 function(err1, data1, fields1) {
                   if (err1) {
@@ -530,9 +516,8 @@ return_vendor_expense: (req, res)=>{
 
   const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
   const id_placeholders = values.map(() => '?').join(',');
-  console.log(id_details)
-  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0 WHERE project_vendor_expense_id IN (${id_placeholders})`,
-    id_details, 
+  dbConnection.query(`UPDATE tbl_project_vendor_expenses SET is_returned=1, is_verified=0, returned_or_verified_by=? WHERE project_vendor_expense_id IN (${id_placeholders})`,
+  [req.user.user_id, ...id_details], 
     function(err, data, fields){
       if(err){
         res.send({
@@ -589,123 +574,6 @@ get_supplier_statement: (req, res)=>{
       }
     }
   )
-},
-get_promoter_details: (req, res)=>{
-
-  dbConnection.query(
-      "SELECT * FROM tbl_project_promoter_expenses GROUP BY ??",
-      [req.body.field_name],
-      function(err, data, fields) {
-        if (err) {
-          res.send({
-            status: "ERROR",
-            message: err.sqlMessage
-          });
-        } else {
-          res.send({
-            status: "SUCCESS",
-            promoter_details: data
-          });
-        }
-      }
-    )
-    
-},
-insert_promoter_expense: (req, res)=>{
-  const values = req.body.values.promoters;
-  const details = values.flatMap(detail => [
-  req.body.values.invoice_number,
-  req.body.values.currency,
-  req.body.values.unit,
-  detail.date_from,
-  detail.date_to,
-  detail.fullname,
-  detail.location,
-  detail.rate,
-  req.user.user_id
-  ]);
-
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
-
-  dbConnection.query(`INSERT INTO tbl_project_promoter_expenses(invoice_number, currency, unit, date_from, date_to, fullname, location, rate, user_id) VALUES ${placeholders}`,
-    details,
-    function(err, data, fields){
-      if (err) {
-        res.send({
-          status: "ERROR",
-          message: err.sqlMessage
-        });
-      } else {
-        res.send({
-          status: "SUCCESS",
-          message: "New promoter expenses for projects are submitted successfuly!"
-        });
-          
-      }
-    }
-  )
-},
-list_promoter_expense: (req, res)=>{
-
-  dbConnection.query(
-      "SELECT * FROM vw_project_promoter_expenses GROUP BY ??",
-      [req.body.field_name],
-      function(err, data, fields) {
-        if (err) {
-          res.send({
-            status: "ERROR",
-            message: err.sqlMessage
-          });
-        } else {
-          if(data.length > 0){
-        
-            let completedQueries = 0;
-    
-          data.forEach((item, index) => {
-              dbConnection.query(
-                "SELECT STATUS, project_name, fullname, location, CONCAT(DATE_FORMAT(date_from, '%Y-%m-%d'), ' to ', DATE_FORMAT(date_to, '%Y-%m-%d')) AS work_period, rate, unit, currency, created_by FROM vw_project_promoter_expenses WHERE ??=? ORDER BY project_promoter_expense_id DESC",
-                [req.body.field_name, item[req.body.field_name]],
-                function(err1, data1, fields1) {
-                  if (err1) {
-                    res.send({
-                      status: "ERROR",
-                      message: err1.sqlMessage
-                    });
-                    return;
-                  } else {
-  
-                    data1.forEach((item1, index1)=>{
-                      data1[index1].selected = false;
-                    })
-  
-                    data[index].details = data1;
-                    completedQueries++;
-      
-                    if (completedQueries === data.length) {
-                      res.send({
-                        status: "SUCCESS",
-                        user_email: req.user.user_email,
-                        user_id: req.user.user_id,
-                        reporting_to: req.user.reporting_to,
-                        promoter_expenses: data
-                      });
-                    }
-                  }
-                }
-              );
-            });
-
-          }else{
-              res.send({
-                status: "SUCCESS",
-                promoter_expenses: []
-              });
-          }
-
-        }
-      }
-    )
-    
 },
 
 }
