@@ -27,5 +27,7 @@ router.route("/get_approval_history").post(controller.get_approval_history);
 router.route("/update_invoice_status").post(middleware.authentication, upload.single('file'), controller.update_invoice_status);
 router.route("/get_invoice_client_details").post(controller.get_invoice_client_details);
 router.route("/download_supporting_doc/:filename").get(controller.download_supporting_doc);
+router.route("/get_clients").get(controller.get_clients);
+router.route("/get_statement").post(controller.get_statement);
 
 module.exports = router;

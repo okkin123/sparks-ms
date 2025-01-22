@@ -20,7 +20,7 @@ import {
   Alert,
   IconButton
 } from "@mui/material";
-import { BarChart, ManageAccounts, SettingsSuggest, ExpandMore, ExpandLess, Add, ViewList, Folder} from "@mui/icons-material";
+import { BarChart, ManageAccounts, SettingsSuggest, ExpandMore, ExpandLess, Add, ViewList, Folder, Article} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -35,6 +35,7 @@ import QEdit from "./Quotations/Edit";
 import InvoiceNew from "./Invoices/New";
 import InvoiceEdit from "./Invoices/Edit";
 import InvoiceList from "./Invoices/List";
+import InvoiceStatement from "./Invoices/Statement";
 import ManageUser from "./ManageUser";
 import Preferences from "./Preferences";
 
@@ -82,6 +83,9 @@ export default function SideMenu() {
       selected: false
     },
     invoice_list: {
+      selected: false,
+    },
+    invoice_statement: {
       selected: false,
     },
     penew: {
@@ -399,6 +403,19 @@ useEffect(()=>{
                     <ViewList />
                   </ListItemIcon>
                   <ListItemText primary="View List" />
+                </ListItemButton>
+                <ListItemButton
+                 selected={component.invoice_statement.selected}
+                 onClick={() => {
+                   handleSelect('invoice_statement', (
+                       <InvoiceStatement />
+                   ))
+                 }}
+                 sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <Article />
+                  </ListItemIcon>
+                  <ListItemText primary="Statement" />
                 </ListItemButton>
               </List>
             </Collapse>

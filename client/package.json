@@ -27,6 +27,7 @@
     "jspdf-autotable": "^3.8.4",
     "material-react-table": "^2.13.1",
     "mui-image": "^1.0.7",
+    "numeral": "^2.0.6",
     "pdfjs-dist": "^3.11.174",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

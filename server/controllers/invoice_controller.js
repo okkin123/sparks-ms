@@ -354,4 +354,42 @@ module.exports = {
           }
         });
     },
+    get_clients: (req, res)=>{
+        dbConnection.query(
+            "SELECT * FROM vw_invoices GROUP BY client_name",
+            function(err, data, fields) {
+              if (err) {
+                res.send({
+                  status: "ERROR",
+                  message: err.sqlMessage
+                });
+              } else {
+                res.send({
+                  status: "SUCCESS",
+                  clients: data
+                });
+              }
+            }
+          )
+          
+    },
+    get_statement: (req, res)=>{
+        dbConnection.query("SELECT * FROM vw_invoice_statement WHERE client_name=? AND (invoice_date BETWEEN ? AND ?) ORDER BY invoice_date",
+          [req.body.client_name, req.body.from_date, req.body.to_date],
+          function(err, data, fields)
+          {
+            if (err) {
+              res.send({
+                status: "ERROR",
+                message: err.sqlMessage
+              });
+            } else {
+              res.send({
+                status: "SUCCESS",
+                client_statement: data
+              });
+            }
+          }
+        )
+      },
 }
