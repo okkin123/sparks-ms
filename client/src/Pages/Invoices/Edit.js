@@ -41,7 +41,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import Dialog from '../../Components/Dialog';
 import AxiosInstance from '../../AxiosInstance';
-
+import NumberFormatCustom from '../../Components/NumberFormatCustom';
 
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -103,6 +103,10 @@ const InvoiceDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     
   });
+
+
+
+  
 export default function Edit(props){
 
     const invoiceNumber = props.invoice_number;
@@ -261,7 +265,8 @@ export default function Edit(props){
         }
         else
         {
-          if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
+          //if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
+          if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance))
           {
             setError({
               open: true,
@@ -322,8 +327,11 @@ export default function Edit(props){
               amount_with_vat: result.data.invoice[0].quotation_cost,
               invoice_amount_with_vat: result.data.invoice[0].amount_with_vat,
               currency: result.data.invoice[0].currency,
-              total_invoice_amount_with_vat: (parseFloat(result.data.invoice[0].total_invoice_amount_with_vat.replace(/,/g, ''))-parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, ''))).toFixed(2),
-              remaining_quotation_balance:  ((parseFloat(result.data.invoice[0].quotation_cost.replace(/,/g, '')) - parseFloat(result.data.invoice[0].total_invoice_amount_with_vat.replace(/,/g, ''))) + parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, ''))).toFixed(2)
+              //total_invoice_amount_with_vat: (parseFloat(result.data.invoice[0].total_invoice_amount_with_vat.replace(/,/g, ''))-parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, ''))).toFixed(2),
+              total_invoice_amount_with_vat: parseFloat(result.data.invoice[0].total_invoice_amount_with_vat)-parseFloat(result.data.invoice[0].amount_with_vat),
+              //remaining_quotation_balance:  ((parseFloat(result.data.invoice[0].quotation_cost.replace(/,/g, '')) - parseFloat(result.data.invoice[0].total_invoice_amount_with_vat.replace(/,/g, ''))) + parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, ''))).toFixed(2)
+               remaining_quotation_balance:  (parseFloat(result.data.invoice[0].quotation_cost) - parseFloat(result.data.invoice[0].total_invoice_amount_with_vat)) + parseFloat(result.data.invoice[0].amount_with_vat)
+   
 
           });
 
@@ -572,6 +580,9 @@ export default function Edit(props){
                     value={formik_invoice.values.amount_with_vat}
                     size="small"
                     readOnly
+                    InputProps={{
+                    inputComponent: NumberFormatCustom,
+                    }}
                     fullWidth />
                     <TextField variant='outlined' 
                     sx={{ '& .MuiInputBase-root': {
@@ -589,6 +600,9 @@ export default function Edit(props){
                     value={formik_invoice.values.total_invoice_amount_with_vat}
                     size="small"
                     readOnly
+                    InputProps={{
+                      inputComponent: NumberFormatCustom,
+                    }}
                     fullWidth />
                     <TextField variant='outlined' 
                     sx={{ '& .MuiInputBase-root': {
@@ -606,6 +620,9 @@ export default function Edit(props){
                     value={formik_invoice.values.remaining_quotation_balance}
                     size="small"
                     readOnly
+                    InputProps={{
+                      inputComponent: NumberFormatCustom,
+                    }}
                     fullWidth />
                      <TextField variant='outlined' label="Currency"
                       name="currency"

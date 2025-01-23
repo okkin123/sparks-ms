@@ -404,6 +404,7 @@ useEffect(()=>{
                   </ListItemIcon>
                   <ListItemText primary="View List" />
                 </ListItemButton>
+                { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
                 <ListItemButton
                  selected={component.invoice_statement.selected}
                  onClick={() => {
@@ -416,7 +417,7 @@ useEffect(()=>{
                     <Article />
                   </ListItemIcon>
                   <ListItemText primary="Statement" />
-                </ListItemButton>
+                </ListItemButton> : null }
               </List>
             </Collapse>
       <ListItem

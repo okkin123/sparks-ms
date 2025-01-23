@@ -38,6 +38,7 @@ import { ToWords } from 'to-words';
 import ReactToPrint from 'react-to-print';
 import FileUpload from '../../Components/FileUpload';
 import "../../Assets/print.css";
+import numeral from 'numeral';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -339,14 +340,14 @@ export default function Details(){
                     client_trn: result.data.invoice[0].client_trn,
                     project_name: result.data.invoice[0].project_name,
                     project_description: result.data.invoice[0].project_description,
-                    amount_without_vat: result.data.invoice[0].amount_without_vat,
+                    amount_without_vat: formatNumber(result.data.invoice[0].amount_without_vat),
                     is_vat: result.data.invoice[0].is_vat,
                     vat_percentage: result.data.invoice[0].vat_percentage,
-                    vat_amount: result.data.invoice[0].vat_amount,
+                    vat_amount: formatNumber(result.data.invoice[0].vat_amount),
                     currency: result.data.invoice[0].currency,
                     company_trn: result.data.invoice[0].company_trn,
                     company_address: result.data.invoice[0].company_address,
-                    amount_with_vat: result.data.invoice[0].amount_with_vat
+                    amount_with_vat: formatNumber(result.data.invoice[0].amount_with_vat)
                   });
 
                   
@@ -361,8 +362,8 @@ export default function Details(){
                   ]);
 
                  
-                  setWords(toWords.convert(parseFloat(result.data.invoice[0].amount_with_vat.replace(/,/g, '')), {currency: true}));
-                  
+                  setWords(toWords.convert(parseFloat(result.data.invoice[0].amount_with_vat), {currency: true}));
+
                   
                   formik_update_quotation_status.setFieldValue("invoice_number", result.data.invoice[0].invoice_number)
                   formik_update_quotation_status.setFieldValue("user_id", result.data.invoice[0].created_by)
@@ -520,6 +521,11 @@ export default function Details(){
       }
     };
 
+
+    const formatNumber = (number) => {
+      return numeral(number).format('0,0.00');
+    };
+    
 
 
     return(
