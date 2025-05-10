@@ -9,11 +9,11 @@ import { Grid,
     Stack,
     Button,
     IconButton,
-    Autocomplete,
     Checkbox,
     Paper,
     Collapse,
     Alert,
+    Autocomplete,
     FormControl,
     InputLabel,
     Select,
@@ -92,8 +92,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     expenses: Yup.array().of(
       Yup.object().shape({
         date: Yup.date().required('Date is required!'),
-        vendor_name: Yup.string()
-        .required('This field is required!'),
         description: Yup.string()
         .required('This field is required!'),
         amount_without_vat: Yup.string()
@@ -220,11 +218,6 @@ const debouncedAmountWVat = debounce((index, event, expense, formik_vendor_expen
 
 export default function New(props){
 
-    const [vendorDetails, setVendorDetails] = useState({
-        vendor_name: [],
-        location: [],
-        description: []
-      })
     const [loading, setLoading] = useState(false)
     
     const [grandTotal, setGrandTotal] = useState({
@@ -241,6 +234,32 @@ export default function New(props){
     const [updateBtn, setUpdateBtn] = useState(false)
     const [vatPrices, setVatPrices] = useState([]);
 
+    const [vendorDetails, setVendorDetails] = useState({
+        // vendor_name: [],
+        // location: [],
+        description: []
+      })
+
+
+      function handleGetVendorDetails(field_name){
+        AxiosInstance.post("/admin_expense/get_vendor_details", {field_name: field_name})
+        .then(function(result){
+            if(result.data.status === 'SUCCESS'){
+              setVendorDetails({
+                ...vendorDetails,
+                [field_name]: result.data.vendor_details.map(element => element[field_name])
+              })
+    
+            }else{
+              console.log(result.data.message)
+            }
+        })
+        .catch(function(error){
+          console.log(error)
+        })
+       }
+
+
     const formik_vendor_expense = useFormik({
         initialValues: props.mode === 'EDIT' ? props.initialValues : {
             currency: "",
@@ -250,8 +269,6 @@ export default function New(props){
               {
                 is_vat: false,
                 date: "",
-                vendor_name: "",
-                location: "",
                 description: "",
                 amount_without_vat: "",
                 vat_percentage: 0,
@@ -264,13 +281,13 @@ export default function New(props){
           validationSchema: ProjectVendorExpenseSchema,
           onSubmit: (values, { validateForm }) => {
             setLoading(true)
-            AxiosInstance.post(props.mode === 'EDIT' ? "/project_expense/update_vendor_expense" : "/admin_expense/insert", {values : values})
-            .then(function(reponse){
-                if(reponse.data.status === 'SUCCESS'){
+            AxiosInstance.post(props.mode === 'EDIT' ? "/admin_expense/update_admin_expense" : "/admin_expense/insert", {values : values})
+            .then(function(response){
+                if(response.data.status === 'SUCCESS'){
                     setResponse({
                         open: true,
                         severity: "success",
-                        message: reponse.data.message
+                        message: response.data.message
                     })
                     handleClearValues();
                     if(props.mode === 'EDIT'){
@@ -280,7 +297,7 @@ export default function New(props){
                     setResponse({
                         open: true,
                         severity: "error",
-                        message: reponse.data.message
+                        message: response.data.message
                     })
                 }
 
@@ -318,24 +335,6 @@ export default function New(props){
 
 
 
-    function handleGetVendorDetails(field_name){
-        AxiosInstance.post("/admin_expense/get_vendor_details", {field_name: field_name})
-        .then(function(result){
-            if(result.data.status === 'SUCCESS'){
-              setVendorDetails({
-                ...vendorDetails,
-                [field_name]: result.data.vendor_details.map(element => element[field_name])
-              })
-    
-            }else{
-              console.log(result.data.message)
-            }
-        })
-        .catch(function(error){
-          console.log(error)
-        })
-       }
-
     useEffect(()=>{
         AxiosInstance.get("/preferences/vat_pricing")
         .then(function(result){
@@ -361,7 +360,6 @@ export default function New(props){
         formik_vendor_expense.setFieldValue('expenses',[{
                 is_vat: false,
                 date: "",
-                vendor_name: "",
                 description: "",
                 amount_without_vat: "",
                 vat_percentage: 0,
@@ -405,7 +403,6 @@ export default function New(props){
         const newExpense = {
             is_vat: false,
             date: "",
-            vendor_name: "",
             description: "",
             amount_without_vat: "",
             vat_percentage: 0,
@@ -481,52 +478,8 @@ export default function New(props){
                             }} />
                     </LocalizationProvider>
                 </StyledTableCell>
-                <StyledTableCell>
-                    <Autocomplete
-                        freeSolo
-                        selectOnFocus
-                        clearOnBlur={false}
-                        handleHomeEndKeys
-                        onFocus={() => handleGetVendorDetails('vendor_name')}
-                        options={vendorDetails.vendor_name.map((option) => option)}
-                        value={expense.vendor_name}
-                        onChange={(event, value) => {
-                        const updatedExpenses = [...formik_vendor_expense.values.expenses];
-                        updatedExpenses[index] = {
-                            ...updatedExpenses[index],
-                            vendor_name: value,
-                        };
-                        formik_vendor_expense.setFieldValue('expenses', updatedExpenses);
-                        }}
-                        renderInput={(params) => (
-                        <CustomInput
-                            {...params}
-                            name={`expenses[${index}].vendor_name`}
-                            fullWidth
-                            size="small"
-                            value={expense.vendor_name}
-                            onChange={(event) => handleChange(index, event)}
-                            sx={{ width: '100%' }}
-                            helperText={
-                                formik_vendor_expense.touched.expenses?.[index]?.vendor_name && formik_vendor_expense.errors.expenses?.[index]?.vendor_name
-                            }
-                            error={Boolean(formik_vendor_expense.errors.expenses?.[index]?.vendor_name)}
-                        />
-                        )}
-                        sx={{ width: '100%' }}
-                        componentsProps={{
-                        paper: {
-                            sx: {
-                            '& .MuiAutocomplete-listbox': {
-                                fontSize: 13,
-                            },
-                            },
-                        },
-                        }}
-                        fullWidth
-                    />
-                </StyledTableCell>
                 <StyledTableCell align="left">
+
                 <Autocomplete
                         freeSolo
                         selectOnFocus
@@ -564,7 +517,6 @@ export default function New(props){
                         }}
                         fullWidth
                     />
-
                 </StyledTableCell>
                 <StyledTableCell align="center">
                 <CustomInput 
@@ -620,7 +572,7 @@ export default function New(props){
         {/* <Paper> */}
         <Grid container direction="column" spacing={2} sx={{padding: 2}}>
           <Grid item>
-            <Typography variant="h6">LIST OF ADMIN EXPENSE</Typography>
+            <Typography variant="h6">{props.mode === 'EDIT' ? 'EDIT' : 'NEW'} ADMIN EXPENSE</Typography>
           </Grid>
           <Grid item>
              <Divider />
@@ -718,7 +670,6 @@ export default function New(props){
                                         checked={formik_vendor_expense.values.expenses.every((expense)=> expense.is_vat ? true : false)}
                             />} label="VAT" labelPlacement="top" /></StyledTableCell>
                             <StyledTableCell align="center" sx={{width: "10%"}}>DATE</StyledTableCell>
-                            <StyledTableCell align="left" sx={{width: "15%"}}>VENDOR NAME</StyledTableCell>
                             <StyledTableCell align="left" sx={{width: "20%"}}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">AMOUNT {`(${formik_vendor_expense.values.currency})`}</StyledTableCell>
                             <StyledTableCell align="center">VAT {`(${formik_vendor_expense.values.vat_percentage}%)`}</StyledTableCell>
@@ -731,7 +682,7 @@ export default function New(props){
                     </TableBody>
                     <TableFooter>
                         <StyledTableRow style={{ position: 'sticky', bottom: 0, backgroundColor: 'white', zIndex: 1}}>
-                            <StyledTableCell colSpan={props.mode !== 'EDIT' ? 6 : 5} align="right">GRAND TOTAL:</StyledTableCell>
+                            <StyledTableCell colSpan={props.mode !== 'EDIT' ? 5 : 4} align="right">GRAND TOTAL:</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_without_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_vat_amount).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>
                             <StyledTableCell align="center">{parseFloat(grandTotal.total_amount_with_vat).toFixed(2)+` ${formik_vendor_expense.values.currency}`}</StyledTableCell>

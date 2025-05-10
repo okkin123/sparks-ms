@@ -84,6 +84,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 
   const ProjectVendorExpenseSchema = Yup.object().shape({
+    posted_date: Yup.date().required('Posted date is required'),
     project_name: Yup.string()
     .required('This field is required!'),
     currency: Yup.string()
@@ -241,6 +242,7 @@ export default function NewVendorExpense(props){
     const formik_vendor_expense = useFormik({
         initialValues: props.mode === 'EDIT' ? props.initialValues : {
             invoice_number: "",
+            posted_date: null,
             project_name: "",
             currency: "",
             vat_percentage: 0,
@@ -372,13 +374,14 @@ export default function NewVendorExpense(props){
 
 
        function handleClearValues(){
+        formik_vendor_expense.setFieldValue("posted_date", null)
         formik_vendor_expense.setFieldValue("invoice_number", "")
         formik_vendor_expense.setFieldValue("project_name", "")
         formik_vendor_expense.setFieldValue('expenses',[{
                 is_vat: false,
-                date: "",
-                vendor_name: "",
-                location: "",
+                // date: "",
+                // vendor_name: "",
+                // location: "",
                 description: "",
                 amount_without_vat: "",
                 vat_percentage: 0,
@@ -421,9 +424,9 @@ export default function NewVendorExpense(props){
     const handleAddRecord = () => {
         const newExpense = {
             is_vat: false,
-            date: "",
-            vendor_name: "",
-            location: "",
+            // date: "",
+            // vendor_name: "",
+            // location: "",
             description: "",
             amount_without_vat: "",
             vat_percentage: 0,
@@ -662,6 +665,21 @@ export default function NewVendorExpense(props){
              <Grid item>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                     <Stack direction="row" spacing={2} sx={{flexGrow: 1}}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker 
+                        value={dayjs(formik_vendor_expense.values.posted_date)}
+                        onChange={(value)=>formik_vendor_expense.setFieldValue('posted_date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                        slotProps={{
+                            textField: {
+                            label: 'Post Date',
+                            variant: 'outlined',
+                            name: 'posted_date',
+                            size: 'small', 
+                            error: Boolean(formik_vendor_expense.errors.posted_date),
+                            helperText:formik_vendor_expense.touched.posted_date && formik_vendor_expense.errors.posted_date
+                            },
+                        }} sx={{minWidth: 220}} />
+                    </LocalizationProvider>
                     <Autocomplete
                     freeSolo
                     selectOnFocus 

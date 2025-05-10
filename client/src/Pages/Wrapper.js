@@ -326,7 +326,7 @@ useEffect(()=>{
                 <ListItemText primary="Dashboard" />
               </ListItemButton>
             </ListItem>
-            <ListItem
+            { user.user_type === 'Admin Assistant' || user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItem
               disablePadding
               onClick={()=>setDropdownMenu({...dropdownMenu, quotation: !dropdownMenu.quotation})}
             >
@@ -337,8 +337,8 @@ useEffect(()=>{
                 <ListItemText primary="Quotations" />
                 {dropdownMenu.quotation ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
-            </ListItem>
-              <Collapse in={dropdownMenu.quotation} timeout="auto" unmountOnExit>
+            </ListItem> : null }
+            { user.user_type === 'Admin Assistant' || user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <Collapse in={dropdownMenu.quotation} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                <ListItemButton 
                  selected={component.qnew.selected}
@@ -365,8 +365,8 @@ useEffect(()=>{
                   <ListItemText primary="View List" />
                 </ListItemButton>
               </List>
-            </Collapse>
-          <ListItem
+            </Collapse> : null }
+            { user.user_type === 'Admin Officer' || user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <ListItem
               disablePadding
               onClick={()=>setDropdownMenu({...dropdownMenu, invoice: !dropdownMenu.invoice})}
             >
@@ -377,10 +377,10 @@ useEffect(()=>{
                 <ListItemText primary="Invoices" />
                 {dropdownMenu.invoice ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
-          </ListItem>
-          <Collapse in={dropdownMenu.invoice} timeout="auto" unmountOnExit>
+          </ListItem> : null }
+          { user.user_type === 'Admin Officer' || user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? <Collapse in={dropdownMenu.invoice} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-               <ListItemButton 
+              { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItemButton 
                  selected={component.invoice_new.selected}
                  onClick={() => {
                    handleSelect('invoice_new', <InvoiceNew/>)
@@ -390,8 +390,8 @@ useEffect(()=>{
                     <Add />
                   </ListItemIcon>
                   <ListItemText primary="New" />
-                </ListItemButton>
-                <ListItemButton
+                </ListItemButton> : null }
+                { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItemButton
                  selected={component.invoice_list.selected}
                  onClick={() => {
                    handleSelect('invoice_list', (
@@ -403,7 +403,7 @@ useEffect(()=>{
                     <ViewList />
                   </ListItemIcon>
                   <ListItemText primary="View List" />
-                </ListItemButton>
+                </ListItemButton> : null }
                 { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
                 <ListItemButton
                  selected={component.invoice_statement.selected}
@@ -419,8 +419,8 @@ useEffect(()=>{
                   <ListItemText primary="Statement" />
                 </ListItemButton> : null }
               </List>
-            </Collapse>
-      <ListItem
+            </Collapse> : null }
+      { user.user_type === 'Managing Director' || user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItem
         disablePadding
         onClick={() => setDropdownMenu({ ...dropdownMenu, expense: !dropdownMenu.expense })}
       >
@@ -431,8 +431,8 @@ useEffect(()=>{
           <ListItemText primary="Expenses" />
           {dropdownMenu.expense ? <ExpandLess /> : <ExpandMore />}
         </ListItemButton>
-      </ListItem>
-      <Collapse in={dropdownMenu.expense} timeout="auto" unmountOnExit>
+      </ListItem> : null }
+      { user.user_type === 'Managing Director' || user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <Collapse in={dropdownMenu.expense} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
           <ListItem
             disablePadding
@@ -448,7 +448,7 @@ useEffect(()=>{
           </ListItem>
           <Collapse in={dropdownMenu.project_expense} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItemButton
+            { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItemButton
                 selected={component.penew.selected}
                 onClick={() => {
                   handleSelect('penew', <PENew />);
@@ -459,11 +459,11 @@ useEffect(()=>{
                   <Add />
                 </ListItemIcon>
                 <ListItemText primary="New" />
-              </ListItemButton>
+              </ListItemButton> : null }
               <ListItemButton
                 selected={component.pelist.selected}
                 onClick={() => {
-                  handleSelect('pelist', <PEList />);
+                  handleSelect('pelist', <PEList user_type={user.user_type} />);
                 }}
                 sx={{ pl: 8 }}
               >
@@ -474,7 +474,7 @@ useEffect(()=>{
               </ListItemButton>
             </List>
           </Collapse>
-          <ListItem
+          { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItem
               disablePadding
               onClick={() => setDropdownMenu({ ...dropdownMenu, admin_expense: !dropdownMenu.admin_expense })}
             >
@@ -485,10 +485,10 @@ useEffect(()=>{
                 <ListItemText primary="Admin" />
                 {dropdownMenu.admin_expense ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
-            </ListItem>
+            </ListItem> : null }
             <Collapse in={dropdownMenu.admin_expense} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItemButton
+            { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItemButton
                 selected={component.aenew.selected}
                 onClick={() => {
                   handleSelect('aenew', <AENew mode="NEW" />);
@@ -499,8 +499,8 @@ useEffect(()=>{
                   <Add />
                 </ListItemIcon>
                 <ListItemText primary="New" />
-              </ListItemButton>
-              <ListItemButton
+              </ListItemButton> : null }
+              { user.user_type === 'Admin Officer' || user.user_type === 'Operations Manager' ? <ListItemButton
                 selected={component.aelist.selected}
                 onClick={() => {
                   handleSelect('aelist', <AEList />);
@@ -511,16 +511,16 @@ useEffect(()=>{
                   <ViewList />
                 </ListItemIcon>
                 <ListItemText primary="View List" />
-              </ListItemButton>
+              </ListItemButton> : null }
             </List>
           </Collapse>
         </List>
-      </Collapse>
+      </Collapse> : null }
 
     </List>
           <Divider />
           <List>
-          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
+          { user.user_type === 'Operations Manager' ? 
           <ListItem
               disablePadding
               selected={component.manage_users.selected}
@@ -536,7 +536,7 @@ useEffect(()=>{
               </ListItemButton>
             </ListItem>
            : null }
-          { user.user_type === 'Managing Director' || user.user_type === 'Operations Manager' ? 
+          { user.user_type === 'Operations Manager' ? 
             <ListItem
               disablePadding
               selected={component.preferences.selected}

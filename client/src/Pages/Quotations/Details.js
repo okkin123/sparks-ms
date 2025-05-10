@@ -65,6 +65,19 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
   }));
 
+  const StyledDiscountCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.footer}`]: {
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 10.5,
+      color: theme.palette.error.main,
+      fontWeight: 'bold',
+      whiteSpace: 'nowrap',
+      padding: 4,
+    }
+
+  }));
+
+
 
   
   
@@ -119,26 +132,22 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       >
       <Grid container direction="column" spacing={2}>
         <Grid item>
-          <Stack direction="column" spacing={2}>
+          <Stack direction="column" spacing={3}>
           <img src={bsLogo} width={220} alt="logo" />
           <StyledTypography variant="body2">TRN NUMBER: {quotation.company_trn}</StyledTypography>
           </Stack>
         </Grid>
         <Grid item>
-            <Stack direction="column" spacing={1}>
                 <StyledTypography variant="body2"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography>
-                <StyledTypography variant="body2">Date: {quotation.quotation_date}</StyledTypography>
-            </Stack>
         </Grid>
         <Grid item>
             <Stack direction="column" spacing={1}>
+                <StyledTypography variant="body2">Date: {quotation.quotation_date}</StyledTypography>
                 <StyledTypography variant="body2">Client Name: {quotation.client_name}</StyledTypography>
                 <StyledTypography variant="body2">Attention To: {quotation.attention_to}</StyledTypography>
+                <StyledTypography variant="body2">Project Name: {quotation.project_name}</StyledTypography>
             </Stack>
         </Grid>
-      <Grid item>
-          <StyledTypography variant="body2">Project Name: {quotation.project_name}</StyledTypography>
-      </Grid>
       <Grid item>
       <TableContainer>
           <Table size="small">
@@ -321,6 +330,8 @@ export default function Details(){
                     project_name: result.data.quotation[0].project_name,
                     project_description: result.data.quotation[0].project_description,
                     cost_without_vat: result.data.quotation[0].amount_without_vat,
+                    discount: result.data.quotation[0].discount,
+                    discounted_amount: result.data.quotation[0].discounted_amount,
                     is_vat: result.data.quotation[0].is_vat,
                     vat_percentage: result.data.quotation[0].vat_percentage,
                     vat_amount: result.data.quotation[0].vat_amount,
@@ -537,7 +548,7 @@ export default function Details(){
                 </div>
                 {/* <Data quotation={quotation} quotationDetails={quotationDetails} bankAccount={bankAccount} /> */}
                 <Grid item>
-                    <Stack direction="column" spacing={2}>
+                    <Stack direction="column" spacing={4}>
                       <Stack direction="row" justifyContent="space-between">
                         <img src={bsLogo} width={220} alt="logo" />
                         { quotation.status === "VERIFIED" || quotation.status === 'APPROVED BY CLIENT' ? <ReactToPrint
@@ -560,13 +571,16 @@ export default function Details(){
                 </Grid>
                 <Grid item>
                    <Stack direction="row" justifyContent="space-between">
-                      <Stack direction="column" spacing={1}>
-                          { quotation.quotation_number ? <StyledTypography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                      <Stack direction="column" spacing={3}>
+                        { quotation.quotation_number ? <StyledTypography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          <Stack direction="column" spacing={1}>
                           { quotation.quotation_date ? <StyledTypography variant="subtitle1">Date: {quotation.quotation_date}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.client_name ? <StyledTypography variant="subtitle1">Client Name: {quotation.client_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.attention_to ? <StyledTypography variant="subtitle1">Attention To: {quotation.attention_to}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.project_name ? <StyledTypography variant="subtitle1">Project Name: {quotation.project_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          </Stack> 
                       </Stack>
+
                       <Stack direction="column" spacing={1}>
                       { quotation.status ? <StyledTypography variant="subtitle1" color="info"><strong>STATUS: {quotation.status}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                       {invoices.length > 0 ? <StyledTypography variant='subtitle1'><strong>INVOICES ISSUED:</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
@@ -620,12 +634,23 @@ export default function Details(){
                             </StyledTableRow> : null }
                         </TableBody>
                         {
-                        quotation.vat_percentage !== null ? (
+                        quotation.is_vat ? (
                           <TableFooter>
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right" >TOTAL COST w/o VAT:</StyledTableCell>
                             <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
+                            {quotation.discount !== '0.00' ?
+                            <React.Fragment>
+                              <StyledTableRow>
+                              <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
+                              <StyledDiscountCell align="right">{'-'+quotation.discount}</StyledDiscountCell>
+                              </StyledTableRow>
+                              <StyledTableRow>
+                              <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
+                              <StyledTableCell align="right">{quotation.discounted_amount}</StyledTableCell>
+                              </StyledTableRow>
+                            </React.Fragment> : null }
                             <StyledTableRow>
                             <StyledTableCell colSpan={4} align="right">VAT {quotation.vat_percentage}%:</StyledTableCell>
                             <StyledTableCell align="right">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
@@ -641,6 +666,17 @@ export default function Details(){
                             <StyledTableCell colSpan={4} align="right" >TOTAL COST:</StyledTableCell>
                             <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
+                            {quotation.discount !== '0.00' ?
+                            <React.Fragment>
+                              <StyledTableRow>
+                              <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
+                              <StyledDiscountCell align="right">{'-'+quotation.discount}</StyledDiscountCell>
+                              </StyledTableRow>
+                              <StyledTableRow>
+                              <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
+                              <StyledTableCell align="right">{quotation.discounted_amount}</StyledTableCell>
+                              </StyledTableRow>
+                            </React.Fragment> : null }
                           </TableFooter>
                         )
                         }

@@ -52,12 +52,13 @@ function TabPanel(props) {
   }
 
 
-export default function List(){
+export default function List(props){
 
     const [tabValue, setTabValue] = useState(0);
     const handleTabChange = (event, newValue) => {
       setTabValue(newValue);
     };
+
 
     return(
         <React.Fragment>
@@ -76,7 +77,7 @@ export default function List(){
               <Tabs value={tabValue} onChange={handleTabChange}
                   textColor='inherit'>
                       <Tab label="Supplier" />
-                      <Tab label="Vendor" />
+                      {props.user_type !== 'Managing Director' ? <Tab label="Vendor" /> : null }
                   </Tabs>
               </AppBar>
               </Grid>
@@ -84,13 +85,13 @@ export default function List(){
               <Grid container direction="column" sx={{paddingLeft: 2, paddingRight: 2}}>
               <Grid item>
               <TabPanel value={tabValue} index={0}>
-                <ListSupplierExpense />
+                <ListSupplierExpense user_type={props.user_type} />
               </TabPanel>
               </Grid>
               <Grid item>
-              <TabPanel value={tabValue} index={1}>
-                <ListVendorExpense />
-              </TabPanel>
+                <TabPanel value={tabValue} index={1}>
+                  <ListVendorExpense />
+                </TabPanel>
               </Grid>
             </Grid>
             {/* </Paper> */}

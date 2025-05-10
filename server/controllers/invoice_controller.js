@@ -91,8 +91,8 @@ module.exports = {
         }else{
             assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
         }
-        dbConnection.query("INSERT INTO tbl_invoices(invoice_number, quotation_number, invoice_date, address, client_trn, po_number, amount_without_vat, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, isNaN(parseInt(req.body.values.po_number)) ? 0 : req.body.values.po_number, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
+        dbConnection.query("INSERT INTO tbl_invoices(invoice_number, quotation_number, invoice_date, address, client_trn, po_box, po_number, amount_without_vat, created_by, assigned_to, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [req.body.invoice_number, req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.values.po_box, isNaN(parseInt(req.body.values.po_number)) ? 0 : req.body.values.po_number, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION"],
             function(err, data, fields)
             {
                 if(err)
@@ -146,8 +146,8 @@ module.exports = {
         }else{
             assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
         }
-        dbConnection.query("UPDATE tbl_invoices SET quotation_number=?, invoice_date=?, address=?, client_trn=?, po_number=?, amount_without_vat=?, created_by=?, assigned_to=?, status=? WHERE invoice_number=?",
-            [req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, isNaN(parseInt(req.body.values.po_number)) ? 0 : req.body.values.po_number, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.invoice_number],
+        dbConnection.query("UPDATE tbl_invoices SET quotation_number=?, invoice_date=?, address=?, client_trn=?, po_box=?, po_number=?, amount_without_vat=?, created_by=?, assigned_to=?, status=? WHERE invoice_number=?",
+            [req.body.values.ref_quotation_number, req.body.values.date, req.body.values.address, req.body.values.client_trn, req.body.values.po_box, isNaN(parseInt(req.body.values.po_number)) ? 0 : req.body.values.po_number, req.body.amount_without_vat, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.invoice_number],
             function(err, data, fields)
             {
                 if(err)

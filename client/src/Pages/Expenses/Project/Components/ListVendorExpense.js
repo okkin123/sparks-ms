@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import UndoIcon from '@mui/icons-material/Undo';
 import Dialog from '../../../../Components/Dialog'
+import numeral from 'numeral';
 
 const columns=[
     {
@@ -106,6 +107,11 @@ const columns=[
         width: 'fit-content',
     },
     {
+      accessorKey: 'posted_date',
+      header: 'DATE POSTED',
+      width: 'fit-content'
+    },
+    {
       accessorKey: 'reporting_to_email',
       header: 'VERIFIER',
       width: 'fit-content',
@@ -122,6 +128,11 @@ const columns=[
   },
     
 ];
+
+const formatNumber = (number) => {
+  return numeral(number).format('0.00');
+  };
+
 
 export default function ListVendorExpense(){
     const [vendorExpenses, setVendorExpenses] = useState([]);
@@ -160,6 +171,9 @@ export default function ListVendorExpense(){
       waiting_for_verification: 0,
       returned: 0
     })
+
+    const [vatPrices, setVatPrices] = useState([]);
+   
     useEffect(()=>{
       handleListVendorExpenses("WAITING FOR VERIFICATION")
     },[refresh])
@@ -192,11 +206,12 @@ export default function ListVendorExpense(){
                   vat_amount: element.vat_amount,
                   amount_with_vat: element.amount_with_vat,
                   currency: element.currency,
+                  posted_date: dayjs(new Date(element.posted_date)).format('DD-MMM-YYYY'),
                   vat_percentage: element.vat_percentage,
                   subRows: element.details,
                   user_reporting_to: result.data.reporting_to,
                   user_email: result.data.user_email,
-                  user_id: result.data.user_id,
+                  user_id: result.data.user_id, 
                 })); 
 
 
@@ -276,24 +291,34 @@ export default function ListVendorExpense(){
           ...row,
           subRows: row.subRows
             .filter((subRow) => subRow.selected === true)
-            .map((subRow) => ({
-              ...subRow,
-              is_vat: true,
-              date: dayjs(new Date(subRow.date)).format('YYYY-MM-DD')
-            })),
+            // .map((subRow) => ({
+            //   ...subRow,
+            //   is_vat: true,
+            //   date: dayjs(new Date(subRow.date)).format('YYYY-MM-DD')
+            // })),
         }));
-
         if(selectedRows[0].subRows.length > 0){
-           console.log(selectedRows[0])
+
+          const selectedCurrency = vatPrices.find(element => element.currency === selectedRows[0].currency);
+          
             navigate('/', {
                 state: {
                     vendor_expense_edit: true,
                     initialValues: {
+                        posted_date: dayjs(new Date(selectedRows[0].posted_date)).format('YYYY-MM-DD'),
                         invoice_number: invoice_number,
                         project_name: selectedRows[0].project_name,
                         currency: selectedRows[0].currency,
-                        vat_percentage: selectedRows[0].vat_percentage,
-                        expenses: selectedRows[0].subRows
+                        vat_percentage: parseFloat(selectedCurrency.vat_percentage),
+                        expenses: selectedRows[0].subRows.map((element)=>({
+                          project_vendor_expense_id: element.project_vendor_expense_id,
+                          is_vat: element.vat_applicable,
+                          description: element.description,
+                          amount_without_vat: formatNumber(element.amount_without_vat),
+                          vat_percentage: element.vat_percentage,
+                          vat_amount: formatNumber(element.vat_amount),
+                          amount_with_vat: formatNumber(element.amount_with_vat)
+                        }))
                     }
                 }
             })
@@ -436,6 +461,24 @@ export default function ListVendorExpense(){
         window.removeEventListener('resize', updateBox);
     };
     }, []);
+
+    useEffect(()=>{
+      AxiosInstance.get("/preferences/vat_pricing")
+      .then(function(result){
+        setVatPrices((vatPrices)=>{
+          return result.data.vat_pricing.map((element)=>({
+            currency: element.currency,
+            vat_percentage: element.vat_percentage
+          }))
+        });
+      })
+      .catch(function(error){
+        console.log(error)
+      })
+
+
+
+     },[])
 
     const handleCheckboxChange = (invoice_number, created_by, status, project_vendor_expense_id, event) => {
 

@@ -22,8 +22,8 @@ import SupplierExpenseStatement from './SupplierExpenseStatement';
     );
   }
 
-export default function ListSupplierExpense(){
-
+export default function ListSupplierExpense(props){
+   
    const [tabValue, setTabValue] = useState(0);
    const handleTabChange = (event, newValue) => {
      setTabValue(newValue);
@@ -33,27 +33,35 @@ export default function ListSupplierExpense(){
     return(
         <React.Fragment>   
         <Paper elevation={2} sx={{ width: '100%', borderRadius: 0, border: 'none', margin: 0}}>
-            <Tabs value={tabValue} onChange={handleTabChange}
+        { props.user_type !== 'Managing Director' ? <Tabs value={tabValue} onChange={handleTabChange}
                 textColor='inherit'>
-                <Tab label="Invoices" />
+               <Tab label="Invoices" />
                 <Tab label="Payments" />
-                <Tab label="Statement" />
-            </Tabs>
+                <Tab label="Statement" />  
+            </Tabs> : 
+             <Tabs value={tabValue} onChange={handleTabChange}
+                textColor='inherit'>
+                <Tab label="Statement" />  
+            </Tabs> }
         </Paper>
+        {props.user_type !== 'Managing Director' ?
+          <React.Fragment>
+          <TabPanel value={tabValue} index={0}>
+              <ListSupplierExpenseInvoices />
+          </TabPanel>
 
-        {/* Invoices Panel */}
-        <TabPanel value={tabValue} index={0}>
-            <ListSupplierExpenseInvoices />
-        </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <ListSupplierExpensePayments />
+          </TabPanel>
 
-         {/* Payments Panel */}
-         <TabPanel value={tabValue} index={1}>
-          <ListSupplierExpensePayments />
-         </TabPanel>
-
-         <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={2}>
+            <SupplierExpenseStatement />
+          </TabPanel>
+          </React.Fragment>
+          : 
+          <TabPanel value={tabValue} index={0}>
           <SupplierExpenseStatement />
-         </TabPanel>
+          </TabPanel> }
 
         </React.Fragment>   
     )

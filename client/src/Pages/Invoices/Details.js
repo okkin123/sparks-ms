@@ -94,6 +94,11 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   fontSize: 10.5,
 }));
 
+const StyledHeader = styled(Typography)(({ theme }) => ({
+  fontFamily: 'Verdana, sans-serif',
+  fontSize: 18,
+}));
+
 
   const PrintComponent = React.forwardRef((props, ref)=>{
     const invoice = props.invoice;
@@ -123,7 +128,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
       </Grid>
       <Grid item>
           <Stack direction="row" justifyContent="center">
-              <StyledTypography variant="h5"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledTypography>
+              <StyledHeader><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledHeader>
           </Stack>
       </Grid>
     
@@ -131,15 +136,16 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
       <Stack direction="row" justifyContent="space-between">
         <Stack direction="column" spacing={0.5}>
             <StyledTypography variant="body2">Client Name: {invoice.client_name}</StyledTypography>
-            <StyledTypography variant="body2">Address: {invoice.address}</StyledTypography>
-            <StyledTypography variant="body2">TRN #: {invoice.client_trn}</StyledTypography>
             <StyledTypography variant="body2">Attention To: {invoice.attention_to}</StyledTypography>
+            <StyledTypography variant="body2">Address: {invoice.address}</StyledTypography>
+            <StyledTypography variant="body2">P.O. Box: {invoice.po_box}</StyledTypography> 
+            <StyledTypography variant="body2">TRN #: {invoice.client_trn}</StyledTypography>
             <StyledTypography variant="body2">Project Name: {invoice.project_name}</StyledTypography>
         </Stack>
         <Stack direction="column" spacing={0.5}>
           <StyledTypography variant="body2">Date: {invoice.invoice_date}</StyledTypography>
           <StyledTypography variant="body2">Ref Quotation #: {invoice.quotation_number}</StyledTypography>
-          { invoice.po_number && <StyledTypography variant="body2">P.O. No.: {invoice.po_number}</StyledTypography> }
+          { invoice.po_number && <StyledTypography variant="body2">P.O. Number: {invoice.po_number}</StyledTypography> }
         </Stack>
       </Stack>
       </Grid>
@@ -329,6 +335,8 @@ export default function Details(){
             setInvoice({
                     invoice_number: result.data.invoice[0].invoice_number,
                     quotation_number: result.data.invoice[0].quotation_number,
+                    
+                    po_box: result.data.invoice[0].po_box,
                     po_number: result.data.invoice[0].po_number!==0 ? result.data.invoice[0].po_number : null,
                     status: result.data.invoice[0].STATUS,
                     created_by: result.data.invoice[0].created_by_email,
@@ -575,7 +583,7 @@ export default function Details(){
                 </Grid>
                 <Grid item>
                     <Stack direction="row" justifyContent="center">
-                    {invoice.invoice_number ? <StyledTypography variant="h4"><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={410} height={50} /> }
+                    {invoice.invoice_number ? <StyledHeader><strong>{invoice.is_vat ? 'TAX ' : ''}INVOICE NO.: {invoice.invoice_number}</strong></StyledHeader> : <Skeleton variant="rounded" width={410} height={50} /> }
                         
                     </Stack>
                 </Grid>
@@ -584,16 +592,18 @@ export default function Details(){
                     <Stack direction="row" justifyContent="space-between">
                       <Stack direction="column" spacing={0.5}>
                           {invoice.client_name ? <StyledTypography variant="subtitle1">Client Name: {invoice.client_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { invoice.address ? <StyledTypography variant="subtitle1">Address: {invoice.address}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
-                          { invoice.client_trn ? <StyledTypography variant="subtitle1">TRN #: {invoice.client_trn}</StyledTypography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
                           { invoice.attention_to ? <StyledTypography variant="subtitle1">Attention To: {invoice.attention_to}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          { invoice.address ? <StyledTypography variant="subtitle1">Address: {invoice.address}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
+                          { invoice.po_box ? <StyledTypography variant="subtitle1">P.O. Box: {invoice.po_box}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
+                          { invoice.client_trn ? <StyledTypography variant="subtitle1">TRN #: {invoice.client_trn}</StyledTypography> : invoice.client_trn === '' ? null : <Skeleton variant="rounded" width={210} height={15} /> }
+       
                           { invoice.project_name ? <StyledTypography variant="subtitle1">Project Name: {invoice.project_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} />}
                           
                       </Stack>
                       <Stack direction="column" spacing={0.5}>
                         {invoice.invoice_date ? <StyledTypography variant="subtitle1">Date: {invoice.invoice_date}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                         { invoice.quotation_number ? <StyledTypography variant="subtitle1">Ref Quotation No.: {invoice.quotation_number}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }    
-                        { invoice.po_number && <StyledTypography variant="subtitle1">P.O. No.: {invoice.po_number}</StyledTypography> }
+                        { invoice.po_number && <StyledTypography variant="subtitle1">P.O. Number: {invoice.po_number}</StyledTypography> }
                       </Stack>
          
                     

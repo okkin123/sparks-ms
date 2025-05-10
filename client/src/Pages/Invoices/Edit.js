@@ -97,6 +97,9 @@ const InvoiceDetailSchema = Yup.object().shape({
       }
       return true;
     }),
+    po_box: Yup.number()
+    .integer('Only whole numbers are allowed')
+    .required('This field is required!'),
     po_number: Yup.number()
     .integer('Only whole numbers are allowed'),
     address: Yup.string()
@@ -242,7 +245,8 @@ export default function Edit(props){
         client_name: "",
         attention_to: "",
         address: "",
-        po_number: "",
+        po_box: "",
+        po_number:"",
         project_name: "",
         project_description: "",
         vat_percentage: null,
@@ -316,6 +320,7 @@ export default function Edit(props){
               is_vat: !!result.data.invoice[0].is_vat ? 'Yes' : 'No',
               date: dayjs(new Date(result.data.invoice[0].invoice_date)).format('YYYY-MM-DD'),
               ref_quotation_number: result.data.invoice[0].quotation_number,
+              po_box: result.data.invoice[0].po_box,
               po_number: result.data.invoice[0].po_number !== 0 ? result.data.invoice[0].po_number : '',
               client_name: result.data.invoice[0].client_name,
               attention_to: result.data.invoice[0].attention_to,
@@ -368,6 +373,7 @@ export default function Edit(props){
             formik_invoice.setFieldValue('is_vat', !!result.data.quotation[0].is_vat ? 'Yes' : 'No');
             formik_invoice.setFieldValue('client_name', result.data.quotation[0].client_name);
             formik_invoice.setFieldValue('attention_to', result.data.quotation[0].attention_to);
+            formik_invoice.setFieldValue('po_box', result.data.quotation[0].po_box);
             formik_invoice.setFieldValue('po_number', result.data.quotation[0].po_number !== 0 ? result.data.quotation[0].po_number : '');
             formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
             formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
@@ -406,7 +412,8 @@ export default function Edit(props){
             setClientDetails((clientDetails)=>[
               ...result.data.client_details.map(element => ({
                 address: element.address,
-                client_trn: element.client_trn
+                client_trn: element.client_trn,
+                po_box: ''+element.po_box
               }))
             ])
   
@@ -478,40 +485,7 @@ export default function Edit(props){
               </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-                 <TextField variant='outlined' label="Vat Applicable"
-                    name="is_vat"
-                    value={formik_invoice.values.is_vat}
-                    size="small"
-                    error={
-                      formik_invoice.touched.is_vat && Boolean(formik_invoice.errors.is_vat)
-                      }
-                    helperText={
-                      formik_invoice.touched.is_vat && formik_invoice.errors.is_vat
-                      }
-                    readOnly
-                    fullWidth />
-                  <TextField size="small" variant="outlined" label="Invoice #" value={invoiceNumber} readOnly fullWidth />
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker 
-                    value={dayjs(formik_invoice.values.date)}
-                    onChange={(value)=>formik_invoice.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
-                    slotProps={{
-                        textField: {
-                          label: 'Date',
-                          variant: 'outlined',
-                          name: 'date',
-                          size: 'small', 
-                          fullWidth: true,
-                          error: Boolean(formik_invoice.errors.date),
-                          helperText:formik_invoice.touched.date && formik_invoice.errors.date
-                        },
-                      }} />
-                  </LocalizationProvider>
-                 </Stack>
-               </Grid>
-               <Grid item>
-                 <Stack direction="row" spacing={2}>
-                    <FormControl
+                      <FormControl
                         fullWidth
                         size="small"
                         error={formik_invoice.touched.ref_quotation_number && Boolean(formik_invoice.errors.ref_quotation_number)}
@@ -536,6 +510,41 @@ export default function Edit(props){
                         {formik_invoice.touched.ref_quotation_number && formik_invoice.errors.ref_quotation_number}
                         </FormHelperText>
                     </FormControl>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker 
+                    value={dayjs(formik_invoice.values.date)}
+                    onChange={(value)=>formik_invoice.setFieldValue('date', dayjs(new Date(value)).format('YYYY-MM-DD'))}
+                    slotProps={{
+                        textField: {
+                          label: 'Date',
+                          variant: 'outlined',
+                          name: 'date',
+                          size: 'small', 
+                          fullWidth: true,
+                          error: Boolean(formik_invoice.errors.date),
+                          helperText:formik_invoice.touched.date && formik_invoice.errors.date
+                        },
+                      }} />
+                  </LocalizationProvider>
+                 <TextField variant='outlined' label="Vat Applicable"
+                    name="is_vat"
+                    value={formik_invoice.values.is_vat}
+                    size="small"
+                    error={
+                      formik_invoice.touched.is_vat && Boolean(formik_invoice.errors.is_vat)
+                      }
+                    helperText={
+                      formik_invoice.touched.is_vat && formik_invoice.errors.is_vat
+                      }
+                    readOnly
+                    fullWidth />
+                  <TextField size="small" variant="outlined" label="Invoice #" value={invoiceNumber} readOnly fullWidth />
+
+                 </Stack>
+               </Grid>
+               <Grid item>
+                 <Stack direction="row" spacing={2}>
+
                     <TextField variant='outlined' label="Client Name"
                       name="client_name"
                       value={formik_invoice.values.client_name}
@@ -560,8 +569,114 @@ export default function Edit(props){
                         } 
                         readOnly
                         fullWidth/>
+                      <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
+                        options={clientDetails.map((option) => option.client_trn)}
+                        value={formik_invoice.values.client_trn}
+                        onChange={(event, value)=>formik_invoice.setFieldValue('client_trn', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Client TRN #"
+                            name="client_trn"
+                            fullWidth
+                            size="small"
+                            value={formik_invoice.values.client_trn}
+                            onChange={formik_invoice.handleChange}
+                            error={
+                            formik_invoice.touched.client_trn && Boolean(formik_invoice.errors.client_trn)
+                            }
+                          helperText={
+                            formik_invoice.touched.client_trn && formik_invoice.errors.client_trn
+                            }
+                          />
+                        )}
+                        fullWidth
+                      />
                  </Stack>
                </Grid>
+                <Grid item>
+                <Stack direction="row" spacing={2}>
+                <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
+                        options={clientDetails.map((option) => option.address)}
+                        value={formik_invoice.values.address}
+                        onChange={(event, value)=>formik_invoice.setFieldValue('address', value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Address"
+                            name="address"
+                            fullWidth
+                            size="small"
+                            value={formik_invoice.values.address}
+                            onChange={formik_invoice.handleChange}
+                            error={
+                            formik_invoice.touched.address && Boolean(formik_invoice.errors.address)
+                            }
+                          helperText={
+                            formik_invoice.touched.address && formik_invoice.errors.address
+                            }
+                          />
+                        )}
+                        fullWidth
+                      />
+
+                        <Autocomplete
+                          freeSolo
+                          selectOnFocus
+                          clearOnBlur
+                          handleHomeEndKeys
+                          onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
+                          options={clientDetails.map((option) => option.po_box)}
+                          value={formik_invoice.values.po_box}
+                          onChange={(event, value)=>{
+                            formik_invoice.setFieldValue('po_box', value)
+  
+                          }}
+                          renderInput={(params) => (
+                            
+                              <TextField
+                                {...params}
+                                label="P.O. Box"
+                                name="po_box"
+                                value={formik_invoice.values.po_box}
+                                onChange={formik_invoice.handleChange}
+                                size="small"
+                                error={
+                                formik_invoice.touched.po_box && Boolean(formik_invoice.errors.po_box)
+                                }
+                                helperText={
+                                formik_invoice.touched.po_box && formik_invoice.errors.po_box
+                                }
+                                fullWidth />
+                          )}
+                          fullWidth
+                        />
+                         <TextField
+                          variant="outlined"
+                          label="P.O. Number"
+                          name="po_number"
+                          value={formik_invoice.values.po_number}
+                          onChange={formik_invoice.handleChange}
+                          size="small"
+                          error={
+                          formik_invoice.touched.po_number && Boolean(formik_invoice.errors.po_number)
+                          }
+                          helperText={
+                          formik_invoice.touched.po_number && formik_invoice.errors.po_number
+                          }
+                          fullWidth />
+                  </Stack>
+                </Grid>
                <Grid item>
                  <Stack direction="row" spacing={2}>
                  <TextField variant='outlined' 
@@ -632,78 +747,7 @@ export default function Edit(props){
                       fullWidth/>
                  </Stack>
                </Grid>
-               <Grid item>
-                <Stack direction="row" spacing={2}>
-                <Autocomplete
-                        freeSolo
-                        selectOnFocus
-                        clearOnBlur
-                        handleHomeEndKeys
-                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
-                        options={clientDetails.map((option) => option.address)}
-                        value={formik_invoice.values.address}
-                        onChange={(event, value)=>formik_invoice.setFieldValue('address', value)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Address"
-                            name="address"
-                            fullWidth
-                            size="small"
-                            value={formik_invoice.values.address}
-                            onChange={formik_invoice.handleChange}
-                            error={
-                            formik_invoice.touched.address && Boolean(formik_invoice.errors.address)
-                            }
-                          helperText={
-                            formik_invoice.touched.address && formik_invoice.errors.address
-                            }
-                          />
-                        )}
-                        fullWidth
-                      />
-                        <Autocomplete
-                        freeSolo
-                        selectOnFocus
-                        clearOnBlur
-                        handleHomeEndKeys
-                        onFocus={()=>handleGetClientDetails(formik_invoice.values.client_name)}
-                        options={clientDetails.map((option) => option.client_trn)}
-                        value={formik_invoice.values.client_trn}
-                        onChange={(event, value)=>formik_invoice.setFieldValue('client_trn', value)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Client TRN #"
-                            name="client_trn"
-                            fullWidth
-                            size="small"
-                            value={formik_invoice.values.client_trn}
-                            onChange={formik_invoice.handleChange}
-                            error={
-                            formik_invoice.touched.client_trn && Boolean(formik_invoice.errors.client_trn)
-                            }
-                          helperText={
-                            formik_invoice.touched.client_trn && formik_invoice.errors.client_trn
-                            }
-                          />
-                        )}
-                        fullWidth
-                      />
-                      <TextField variant='outlined' label="P.O. No."
-                        name="po_number"
-                        value={formik_invoice.values.po_number}
-                        onChange={formik_invoice.handleChange}
-                        size="small"
-                        error={
-                          formik_invoice.touched.po_number && Boolean(formik_invoice.errors.po_number)
-                          }
-                        helperText={
-                          formik_invoice.touched.po_number && formik_invoice.errors.po_number
-                          }
-                        fullWidth />
-                  </Stack>
-                </Grid>
+  
                 <Grid item>
                   <TextField variant='outlined' label="Project Name"
                     name="project_name"

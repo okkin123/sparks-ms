@@ -160,6 +160,15 @@ const columns = [
       header: 'COST w/o VAT'
     },
     {
+      accessorKey: 'discount',
+      header: 'DISCOUNT',
+      Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
+    },
+    {
+      accessorKey: 'discounted_amount',
+      header: 'Cost w/ Discount'
+    },
+    {
       accessorKey: 'vat_percentage',
       header: 'VAT %',
       Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
@@ -216,6 +225,8 @@ export default function List(props){
             project_name: element.project_name,
             project_description: element.project_description,
             cost_without_vat: element.amount_without_vat,
+            discount: '-'+element.discount,
+            discounted_amount: element.discounted_amount,
             is_vat: !!element.is_vat ? 'Yes' : 'No',
             vat_percentage: element.vat_percentage === null ? '' : element.vat_percentage+'%',
             vat_amount: element.vat_amount,

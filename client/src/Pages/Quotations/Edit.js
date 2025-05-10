@@ -58,12 +58,35 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   }
 }));
 
+const StyledDiscountCell= styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.footer}`]: {
+    fontSize: 14,
+    color: theme.palette.error.main,
+    fontWeight: 'bold',
+    whiteSpace: 'nowrap'
+  }
+}));
+
+
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   // hide last border
   'td,th': {
     border: '1px solid gray',
   },
 }));
+
+const CustomInput = styled(TextField)(({ theme }) => ({
+      '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+          border: 'none'
+        },
+        '& input': {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.palette.error.main 
+        },
+      },
+ }));
 
 const QuotationDetailSchema = Yup.object().shape({
   description: Yup.string()
@@ -89,6 +112,9 @@ const QuotationDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     currency: Yup.string()
     .required('This field is required!'),
+    discount: Yup.string()
+      .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
+      .required('This field is required!')
     
   });
   
@@ -107,6 +133,7 @@ export default function Edit(props){
     const [quotationDetails, setQuotationDetails] = useState([]);
     const [quotationBreakdown, setQuotationBreakdown] = useState({
       total_cost_without_vat: "",
+      total_cost_with_discount: "",
       vat_amount: "",
       total_cost_with_vat: ""
     })
@@ -229,6 +256,7 @@ export default function Edit(props){
         attention_to: "",
         project_name: "",
         project_description: "",
+        discount: 0,
         currency: "",
         vat_percentage: 0,
         notes: ""
@@ -282,12 +310,13 @@ export default function Edit(props){
 
       setQuotationBreakdown({
         total_cost_without_vat: total_cost_without_vat,
-        vat_amount: total_cost_without_vat * (formik_quotation.values.vat_percentage / 100),
-        total_cost_with_vat: total_cost_without_vat + (total_cost_without_vat * (formik_quotation.values.vat_percentage / 100))
+        total_cost_with_discount: (total_cost_without_vat-formik_quotation.values.discount),
+        vat_amount: (total_cost_without_vat-formik_quotation.values.discount) * (formik_quotation.values.vat_percentage / 100),
+        total_cost_with_vat: (total_cost_without_vat-formik_quotation.values.discount)  + ((total_cost_without_vat-formik_quotation.values.discount)  * (formik_quotation.values.vat_percentage / 100))
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[quotationDetails, formik_quotation.values.vat_percentage])
+    },[quotationDetails, formik_quotation.values.vat_percentage, formik_quotation.values.discount])
 
    useEffect(()=>{
 
@@ -305,6 +334,8 @@ export default function Edit(props){
             attention_to: result.data.quotation[0].attention_to,
             project_name: result.data.quotation[0].project_name,
             project_description: result.data.quotation[0].project_description,
+            discount: result.data.quotation[0].discount,
+            discount_amount: result.data.quotation[0].discount_amount,
         });
 
           
@@ -795,30 +826,89 @@ export default function Edit(props){
                                 ))}
                                 </TableBody>
                                 {
-                                formik_quotation.values.vat_percentage !== 0  ? (
-                                    <TableFooter>
-                                    <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL COST w/out VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                    </StyledTableRow>
-                                    <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.values.vat_percentage}%:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                    </StyledTableRow>
-                                    <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                    </StyledTableRow>
-                                  </TableFooter>
-                                  ) : (
-                                    <TableFooter>
-                                    <StyledTableRow>
-                                      <StyledTableCell colSpan={5} align="right"  >TOTAL COST:</StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                    </StyledTableRow>
-                                  </TableFooter>
-                                  )
-                                }
+                                    formik_quotation.values.is_vat ? (
+                                      <TableFooter>
+                                      <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right"  >TOTAL COST w/o VAT:</StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                                              <StyledTableRow>
+                                        <StyledDiscountCell colSpan={5} align="right">DISCOUNT: </StyledDiscountCell>
+                                        <StyledTableCell align="center">
+                                        <CustomInput 
+                                              name="discount" 
+                                              value={formik_quotation.values.discount} 
+                                              variant="outlined" 
+                                              fullWidth 
+                                              size="small" 
+                                              sx={{
+                                                  '& .MuiOutlinedInput-root': {
+                                                      '& input': {
+                                                          textAlign: 'center',
+                                                      }
+                                                  }
+                                              }}
+                                              onChange={formik_quotation.handleChange}
+                                              helperText={
+                                                  formik_quotation.touched.discount && formik_quotation.errors.discount
+                                              }
+                                              error={Boolean(formik_quotation.touched.discount && formik_quotation.errors.discount)}
+                                              autoComplete="off"
+                                          />
+                                        </StyledTableCell>
+                                      </StyledTableRow>
+                                      <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right">TOTAL COST w/ DISCOUNT: </StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+(parseFloat(quotationBreakdown.total_cost_without_vat)-formik_quotation.values.discount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                      <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.values.vat_percentage}%:</StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                      <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                    </TableFooter>
+                                    ) : (
+                                      <TableFooter>
+                                      <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right"  >TOTAL COST:</StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                        <StyledTableRow>
+                                        <StyledDiscountCell colSpan={5} align="right">DISCOUNT: </StyledDiscountCell>
+                                        <StyledTableCell align="center">
+                                        <CustomInput 
+                                              name="discount" 
+                                              value={formik_quotation.values.discount} 
+                                              variant="outlined" 
+                                              fullWidth 
+                                              size="small" 
+                                              sx={{
+                                                  '& .MuiOutlinedInput-root': {
+                                                      '& input': {
+                                                          textAlign: 'center',
+                                                          
+                                                      }
+                                                  }
+                                              }}
+                                              onChange={formik_quotation.handleChange}
+                                              helperText={
+                                                  formik_quotation.touched.discount && formik_quotation.errors.discount
+                                              }
+                                              error={Boolean(formik_quotation.touched.discount && formik_quotation.errors.discount)}
+                                              autoComplete="off"
+                                          />
+                                        </StyledTableCell>
+                                      </StyledTableRow>
+                                        <StyledTableRow>
+                                        <StyledTableCell colSpan={5} align="right">TOTAL COST w/ DISCOUNT: </StyledTableCell>
+                                        <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_discount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      </StyledTableRow>
+                                    </TableFooter>
+                                    )
+                                  }
 
                             </Table>
                         </TableContainer>

@@ -201,6 +201,7 @@ module.exports = {
       "SELECT supplier_name, SUM(amount) as total_amount, currency FROM vw_project_supplier_expense_payments GROUP BY supplier_name, currency",
       function(err, data, fields) {
         if (err) {
+    
           res.send({
             status: "ERROR",
             message: err.sqlMessage
@@ -319,6 +320,7 @@ module.exports = {
 insert_vendor_expense: (req, res)=>{
   const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
+  req.body.values.posted_date,
   req.body.values.invoice_number,
   detail.description,
   detail.is_vat,
@@ -330,9 +332,9 @@ insert_vendor_expense: (req, res)=>{
   req.user.user_id
   ]);
 
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
 
-  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
+  dbConnection.query(`INSERT INTO tbl_project_vendor_expenses(posted_date, ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
     details,
     function(err, data, fields){
       if (err) {
@@ -353,6 +355,7 @@ insert_vendor_expense: (req, res)=>{
 update_vendor_expense: (req, res)=>{
   const values = req.body.values.expenses;
   const details = values.flatMap(detail => [
+    req.body.values.posted_date,
     req.body.values.invoice_number,
     detail.description,
     detail.is_vat,
@@ -364,7 +367,7 @@ update_vendor_expense: (req, res)=>{
     req.user.user_id
   ]);
   
-  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
+  const placeholders = values.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
   
   const id_details = values.flatMap(id_detail => [id_detail.project_vendor_expense_id]);
   const id_placeholders = values.map(() => '?').join(',');
@@ -376,7 +379,6 @@ update_vendor_expense: (req, res)=>{
         message: err.sqlMessage
       });
     }
-  
     dbConnection.query(
       `DELETE FROM tbl_project_vendor_expenses WHERE project_vendor_expense_id IN (${id_placeholders})`, 
       id_details,
@@ -391,7 +393,7 @@ update_vendor_expense: (req, res)=>{
         }
   
         dbConnection.query(
-          `INSERT INTO tbl_project_vendor_expenses(ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
+          `INSERT INTO tbl_project_vendor_expenses(posted_date, ref_invoice_number, description, vat_applicable, vat_percentage, amount_without_vat, vat_amount, amount_with_vat, currency, user_id) VALUES ${placeholders}`,
           details,
           function(err2, data2, fields2) {
             if (err2) {
@@ -452,7 +454,7 @@ delete_vendor_expense: (req, res)=>{
 list_vendor_expense: (req, res)=>{
 
   dbConnection.query(
-      "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses GROUP BY invoice_number, currency, status, created_by_email ORDER BY invoice_number DESC",
+      "SELECT invoice_number, status, project_name, SUM(amount_without_vat) as amount_without_vat, SUM(vat_amount) as vat_amount, SUM(amount_with_vat) as amount_with_vat, currency, posted_date, vat_percentage, created_by_email, reporting_to, reporting_to_email FROM vw_project_vendor_expenses GROUP BY invoice_number, currency, status, created_by_email ORDER BY invoice_number DESC",
       function(err, data, fields) {
         if (err) {
           res.send({
