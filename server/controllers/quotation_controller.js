@@ -8,7 +8,7 @@ module.exports = {
     generateQuotationNumber: (req, res)=>
     {
         let initializedValue = 1;
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear()-1;
         const prefix = 'BS';
         let quotationNumber;
 
@@ -21,7 +21,7 @@ module.exports = {
                     })
                 }else{
                     const result = data[0]; // Access the first element of the results array
-           
+                  
                     let nextValue;
               
                     if (result.storedValue === null) {
