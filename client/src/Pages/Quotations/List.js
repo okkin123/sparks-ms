@@ -225,7 +225,7 @@ export default function List(props){
             project_name: element.project_name,
             project_description: element.project_description,
             cost_without_vat: element.amount_without_vat,
-            discount: '-'+element.discount,
+            discount: parseInt(element.discount)===0 ? element.discount : '-'+element.discount,
             discounted_amount: element.discounted_amount,
             is_vat: !!element.is_vat ? 'Yes' : 'No',
             vat_percentage: element.vat_percentage === null ? '' : element.vat_percentage+'%',
