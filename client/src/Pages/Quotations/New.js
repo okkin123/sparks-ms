@@ -110,8 +110,8 @@ const QuotationDetailSchema = Yup.object().shape({
     .required('This field is required!'),
     project_name: Yup.string()
     .required('This field is required!'),
-    project_description: Yup.string()
-    .required('This field is required!'),
+    // project_description: Yup.string()
+    // .required('This field is required!'),
     currency: Yup.string()
     .required('This field is required!'),
     discount: Yup.string()
@@ -558,12 +558,12 @@ export default function New(){
                     value={formik_quotation.values.project_description}
                     onChange={formik_quotation.handleChange}
                     size="small"
-                    error={
-                      formik_quotation.touched.project_description && Boolean(formik_quotation.errors.project_description)
-                      }
-                    helperText={
-                      formik_quotation.touched.project_description && formik_quotation.errors.project_description
-                      }
+                    // error={
+                    //   formik_quotation.touched.project_description && Boolean(formik_quotation.errors.project_description)
+                    //   }
+                    // helperText={
+                    //   formik_quotation.touched.project_description && formik_quotation.errors.project_description
+                    //   }
                      multiline rows={2} fullWidth />
                 </Grid>
                 <Grid item>

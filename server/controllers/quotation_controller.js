@@ -8,7 +8,7 @@ module.exports = {
     generateQuotationNumber: (req, res)=>
     {
         let initializedValue = 1;
-        const currentYear = new Date().getFullYear()-1;
+        const currentYear = new Date().getFullYear();
         const prefix = 'BS';
         let quotationNumber;
 

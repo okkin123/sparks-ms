@@ -161,13 +161,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               </StyledTableRow>
               </TableHead>
               <TableBody>
-                  <StyledTableRow>
+                  {quotation.project_description !== null ? <StyledTableRow>
                       <StyledTableCell align="left"></StyledTableCell>
                       <StyledTableCell sx={{ minWidth: 300 }}><pre>{quotation.project_description}</pre></StyledTableCell>
                       <StyledTableCell align="center"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
-                  </StyledTableRow>
+                  </StyledTableRow> : null}
                   {
                       quotationDetails.map((quotationDetail, i)=>(
                           <StyledTableRow>
@@ -607,13 +607,13 @@ export default function Details(){
                         </StyledTableRow>
                         </TableHead>
                         <TableBody>
-                            <StyledTableRow>
+                            {quotation.project_description !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
                                 <StyledTableCell sx={{ minWidth: 350 }}><pre>{quotation.project_description}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
-                            </StyledTableRow>
+                            </StyledTableRow> : null}
                             {
                                 quotationDetails.map((quotationDetail, i)=>(
                                     <StyledTableRow>
