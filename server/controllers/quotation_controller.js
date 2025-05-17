@@ -1,7 +1,8 @@
 const dbConnection = require('../config/database');
 
 function formatNumber(num) {
-    return num < 10 ? num.toString().padStart(2, '0') : num
+    //return num < 10 ? num.toString().padStart(3, '0') : num
+    return num.toString().padStart(3, '0')
 }
 
 module.exports = {
