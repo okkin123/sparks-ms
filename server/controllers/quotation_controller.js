@@ -13,8 +13,9 @@ module.exports = {
         const prefix = 'BS';
         let quotationNumber;
 
-        dbConnection.query( `SELECT MAX(quotation_number), SUBSTRING_INDEX(SUBSTRING_INDEX(MAX(quotation_number), '/', 1), 'BS', -1) AS storedValue, SUBSTRING_INDEX(MAX(quotation_number), '/', -1) AS storedYear FROM tbl_quotations`, 
+        dbConnection.query( `SELECT RIGHT(MAX(quotation_order_number), 3) AS storedValue, LEFT(MAX(quotation_order_number), 4) AS storedYear FROM vw_quotations`, 
             function(err, data, fields){
+              
                 if(err){
                     res.send({
                         status: "ERROR",
@@ -22,7 +23,7 @@ module.exports = {
                     })
                 }else{
                     const result = data[0]; // Access the first element of the results array
-                  
+                    console.log(result.storedYear)
                     let nextValue;
               
                     if (result.storedValue === null) {
