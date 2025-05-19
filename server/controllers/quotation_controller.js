@@ -4,15 +4,39 @@ function formatNumber(num) {
     //return num < 10 ? num.toString().padStart(3, '0') : num
     return num.toString().padStart(3, '0')
 }
+function incrementSuffix(value) {
+    return value.replace(/([A-Z]+\d+)-?([A-Z]*)(\/\d{4})$/, (match, prefix, suffix, year) => {
+        if (!suffix) return `${prefix}-A${year}`; // Start with "A" if no suffix exists
+
+        let suffixArr = suffix.split("").reverse();
+        let carry = true;
+
+        for (let i = 0; i < suffixArr.length && carry; i++) {
+            if (suffixArr[i] !== "Z") {
+                suffixArr[i] = String.fromCharCode(suffixArr[i].charCodeAt(0) + 1);
+                carry = false;
+            } else {
+                suffixArr[i] = "A";
+            }
+        }
+
+        if (carry) suffixArr.push("A"); // Handle "Z" rolling to "AA"
+
+        return `${prefix}-${suffixArr.reverse().join("")}${year}`;
+    });
+}
 
 module.exports = {
     generateQuotationNumber: (req, res)=>
     {
+
+
         let initializedValue = 1;
         const currentYear = new Date().getFullYear();
         const prefix = 'BS';
         let quotationNumber;
-
+        const is_series = req.body.is_series;
+        let series_quotation_numbers = [];
         dbConnection.query( `SELECT RIGHT(MAX(quotation_order_number), 3) AS storedValue, LEFT(MAX(quotation_order_number), 4) AS storedYear FROM vw_quotations`, 
             function(err, data, fields){
               
@@ -23,7 +47,7 @@ module.exports = {
                     })
                 }else{
                     const result = data[0]; // Access the first element of the results array
-                    console.log(result.storedYear)
+                   
                     let nextValue;
               
                     if (result.storedValue === null) {
@@ -38,18 +62,35 @@ module.exports = {
                             nextValue = parseInt(result.storedValue) + 1;
                         }
                     }
-              
-                    quotationNumber = `${prefix}${formatNumber(nextValue)}/${currentYear}`;
+                    
+                    if(is_series){
+                        quotationNumber = incrementSuffix(`${prefix}${formatNumber(nextValue)}/${currentYear}`);
+                        series_quotation_numbers.push(quotationNumber);
+                        dbConnection.query( `SELECT quotation_number FROM vw_quotations WHERE is_series=?`,[is_series], 
+                        function(err1, data1, fields1){
+
+                               data1.forEach(function(element){
+                                    series_quotation_numbers.push(incrementSuffix(element.quotation_number))
+                               })
+                              
+                        })
+                         
+                    }else{
+                        quotationNumber = `${prefix}${formatNumber(nextValue)}/${currentYear}`;
+                    }
+                   
                   
                     res.send({
                         status: "SUCCESS",
-                        quotation_number: quotationNumber
+                        quotation_number: quotationNumber,
+                        series_quotation_numbers: series_quotation_numbers
                     })
                    
                 }
             }
         )
     },
+    
     insert: (req, res)=>
     {
                     const reporting_to = req.user.reporting_to; 
@@ -59,8 +100,8 @@ module.exports = {
                     }else{
                         assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
                     }
-                    dbConnection.query("INSERT INTO tbl_quotations(quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, discount, is_vat, vat_percentage, currency, company_trn, company_address, created_by, assigned_to, status, notes) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.discount, req.body.values.is_vat, req.body.values.vat_percentage, req.body.values.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.values.notes],
+                    dbConnection.query("INSERT INTO tbl_quotations(is_series, quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, discount, is_vat, vat_percentage, currency, company_trn, company_address, created_by, assigned_to, status, notes) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [req.body.values.is_series, req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.discount, req.body.values.is_vat, req.body.values.vat_percentage, req.body.values.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.values.notes],
                         function(err, data, fields)
                         {
                             if(err)

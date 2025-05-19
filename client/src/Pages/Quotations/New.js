@@ -141,7 +141,7 @@ export default function New(){
     })
     const [vatPrices, setVatPrices] = useState([]);
     const [error, setError] = useState(false);
-
+    const [seriesQuotationNumbers, setSeriesQuotationNumbers] = useState([]);
     const handleEditQuotaionDetails = (index) => {
 
       quotationDetails.map((quotationDetail, i) => 
@@ -246,6 +246,7 @@ export default function New(){
 
     const formik_quotation = useFormik({
       initialValues: {
+        is_series: false,
         is_vat: false,
         date: null,
         client_name: "",
@@ -314,12 +315,17 @@ export default function New(){
           // eslint-disable-next-line react-hooks/exhaustive-deps
     },[quotationDetails, formik_quotation.values.vat_percentage, formik_quotation.values.discount])
 
-   useEffect(()=>{
-    AxiosInstance.get("/quotation/generateQuotationNumber")
+
+  function generateQuotationNumber(is_series){
+   AxiosInstance.post("/quotation/generateQuotationNumber", {is_series: is_series})
     .then(function(result){
         if(result.data.status === "SUCCESS")
         {
           setQuotationNumber(result.data.quotation_number);
+          setSeriesQuotationNumbers((seriesQuotationNumbers)=>[
+          ...seriesQuotationNumbers,
+           result.data.series_quotation_numbers
+           ]);
         }
         else
         {
@@ -330,7 +336,11 @@ export default function New(){
       console.log(error)
     })
 
+  }
 
+   useEffect(()=>{
+ 
+   generateQuotationNumber(false);
     AxiosInstance.get("/preferences/vat_pricing")
     .then(function(result){
       setVatPrices((vatPrices)=>{
@@ -381,6 +391,77 @@ export default function New(){
               </Grid>
                <Grid item>
                 <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      error={formik_quotation.touched.is_series && Boolean(formik_quotation.errors.is_series)}
+                    >
+                      <InputLabel>Series Quotation:</InputLabel>
+                      <Select
+                      name="is_series"
+                      value={formik_quotation.values.is_series}
+                      label="Series Quotation"
+                      onChange={(event)=>{
+
+                         formik_quotation.setFieldValue('is_series', event.target.value)
+                         generateQuotationNumber(event.target.value)
+                        // const selectedElement = vatPrices.find(element => element.currency === formik_quotation.values.currency);
+                      
+                        // if (selectedElement) {
+                        //   const vatPercentage = selectedElement.vat_percentage;
+                        //   if(event.target.value){
+                        //     formik_quotation.setFieldValue('vat_percentage', parseFloat(vatPercentage));
+                        //   }else{
+                        //       formik_quotation.setFieldValue('vat_percentage', 0);
+                        //   }
+
+                        // } 
+
+
+                      }}
+                      >
+                          <MenuItem value={true}>
+                              Yes
+                          </MenuItem>
+                          <MenuItem value={false}>
+                              No
+                          </MenuItem>
+                      </Select>
+                      {/* <FormHelperText>
+                      {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                      </FormHelperText> */}
+                  </FormControl>
+                    {!formik_quotation.values.is_series ? <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
+                    : <FormControl
+                      fullWidth
+                      size="small"
+                      //error={formik_quotation.touched.is_vat && Boolean(formik_quotation.errors.is_vat)}
+                    >
+                      <InputLabel>Vat Appicable</InputLabel>
+                      <Select
+                      name="quotation_number"
+                      value={formik_quotation.values.is_vat}
+                      label="Quotation #:"
+                      onChange={(event)=>{
+
+                        
+
+
+                      }}
+                      >
+                        { seriesQuotationNumbers.map((seriesQuotationNumber)=>{
+                          return(
+                          <MenuItem value={seriesQuotationNumber}>
+                              {seriesQuotationNumber}
+                          </MenuItem>
+                          )
+                        })}
+                         
+                      </Select>
+                      <FormHelperText>
+                      {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
+                      </FormHelperText>
+                    </FormControl>}
                     <FormControl
                       fullWidth
                       size="small"
@@ -458,7 +539,7 @@ export default function New(){
                       {formik_quotation.touched.currency && formik_quotation.errors.currency}
                       </FormHelperText>
                   </FormControl>
-                  <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
+                  
                  </Stack>
                </Grid>
                <Grid item>
