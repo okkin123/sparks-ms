@@ -27,68 +27,72 @@ function incrementSuffix(value) {
 }
 
 module.exports = {
-    generateQuotationNumber: (req, res)=>
-    {
-
-
+    generateQuotationNumber: (req, res) => {
         let initializedValue = 1;
         const currentYear = new Date().getFullYear();
         const prefix = 'BS';
         let quotationNumber;
         const is_series = req.body.is_series;
         let series_quotation_numbers = [];
-        dbConnection.query( `SELECT RIGHT(MAX(quotation_order_number), 3) AS storedValue, LEFT(MAX(quotation_order_number), 4) AS storedYear FROM vw_quotations`, 
-            function(err, data, fields){
-              
-                if(err){
-                    res.send({
+
+        dbConnection.query(
+            `SELECT RIGHT(MAX(quotation_order_number), 3) AS storedValue, 
+                    LEFT(MAX(quotation_order_number), 4) AS storedYear 
+            FROM vw_quotations`, 
+            function(err, data) {
+                if (err) {
+                    return res.send({
                         status: "ERROR",
                         message: err.sqlMessage
-                    })
-                }else{
-                    const result = data[0]; // Access the first element of the results array
-                   
-                    let nextValue;
-              
-                    if (result.storedValue === null) {
-                      nextValue = initializedValue;
-                    } else{
-                        if(result.storedYear != currentYear)
-                        {
-                            nextValue = initializedValue;
-                        }   
-                        else
-                        {
-                            nextValue = parseInt(result.storedValue) + 1;
-                        }
-                    }
-                    
-                    if(is_series){
-                        quotationNumber = incrementSuffix(`${prefix}${formatNumber(nextValue)}/${currentYear}`);
-                        series_quotation_numbers.push(quotationNumber);
-                        dbConnection.query( `SELECT quotation_number FROM vw_quotations WHERE is_series=?`,[is_series], 
-                        function(err1, data1, fields1){
+                    });
+                }
 
-                               data1.forEach(function(element){
-                                    series_quotation_numbers.push(incrementSuffix(element.quotation_number))
-                               })
-                              
-                        })
-                         
-                    }else{
-                        quotationNumber = `${prefix}${formatNumber(nextValue)}/${currentYear}`;
-                    }
-                   
-                  
+                const result = data[0]; 
+                let nextValue;
+
+                if (result.storedValue === null || result.storedYear != currentYear) {
+                    nextValue = initializedValue;
+                } else {
+                    nextValue = parseInt(result.storedValue) + 1;
+                }
+
+                if (is_series) {
+                    quotationNumber = incrementSuffix(`${prefix}${formatNumber(nextValue)}/${currentYear}`);
+                    series_quotation_numbers.push(quotationNumber);
+
+                    dbConnection.query(`SELECT quotation_number FROM vw_quotations WHERE is_series=?`, [is_series], 
+                        function(err1, data1) {
+                            if (err1) {
+                                return res.send({
+                                    status: "ERROR",
+                                    message: err1.sqlMessage
+                                });
+                            }
+
+                            data1.forEach(element => {
+                                series_quotation_numbers.push(incrementSuffix(element.quotation_number));
+                            });
+
+                            // Respond once the array is fully populated
+                            res.send({
+                                status: "SUCCESS",
+                                quotation_number: quotationNumber,
+                                series_quotation_numbers: series_quotation_numbers
+                            });
+                        }
+                    );
+                } else {
+                    quotationNumber = `${prefix}${formatNumber(nextValue)}/${currentYear}`;
+
+                    // Immediate response for non-series quotations
                     res.send({
                         status: "SUCCESS",
                         quotation_number: quotationNumber,
-                        series_quotation_numbers: series_quotation_numbers
-                    })
-                   
+                        series_quotation_numbers: []
+                    });
                 }
             }
-        )
+        );
     },
     
     insert: (req, res)=>
