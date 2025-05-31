@@ -60,7 +60,16 @@ module.exports = {
                     quotationNumber = incrementSuffix(`${prefix}${formatNumber(nextValue)}/${currentYear}`);
                     series_quotation_numbers.push(quotationNumber);
 
-                    dbConnection.query(`SELECT quotation_number FROM vw_quotations WHERE is_series=?`, [is_series], 
+                    dbConnection.query(`SELECT q.quotation_group_number, q.quotation_number, q.quotation_order_number
+                                        FROM vw_quotations q
+                                        JOIN (
+                                            SELECT quotation_group_number, MAX(quotation_order_number) AS max_order_number
+                                            FROM vw_quotations
+                                            WHERE is_series = ?
+                                            GROUP BY quotation_group_number
+                                        ) AS subquery ON q.quotation_group_number = subquery.quotation_group_number 
+                                        AND q.quotation_order_number = subquery.max_order_number;
+                                        `, [is_series], 
                         function(err1, data1) {
                             if (err1) {
                                 return res.send({
@@ -98,14 +107,20 @@ module.exports = {
     insert: (req, res)=>
     {
                     const reporting_to = req.user.reporting_to; 
-                    let assigned_to;
+                    let assigned_to, quotation_number;
+                    if(req.body.values.is_series){
+                        quotation_number = req.body.values.quotation_number;
+                    }else{
+                        quotation_number = req.body.quotation_number;
+                    }
                     if(reporting_to !== null){
                         assigned_to = reporting_to;
                     }else{
                         assigned_to = JSON.stringify({ 'user_id': [req.user.user_id] });
                     }
+                    
                     dbConnection.query("INSERT INTO tbl_quotations(is_series, quotation_number, quotation_date, client_name, attention_to, project_name, project_description, amount_without_vat, discount, is_vat, vat_percentage, currency, company_trn, company_address, created_by, assigned_to, status, notes) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [req.body.values.is_series, req.body.quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.discount, req.body.values.is_vat, req.body.values.vat_percentage, req.body.values.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.values.notes],
+                        [req.body.values.is_series, quotation_number, req.body.values.date, req.body.values.client_name, req.body.values.attention_to, req.body.values.project_name, req.body.values.project_description, req.body.amount_without_vat, req.body.values.discount, req.body.values.is_vat, req.body.values.vat_percentage, req.body.values.currency, process.env.TRN, process.env.COMPANY_ADDRESS, req.user.user_id, assigned_to, "WAITING FOR VERIFICATION", req.body.values.notes],
                         function(err, data, fields)
                         {
                             if(err)
