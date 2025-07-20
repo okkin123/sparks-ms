@@ -136,7 +136,7 @@ module.exports = {
                             {
                                 const quotation_details = req.body.details;
                                 const values = quotation_details.flatMap(quotation_detail => [
-                                req.body.quotation_number,
+                                quotation_number,
                                 quotation_detail.description,
                                 quotation_detail.quantity === '' ? null : quotation_detail.quantity,
                                 quotation_detail.unit_cost === '' ? null : quotation_detail.unit_cost,
@@ -156,12 +156,12 @@ module.exports = {
                                         })
                                       } else {
                                         dbConnection.query("INSERT INTO tbl_quotation_approval_history (quotation_number, user_id, comments, status) VALUES (?, ?, ?, ?)",
-                                            [req.body.quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){
+                                            [quotation_number, req.user.user_id, "", "CREATED"], function(err3, data3, fields3){
                                                 console.log(err3)
                                             })
                                         res.send({
                                           status: "SUCCESS",
-                                          message: "Quotation #: " + req.body.quotation_number + " has been submitted for approval!"
+                                          message: "Quotation #: " + quotation_number + " has been submitted for approval!"
                                         });
                                       }
                                     }
@@ -408,9 +408,18 @@ module.exports = {
         )
     },
     get_quotation_client_details: (req, res)=>{
+        const client_name = req.body.client_name;
+        let query, params;
+        if (client_name === '') {
+            query = "SELECT * FROM vw_quotations WHERE status <> 'VOIDED' AND status <> 'NO RESPONSE FROM CLIENT' AND status <> 'REJECTED BY CLIENT' GROUP BY ??"
+            params = [req.body.field_name];
+        }else{
+            query = "SELECT * FROM vw_quotations WHERE client_name=? AND status <> 'VOIDED' AND status <> 'NO RESPONSE FROM CLIENT' AND status <> 'REJECTED BY CLIENT' GROUP BY ??"
+            params = [client_name, req.body.field_name];
+        }
         dbConnection.query(
-            "SELECT * FROM vw_quotations WHERE status <> 'VOIDED' AND status <> 'NO RESPONSE FROM CLIENT' AND status <> 'REJECTED BY CLIENT' GROUP BY ??", 
-            [req.body.field_name], 
+            query,
+            params, 
             function(err, data, fields) {
               if (err) {
                 res.send({

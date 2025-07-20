@@ -369,8 +369,8 @@ export default function New(){
  // eslint-disable-next-line  
    }, [])
 
-   function handleGetClientDetails(field_name){
-    AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name})
+   function handleGetClientDetails(field_name, client_name){
+    AxiosInstance.post("/quotation/get_quotation_client_details", {field_name: field_name, client_name: client_name})
     .then(function(result){
         if(result.data.status === 'SUCCESS'){
 
@@ -563,7 +563,7 @@ export default function New(){
                         selectOnFocus
                         clearOnBlur
                         handleHomeEndKeys
-                        onFocus={()=>handleGetClientDetails('client_name')}
+                        onFocus={()=>handleGetClientDetails('client_name', '')}
                         options={clientDetails.client_name.map((option) => option)}
                         value={formik_quotation.values.client_name}
                         onChange={(event, value)=>formik_quotation.setFieldValue('client_name', value)}
@@ -591,7 +591,7 @@ export default function New(){
                         selectOnFocus
                         clearOnBlur
                         handleHomeEndKeys
-                        onFocus={()=>handleGetClientDetails('attention_to')}
+                        onFocus={()=>handleGetClientDetails('attention_to', formik_quotation.values.client_name)}
                         options={clientDetails.attention_to.map((option) => option)}
                         value={formik_quotation.values.attention_to}
                         onChange={(event, value)=>formik_quotation.setFieldValue('attention_to', value)}
