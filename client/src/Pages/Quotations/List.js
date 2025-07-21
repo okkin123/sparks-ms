@@ -8,6 +8,7 @@ import AxiosInstance from '../../AxiosInstance';
 import { theme } from '../../Theme';
 import LockIcon from '@mui/icons-material/Lock';
 import dayjs from 'dayjs';
+import { NumericFormat } from 'react-number-format';
 
 
 const parentHeight = window.innerHeight;
@@ -162,7 +163,17 @@ const columns = [
     {
       accessorKey: 'discount',
       header: 'DISCOUNT',
-      Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">{renderedCellValue}</Typography>
+      Cell: ({renderedCellValue, row})=><Typography variant="p" color="error">
+  
+                <NumericFormat
+                value={renderedCellValue}
+                displayType={'text'}
+                thousandSeparator={true}
+                decimalScale={2}
+                fixedDecimalScale={true}
+              />
+        
+      </Typography>
     },
     {
       accessorKey: 'discounted_amount',
