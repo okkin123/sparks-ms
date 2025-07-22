@@ -36,7 +36,7 @@ module.exports = {
         let series_quotation_numbers = [];
 
         dbConnection.query(
-            `SELECT RIGHT(MAX(quotation_order_number), 3) AS storedValue, 
+            `SELECT RIGHT(MAX(quotation_order_number), LENGTH(MAX(quotation_order_number))-4) AS storedValue, 
                     LEFT(MAX(quotation_order_number), 4) AS storedYear 
             FROM vw_quotations`, 
             function(err, data) {

@@ -104,6 +104,8 @@ const QuotationDetailSchema = Yup.object().shape({
 
   const QuotationSchema = Yup.object().shape({  
     date: Yup.date().required('Date is required'),
+    quotation_number: Yup.string()
+    .required('This field is required!'),
     client_name: Yup.string()
     .required('This field is required!'),
     attention_to: Yup.string()
