@@ -327,6 +327,7 @@ export default function New(){
         if(result.data.status === "SUCCESS")
         {
           setQuotationNumber(result.data.quotation_number);
+          formik_quotation.setFieldValue('quotation_number', result.data.quotation_number);
           // const fetchSeriesQuotationNumbers = result.data.series_quotation_numbers.map((series_quotation_numbers)=>({
           //   series_quotation_numbers: series_quotation_numbers
           // }))
@@ -432,7 +433,7 @@ export default function New(){
                       {formik_quotation.touched.is_vat && formik_quotation.errors.is_vat}
                       </FormHelperText> */}
                   </FormControl>
-                    {!formik_quotation.values.is_series ? <TextField size="small" variant="outlined" label="Quotation #" value={quotationNumber} readOnly fullWidth />
+                    {!formik_quotation.values.is_series ? <TextField size="small" name="quotation_number" variant="outlined" label="Quotation #" value={formik_quotation.values.quotation_number} readOnly fullWidth />
                     : <Autocomplete
                         freeSolo
                         selectOnFocus
