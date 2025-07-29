@@ -37,6 +37,11 @@ import * as Yup from 'yup';
 import ReactToPrint from 'react-to-print';
 import FileUpload from '../../Components/FileUpload';
 import "../../Assets/print.css";
+import numeral from 'numeral';
+
+
+
+
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -44,23 +49,39 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
-      padding: 4,
+      fontSize: 7,
+      padding: 2  ,
+      height: 0,
     },
     [`&.${tableCellClasses.body}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
+      height: 0,
+      fontSize: 7,
       color: theme.palette.primary.dark,
-      padding: 4,
+      padding: 2,
      
     },
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
+      fontSize: 7,
+      height: 0,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
+      padding: 2,
+    }
+
+  }));
+
+
+  const StyledTableCellDescription = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.body}`]: {
+      fontFamily: 'Verdana, sans-serif',
+      fontSize: 8,
+      fontWeight: 'bold',
+      color: theme.palette.primary.dark,
       padding: 4,
+      height: 5
     }
 
   }));
@@ -68,11 +89,12 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledDiscountCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
+      fontSize:7,
       color: theme.palette.error.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
       padding: 4,
+      height: 5
     }
 
   }));
@@ -90,13 +112,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: 0,
       padding: 2,
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 10.5,
+      fontSize: 7,
     }
   }));
 
   const StyledTypography = styled(Typography)(({ theme }) => ({
     fontFamily: 'Verdana, sans-serif',
-    fontSize: 10.5,
+    fontSize: 8 ,
   }));
 
   const VisuallyHiddenInput = styled('input')({
@@ -132,7 +154,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       >
       <Grid container direction="column" spacing={2}>
         <Grid item>
-          <Stack direction="column" spacing={3}>
+          <Stack direction="column" spacing={1}>
           <img src={bsLogo} width={220} alt="logo" />
           <StyledTypography variant="body2">TRN NUMBER: {quotation.company_trn}</StyledTypography>
           </Stack>
@@ -142,10 +164,12 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
         </Grid>
         <Grid item>
             <Stack direction="column" spacing={1}>
+               <Stack direction="column">
                 <StyledTypography variant="body2">Date: {quotation.quotation_date}</StyledTypography>
                 <StyledTypography variant="body2">Client Name: {quotation.client_name}</StyledTypography>
                 <StyledTypography variant="body2">Attention To: {quotation.attention_to}</StyledTypography>
-                <StyledTypography variant="body2">Project Name: {quotation.project_name}</StyledTypography>
+                </Stack>
+                <StyledTypography variant="body2"><strong>Project Name: {quotation.project_name}</strong></StyledTypography>
             </Stack>
         </Grid>
       <Grid item>
@@ -154,7 +178,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               <TableHead>
               <StyledTableRow>
                   <StyledTableCell align="left">SN</StyledTableCell>
-                  <StyledTableCell sx={{ minWidth: 300 }}>DESCRIPTION</StyledTableCell>
+                  <StyledTableCell sx={{ minWidth: 300, textAlign: 'center' }}>DESCRIPTION</StyledTableCell>
                   <StyledTableCell align="center">QUANTITY</StyledTableCell>
                   <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
                   <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
@@ -174,8 +198,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                               <StyledTableCell align="left">{i+1}</StyledTableCell>
                               <StyledTableCell sx={{ minWidth: 300 }}>{quotationDetail.description}</StyledTableCell>
                               <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
-                              <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                              <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                               <StyledTableCell align="right">{quotationDetail.unit_cost !== '' ? quotation.currency+' '+quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}</StyledTableCell>
+                                        <StyledTableCell align="right">{quotation.currency+' '+quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                           </StyledTableRow>
                       ))
                   }
@@ -194,6 +218,17 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                   <StyledTableCell colSpan={4} align="right" >TOTAL COST w/o VAT:</StyledTableCell>
                   <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                   </StyledTableRow>
+                  {quotation.discount !== 0 ?
+                  <React.Fragment>
+                    <StyledTableRow>
+                    <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
+                    <StyledDiscountCell align="right">{quotation.currency+' '+formatNumber(quotation.discount)}</StyledDiscountCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                    <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
+                    <StyledTableCell align="right">{quotation.currency+' '+quotation.discounted_amount}</StyledTableCell>
+                    </StyledTableRow>
+                  </React.Fragment> : null }
                   <StyledTableRow>
                   <StyledTableCell colSpan={4} align="right">VAT {quotation.vat_percentage}%:</StyledTableCell>
                   <StyledTableCell align="right">{quotation.currency+' '+quotation.vat_amount}</StyledTableCell>
@@ -204,62 +239,80 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                   </StyledTableRow>
                 </TableFooter>
               ) : (
-                <TableFooter>
-                  <StyledTableRow>
-                  <StyledTableCell colSpan={4} align="right" >TOTAL COST:</StyledTableCell>
-                  <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
-                  </StyledTableRow>
-                </TableFooter>
+                 <TableFooter>
+                    <StyledTableRow>
+                    <StyledTableCell colSpan={4} align="right" >TOTAL COST:</StyledTableCell>
+                    <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
+                    </StyledTableRow>
+                    {quotation.discount !== 0 ?
+                    <React.Fragment>
+                      <StyledTableRow>
+                      <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
+                      <StyledDiscountCell align="right">{quotation.discount}</StyledDiscountCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                      <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
+                      <StyledTableCell align="right">{quotation.discounted_amount}</StyledTableCell>
+                      </StyledTableRow>
+                    </React.Fragment> : null }
+                  </TableFooter>
               )
               }
               
           </Table>
       </TableContainer>
       </Grid>
-      <Grid item>
-        <TableContainer>
-          <Table size="small">
-            <TableBody>
-              <StyledTableRow>
-                <TableCell id="bankAccount" sx={{fontSize: 16}} colSpan={2}><strong>Please transfer the amount to the below UAE bank account details:</strong></TableCell>
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
-                <TableCell id="bankAccount"><strong>Client Approval:</strong></TableCell>
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.name}</TableCell>
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.address}</TableCell>
-                <TableCell id="bankAccount"><strong>Name:</strong></TableCell>
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.account_number}</TableCell>
+                <Grid item>
+                <Stack direction="row" spacing={10}>
+                  <Stack direction="column">
+                  <TableContainer>
+                  <Table size="small">
+                    <TableBody>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount" sx={{fontSize: 16}} colSpan={2}><strong>Please transfer the amount to the below UAE bank account details:</strong></TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.name}</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.address}</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.account_number}</TableCell>
+                        
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.swift_code}</TableCell>
+                        
+                      </StyledTableRow>
+                      <StyledTableRow>
+                        <TableCell id="bankAccount"><strong>ROUTING CODE:</strong></TableCell>
+                        <TableCell id="bankAccount">{bankAccount.routing_code}</TableCell>
+                      </StyledTableRow>
+                    </TableBody>    
+                  </Table>
+                </TableContainer>
+                </Stack>
+                  <Stack direction="column" spacing={2}>
+                       <StyledTypography variant="body"><strong>Client Approval</strong></StyledTypography>
+                       <StyledTypography variant="body"><strong>Name:</strong></StyledTypography>
+                       <StyledTypography variant="body"><strong>Signature:</strong></StyledTypography>
+                 </Stack>
+                </Stack>
                 
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
-                <TableCell id="bankAccount"><strong>Signature:</strong></TableCell>
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.swift_code}</TableCell>
-                
-              </StyledTableRow>
-              <StyledTableRow>
-                <TableCell id="bankAccount"><strong>ROUTING CODE:</strong></TableCell>
-                <TableCell id="bankAccount">{bankAccount.routing_code}</TableCell>
-              </StyledTableRow>
-            </TableBody>    
-          </Table>
-        </TableContainer>
-      </Grid>
+                </Grid>
       </Grid>
   
       </Box>
@@ -270,6 +323,9 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     )
   })
   
+const formatNumber = (number) => {
+  return numeral(number).format('0,000.00');
+  };
 
 
 export default function Details(){
@@ -548,7 +604,7 @@ export default function Details(){
                 </div>
                 {/* <Data quotation={quotation} quotationDetails={quotationDetails} bankAccount={bankAccount} /> */}
                 <Grid item>
-                    <Stack direction="column" spacing={4}>
+                    <Stack direction="column" spacing={2}>
                       <Stack direction="row" justifyContent="space-between">
                         <img src={bsLogo} width={220} alt="logo" />
                         { quotation.status === "VERIFIED" || quotation.status === 'APPROVED BY CLIENT' ? <ReactToPrint
@@ -571,13 +627,16 @@ export default function Details(){
                 </Grid>
                 <Grid item>
                    <Stack direction="row" justifyContent="space-between">
-                      <Stack direction="column" spacing={3}>
+                      <Stack direction="column" spacing={2}>
                         { quotation.quotation_number ? <StyledTypography variant="subtitle1"><strong>Quotation No.: {quotation.quotation_number}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           <Stack direction="column" spacing={1}>
+                         
+                          <Stack direction="column">
                           { quotation.quotation_date ? <StyledTypography variant="subtitle1">Date: {quotation.quotation_date}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.client_name ? <StyledTypography variant="subtitle1">Client Name: {quotation.client_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           { quotation.attention_to ? <StyledTypography variant="subtitle1">Attention To: {quotation.attention_to}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
-                          { quotation.project_name ? <StyledTypography variant="subtitle1">Project Name: {quotation.project_name}</StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
+                          </Stack>
+                          { quotation.project_name ? <StyledTypography variant="subtitle1"><strong>Project Name: {quotation.project_name}</strong></StyledTypography> : <Skeleton variant="rounded" width={210} height={15} /> }
                           </Stack> 
                       </Stack>
 
@@ -600,7 +659,7 @@ export default function Details(){
                         <TableHead>
                         <StyledTableRow>
                             <StyledTableCell align="left">SN</StyledTableCell>
-                            <StyledTableCell sx={{ minWidth: 350 }}>DESCRIPTION</StyledTableCell>
+                            <StyledTableCell sx={{ minWidth: 350, textAlign: 'center' }}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">QUANTITY</StyledTableCell>
                             <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
                             <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
@@ -609,7 +668,7 @@ export default function Details(){
                         <TableBody>
                             {quotation.project_description !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 350 }}><pre>{quotation.project_description}</pre></StyledTableCell>
+                                <StyledTableCellDescription sx={{ minWidth: 350}}><pre>{quotation.project_description}</pre></StyledTableCellDescription>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -620,8 +679,8 @@ export default function Details(){
                                         <StyledTableCell align="left">{i+1}</StyledTableCell>
                                         <StyledTableCell sx={{ minWidth: 350 }}>{quotationDetail.description}</StyledTableCell>
                                         <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
-                                        <StyledTableCell align="right">{quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                        <StyledTableCell align="right">{quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                        <StyledTableCell align="right">{quotationDetail.unit_cost !== '' ? quotation.currency+' '+quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}</StyledTableCell>
+                                        <StyledTableCell align="right">{quotation.currency+' '+quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                     </StyledTableRow>
                                 ))
                             }
@@ -640,15 +699,15 @@ export default function Details(){
                             <StyledTableCell colSpan={4} align="right" >TOTAL COST w/o VAT:</StyledTableCell>
                             <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
-                            {quotation.discount !== '0.00' ?
+                            {quotation.discount !== 0 ?
                             <React.Fragment>
                               <StyledTableRow>
                               <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
-                              <StyledDiscountCell align="right">{'-'+quotation.discount}</StyledDiscountCell>
+                              <StyledDiscountCell align="right">{quotation.currency+' '+formatNumber(quotation.discount)}</StyledDiscountCell>
                               </StyledTableRow>
                               <StyledTableRow>
                               <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
-                              <StyledTableCell align="right">{quotation.discounted_amount}</StyledTableCell>
+                              <StyledTableCell align="right">{quotation.currency+' '+quotation.discounted_amount}</StyledTableCell>
                               </StyledTableRow>
                             </React.Fragment> : null }
                             <StyledTableRow>
@@ -666,11 +725,11 @@ export default function Details(){
                             <StyledTableCell colSpan={4} align="right" >TOTAL COST:</StyledTableCell>
                             <StyledTableCell align="right">{quotation.currency+' '+quotation.cost_without_vat}</StyledTableCell  >
                             </StyledTableRow>
-                            {quotation.discount !== '0.00' ?
+                            {quotation.discount !== 0 ?
                             <React.Fragment>
                               <StyledTableRow>
                               <StyledDiscountCell colSpan={4} align="right">DISCOUNT:</StyledDiscountCell>
-                              <StyledDiscountCell align="right">{'-'+quotation.discount}</StyledDiscountCell>
+                              <StyledDiscountCell align="right">{quotation.discount}</StyledDiscountCell>
                               </StyledTableRow>
                               <StyledTableRow>
                               <StyledTableCell colSpan={4} align="right">TOAL COST w/ DISCOUNT:</StyledTableCell>
@@ -685,7 +744,9 @@ export default function Details(){
                 </TableContainer>) : <Skeleton variant="rounded" width="100%" height={200} /> }
                 </Grid>
                 <Grid item>
-                <TableContainer>
+                <Stack direction="row" spacing={10}>
+                  <Stack direction="column">
+                  <TableContainer>
                   <Table size="small">
                     <TableBody>
                       <StyledTableRow>
@@ -694,7 +755,6 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BENIFICIARY:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.benificiary}</TableCell>
-                        <TableCell id="bankAccount"><strong>Client Approval:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BANK NAME:</strong></TableCell>
@@ -703,7 +763,6 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>BANK ADDRESS:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.address}</TableCell>
-                        <TableCell id="bankAccount"><strong>Name:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>ACCOUNT NUMBER:</strong></TableCell>
@@ -713,7 +772,6 @@ export default function Details(){
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>IBAN:</strong></TableCell>
                         <TableCell id="bankAccount">{bankAccount.iban}</TableCell>
-                        <TableCell id="bankAccount"><strong>Signature:</strong></TableCell>
                       </StyledTableRow>
                       <StyledTableRow>
                         <TableCell id="bankAccount"><strong>SWIFT CODE:</strong></TableCell>
@@ -727,6 +785,14 @@ export default function Details(){
                     </TableBody>    
                   </Table>
                 </TableContainer>
+                </Stack>
+                  <Stack direction="column" spacing={2}>
+                       <StyledTypography variant="body"><strong>Client Approval</strong></StyledTypography>
+                       <StyledTypography variant="body"><strong>Name:</strong></StyledTypography>
+                       <StyledTypography variant="body"><strong>Signature:</strong></StyledTypography>
+                 </Stack>
+                </Stack>
+                
                 </Grid>
                 <Grid item>
                   <StyledTypography variant="body1"><strong>APPROVAL HISTORY</strong></StyledTypography>

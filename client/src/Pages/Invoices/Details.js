@@ -184,14 +184,14 @@ const StyledHeader = styled(Typography)(({ theme }) => ({
                         {
                           invoice.vat_percentage !== null ? (
                             <React.Fragment>
-                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                            <StyledTableCell align="center">{invoiceDetail.vat_amount}</StyledTableCell>
-                            <StyledTableCell align="center">{invoiceDetail.amount_with_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.vat_amount}</StyledTableCell>
+                            <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_with_vat}</StyledTableCell>
                             </React.Fragment>
                           ) : (
                             <React.Fragment>
-                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
-                            <StyledTableCell align="center">{invoiceDetail.amount_without_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat}</StyledTableCell>
+                            <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat}</StyledTableCell>
                             </React.Fragment>
                           )
                         }
@@ -644,14 +644,14 @@ export default function Details(){
                                   {
                                     invoice.vat_percentage !== null ? (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.vat_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_with_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.vat_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_with_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     ) : (
                                       <React.Fragment>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
-                                      <StyledTableCell align="center">{invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{invoice.currency+' '+invoiceDetail.amount_without_vat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
                                       </React.Fragment>
                                     )
                                   }

@@ -88,8 +88,7 @@ const InvoiceDetailSchema = Yup.object().shape({
     date: Yup.date().required('Date is required'),
     ref_quotation_number: Yup.string()
     .required('This field is required!'),
-    client_trn: Yup.number()
-    .integer('Only whole numbers are allowed')
+    client_trn: Yup.string()
     .test('is-required-if-vat', 'This field is required!', function (value) {
       const { is_vat } = this.parent;
       if (is_vat === 'Yes' && !value) {
@@ -428,14 +427,22 @@ export default function Edit(props){
 
     useEffect(()=>{
 
-      const total_amount_without_vat = invoiceDetails.reduce((accumulator, currentItem) => {
+     const total_cost_without_vat = invoiceDetails.reduce((accumulator, currentItem) => {
         return accumulator + parseFloat(currentItem.amount_without_vat);
       }, 0);
 
+      const vat_amount = invoiceDetails.reduce((accumulator, currentItem) => {
+        return accumulator + parseFloat(currentItem.vat_amount);
+      }, 0);
+
+      const total_cost_with_vat = invoiceDetails.reduce((accumulator, currentItem) => {
+        return accumulator + parseFloat(currentItem.amount_with_vat);
+      }, 0);
+
       setQuotationBreakdown({
-        total_cost_without_vat: total_amount_without_vat,
-        vat_amount: total_amount_without_vat * (formik_invoice.values.vat_percentage / 100),
-        total_cost_with_vat: total_amount_without_vat + (total_amount_without_vat * (formik_invoice.values.vat_percentage / 100))
+        total_cost_without_vat: total_cost_without_vat,
+        vat_amount: vat_amount,
+        total_cost_with_vat: total_cost_with_vat
       })
 
           // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -863,7 +870,7 @@ export default function Edit(props){
                         const value = +event.target.value || 0;
                         const amount_without_vat = (value / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
                         formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
-                        formik_invoice_detail.setFieldValue('amount_without_vat', parseFloat(amount_without_vat.toFixed(2)))
+                        formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat)
                        }}
                        error={
                         formik_invoice_detail.touched.amount_with_vat && Boolean(formik_invoice_detail.errors.amount_with_vat)
@@ -874,7 +881,7 @@ export default function Edit(props){
                        fullWidth
                       />
                     </Grid>
-                    <Grid item>
+                    {/* <Grid item>
                       <TextField 
                        label="Amount w/o VAT"
                        variant="outlined"
@@ -885,7 +892,8 @@ export default function Edit(props){
                        fullWidth
                       
                       />
-                    </Grid></React.Fragment> : 
+                    </Grid> */}
+                    </React.Fragment> : 
                     <Grid item>
                        <TextField 
                        label="Amount"
@@ -1006,7 +1014,7 @@ export default function Edit(props){
                                               const value = +event.target.value || 0;
                                               const amount_without_vat = (value / (100 + parseInt(formik_invoice.values.vat_percentage))) * 100;
                                               formik_invoice_detail.setFieldValue('amount_with_vat', event.target.value)
-                                              formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat.toFixed(2))
+                                              formik_invoice_detail.setFieldValue('amount_without_vat', amount_without_vat)
                                             }}
                                             error={
                                               formik_invoice_detail.touched.amount_with_vat && Boolean(formik_invoice_detail.errors.amount_with_vat)
@@ -1017,7 +1025,7 @@ export default function Edit(props){
                                             fullWidth
                                             />
                                           </Grid>
-                                          <Grid item>
+                                          {/* <Grid item>
                                             <TextField 
                                             label="Amount w/o VAT"
                                             variant="outlined"
@@ -1028,7 +1036,8 @@ export default function Edit(props){
                                             fullWidth
                                             
                                             />
-                                          </Grid></React.Fragment> : 
+                                          </Grid> */}
+                                          </React.Fragment> : 
                                           <Grid item>
                                           <TextField 
                                               label="Amount"
@@ -1045,7 +1054,8 @@ export default function Edit(props){
                                                   formik_invoice_detail.touched.amount_without_vat && formik_invoice_detail.errors.amount_without_vat
                                               }
                                               />
-                                          </Grid>}
+                                          </Grid>
+                                          }
                                         <Grid item container justifyContent="flex-end">
                                             <Grid item>
                                                 <Button variant="text" color="primary" onClick={()=>handleEditCancel(i)}>Cancel</Button>
