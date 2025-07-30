@@ -269,7 +269,9 @@ export default function Edit(props){
         else
         {
           //if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
-          if(parseFloat(quotationBreakdown.total_cost_with_vat.toFixed(2)) > parseFloat(values.remaining_quotation_balance))
+          //console.log(parseFloat(quotationBreakdown.total_cost_with_vat))
+          //console.log(parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
+          if(parseFloat(quotationBreakdown.total_cost_with_vat) > parseFloat(values.remaining_quotation_balance.replace(/,/g, '')))
           {
             setError({
               open: true,

@@ -49,21 +49,21 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 7,
+      fontSize: 8.5,
       padding: 2  ,
       height: 0,
     },
     [`&.${tableCellClasses.body}`]: {
       fontFamily: 'Verdana, sans-serif',
       height: 0,
-      fontSize: 7,
+      fontSize: 8,
       color: theme.palette.primary.dark,
       padding: 2,
      
     },
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 7,
+      fontSize: 8,
       height: 0,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
@@ -77,7 +77,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledTableCellDescription = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 8,
+      fontSize: 8.5,
       fontWeight: 'bold',
       color: theme.palette.primary.dark,
       padding: 4,
@@ -89,7 +89,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledDiscountCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize:7,
+      fontSize:8,
       color: theme.palette.error.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
@@ -173,8 +173,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             </Stack>
         </Grid>
       <Grid item>
-      <TableContainer>
-          <Table size="small">
+      <TableContainer sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <Table size="small" sx={{width: '95%', justifyContent: 'center'}}>
               <TableHead>
               <StyledTableRow>
                   <StyledTableCell align="left">SN</StyledTableCell>
@@ -262,7 +262,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
           </Table>
       </TableContainer>
       </Grid>
-                <Grid item>
+                <Grid item sx={{mt: 5}}>
                 <Stack direction="row" spacing={10}>
                   <Stack direction="column">
                   <TableContainer>
