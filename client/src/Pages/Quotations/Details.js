@@ -49,22 +49,19 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       color: theme.palette.common.white,
       whiteSpace: 'nowrap',
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 8.5,
-      padding: 2  ,
-      height: 0,
+      fontSize: 10.5,
+      padding: 2
     },
     [`&.${tableCellClasses.body}`]: {
       fontFamily: 'Verdana, sans-serif',
-      height: 0,
-      fontSize: 8,
+      fontSize: 10,
       color: theme.palette.primary.dark,
       padding: 2,
      
     },
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 8,
-      height: 0,
+      fontSize: 10,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
@@ -77,11 +74,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledTableCellDescription = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.body}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 8.5,
+      fontSize: 10.5,
       fontWeight: 'bold',
       color: theme.palette.primary.dark,
-      padding: 4,
-      height: 5
+      padding: 2
     }
 
   }));
@@ -89,12 +85,11 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   const StyledDiscountCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.footer}`]: {
       fontFamily: 'Verdana, sans-serif',
-      fontSize:8,
+      fontSize:10,
       color: theme.palette.error.main,
       fontWeight: 'bold',
       whiteSpace: 'nowrap',
-      padding: 4,
-      height: 5
+      padding: 2
     }
 
   }));
@@ -112,13 +107,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       border: 0,
       padding: 2,
       fontFamily: 'Verdana, sans-serif',
-      fontSize: 7,
+      fontSize: 10,
     }
   }));
 
   const StyledTypography = styled(Typography)(({ theme }) => ({
     fontFamily: 'Verdana, sans-serif',
-    fontSize: 8 ,
+    fontSize: 10 ,
   }));
 
   const VisuallyHiddenInput = styled('input')({
@@ -173,8 +168,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
             </Stack>
         </Grid>
       <Grid item>
-      <TableContainer sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <Table size="small" sx={{width: '95%', justifyContent: 'center'}}>
+      <TableContainer>
+          <Table size="small">
               <TableHead>
               <StyledTableRow>
                   <StyledTableCell align="left">SN</StyledTableCell>
@@ -187,7 +182,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               <TableBody>
                   {quotation.project_description !== null ? <StyledTableRow>
                       <StyledTableCell align="left"></StyledTableCell>
-                      <StyledTableCell sx={{ minWidth: 300 }}><pre>{quotation.project_description}</pre></StyledTableCell>
+                      <StyledTableCellDescription sx={{ minWidth: 300 }}><pre>{quotation.project_description}</pre></StyledTableCellDescription>
                       <StyledTableCell align="center"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
@@ -263,7 +258,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       </TableContainer>
       </Grid>
                 <Grid item sx={{mt: 5}}>
-                <Stack direction="row" spacing={10}>
+                <Stack direction="row" spacing={5}>
                   <Stack direction="column">
                   <TableContainer>
                   <Table size="small">
@@ -324,7 +319,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   })
   
 const formatNumber = (number) => {
-  return numeral(number).format('0,000.00');
+  return numeral(number).format('0,0.00');
   };
 
 
@@ -385,13 +380,13 @@ export default function Details(){
                     attention_to: result.data.quotation[0].attention_to,
                     project_name: result.data.quotation[0].project_name,
                     project_description: result.data.quotation[0].project_description,
-                    cost_without_vat: result.data.quotation[0].amount_without_vat,
+                    cost_without_vat: formatNumber(result.data.quotation[0].amount_without_vat),
                     discount: result.data.quotation[0].discount,
-                    discounted_amount: result.data.quotation[0].discounted_amount,
+                    discounted_amount: formatNumber(result.data.quotation[0].discounted_amount),
                     is_vat: result.data.quotation[0].is_vat,
                     vat_percentage: result.data.quotation[0].vat_percentage,
-                    vat_amount: result.data.quotation[0].vat_amount,
-                    cost_with_vat: result.data.quotation[0].amount_with_vat,
+                    vat_amount: formatNumber(result.data.quotation[0].vat_amount),
+                    cost_with_vat: formatNumber(result.data.quotation[0].amount_with_vat),
                     currency: result.data.quotation[0].currency,
                     company_trn: result.data.quotation[0].company_trn,
                     company_address: result.data.quotation[0].company_address,
