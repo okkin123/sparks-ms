@@ -12,7 +12,16 @@ module.exports = {
         const currentYear = new Date().getFullYear();
         let invoiceNumber;
 
-        dbConnection.query( `SELECT SUBSTRING_INDEX(MAX(invoice_number), '/', 1) AS storedValue, SUBSTRING_INDEX(MAX(invoice_number), '/', -1) AS storedYear FROM tbl_invoices`, 
+         
+
+        dbConnection.query( `SELECT SUBSTRING_INDEX(invoice_number, '/', 1) AS storedValue,
+                            SUBSTRING_INDEX(invoice_number, '/', -1) AS storedYear
+
+                            FROM tbl_invoices
+                            ORDER BY 
+                                CAST(SUBSTRING_INDEX(invoice_number, '/', 1) AS DECIMAL) /
+                                CAST(SUBSTRING_INDEX(invoice_number, '/', -1) AS DECIMAL) DESC
+                            LIMIT 1`, 
             function(err, data, fields){
                 if(err){
                     res.send({
@@ -207,7 +216,11 @@ module.exports = {
     },
     list: (req, res)=>{
         //WHERE JSON_CONTAINS(assigned_to, '"+req.user.user_id+"', '$.user_id') OR created_by=?
-        dbConnection.query("SELECT * FROM vw_invoices ORDER BY invoice_number DESC", function(err, data, fields){
+        dbConnection.query(`SELECT *
+                        FROM vw_invoices
+                        ORDER BY 
+                            CAST(SUBSTRING_INDEX(invoice_number, '/', 1) AS DECIMAL) /
+                            CAST(SUBSTRING_INDEX(invoice_number, '/', -1) AS DECIMAL) DESC`, function(err, data, fields){
                 if(err)
                 {
                     res.send({

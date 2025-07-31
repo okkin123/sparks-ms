@@ -12,7 +12,7 @@ const { sendingMail } = require("../config/mailing");
 module.exports = {
   send_code: (req, res) => {
      const verification_code = Math.floor(1000 + Math.random() * 9000);
-     const token_expiry = 30;
+     const token_expiry = 60;
 
       dbConnection.query(
       "SELECT * from vw_users WHERE email_address=?",

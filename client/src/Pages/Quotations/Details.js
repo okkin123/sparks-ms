@@ -30,7 +30,7 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import LoadingButton from "@mui/lab/LoadingButton";
 import AxiosInstance from '../../AxiosInstance';
 import AxiosFileInstance from '../../AxiosFileInstance';
-import bsLogo from "../../Assets/BS LOGO.png";
+import bsLogo from "../../Assets/BSMM LOGO.png";
 import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
