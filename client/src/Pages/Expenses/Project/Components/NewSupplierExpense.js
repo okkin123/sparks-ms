@@ -17,10 +17,10 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import CloseIcon from "@mui/icons-material/Close";
 
 const ProjectExpenseSchema = Yup.object().shape({
-  ref_invoice_number: Yup.string()
-  .required('This field is required!'),
-  project_name: Yup.string()
-  .required('This field is required!'),
+  // ref_invoice_number: Yup.string()
+  // .required('This field is required!'),
+  // project_name: Yup.string()
+  // .required('This field is required!'),
   file: Yup.mixed().required('Supplier invoice file is required!'),
   date_issued: Yup.date().required('Date issued is required'),
   supplier_name: Yup.string()
@@ -78,8 +78,8 @@ export default function NewSupplierExpense(){
         file: null,
         date_issued: null,
         is_vat: false,
-        ref_invoice_number: "",
-        project_name: "",
+        //ref_invoice_number: null,
+        //project_name: "",
         supplier_name: "",
         supplier_invoice_number: "",
         amount_without_vat: "",
@@ -98,6 +98,7 @@ export default function NewSupplierExpense(){
 
         AxiosFileInstance.post("/project_expense/insert", formData)
         .then(function(response){
+          console.log(response.data)
           if(response.data.status === 'SUCCESS'){
            
            
@@ -195,8 +196,8 @@ export default function NewSupplierExpense(){
         file: null,
         date_issued: null,
         is_vat: false,
-        ref_invoice_number: "",
-        project_name: "",
+        //ref_invoice_number: "",
+        //project_name: "",
         supplier_name: "",
         supplier_invoice_number: "",
         amount_without_vat: "",
@@ -243,7 +244,7 @@ export default function NewSupplierExpense(){
                             <FileUpload onFileUpload={handleFileUpload} fileTypes={['application/pdf']} mainError={formik_project_expense.touched.file && formik_project_expense.errors.file} alertOpen={fileAlert}/>
                             {formik_project_expense.values.file !== null ? 
                             <React.Fragment>
-                            <Autocomplete
+                            {/* <Autocomplete
                                 freeSolo
                                 selectOnFocus 
                                 clearOnBlur
@@ -293,8 +294,8 @@ export default function NewSupplierExpense(){
                                     />
                                 )}
                                 fullWidth
-                                />
-                                                      <Autocomplete
+                                /> */}
+                              <Autocomplete
                                 freeSolo
                                 selectOnFocus
                                 clearOnBlur
@@ -317,8 +318,12 @@ export default function NewSupplierExpense(){
                                     name="supplier_name"
                                     value={formik_project_expense.values.supplier_name}
                                     onChange={(event)=>{
-                                        formik_project_expense.setFieldValue('supplier_name', event.target.value)
+                                        formik_project_expense.setFieldValue('supplier_name', event.target.value.toUpperCase())
                                         
+                                    }}
+                                    inputProps={{
+                                      ...params.inputProps,
+                                      style: { textTransform: 'uppercase' } // purely visual
                                     }}
                                     fullWidth
                                     size="small"

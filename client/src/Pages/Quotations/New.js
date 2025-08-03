@@ -40,6 +40,8 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import Dialog from '../../Components/Dialog';
 import AxiosInstance from '../../AxiosInstance';
+import numeral from 'numeral';
+
 
 
 
@@ -120,6 +122,11 @@ const QuotationDetailSchema = Yup.object().shape({
      .matches(/^\d*\.?\d*$/, 'Only numbers and decimal points are allowed!')
       .required('This field is required!')
   });
+
+const formatNumber = (number) => {
+      return numeral(number).format('0,0.00');
+    };
+      
 export default function New(){
 
     const [modal, setModal] = useState({
@@ -909,22 +916,22 @@ export default function New(){
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">TOTAL COST w/ DISCOUNT: </StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+(parseFloat(quotationBreakdown.total_cost_without_vat)-formik_quotation.values.discount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+formatNumber(quotationBreakdown.total_cost_without_vat-formik_quotation.values.discount)}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">VAT {formik_quotation.values.vat_percentage}%:</StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.vat_amount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+formatNumber(quotationBreakdown.vat_amount)}</StyledTableCell>
                                     </StyledTableRow>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">TOTAL COST w/ VAT:</StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+formatNumber(quotationBreakdown.total_cost_with_vat)}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   ) : (
                                     <TableFooter>
                                     <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right"  >TOTAL COST:</StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_without_vat).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+formatNumber(quotationBreakdown.total_cost_without_vat)}</StyledTableCell>
                                     </StyledTableRow>
                                      <StyledTableRow>
                                       <StyledDiscountCell colSpan={5} align="right">DISCOUNT: </StyledDiscountCell>
@@ -954,7 +961,7 @@ export default function New(){
                                     </StyledTableRow>
                                      <StyledTableRow>
                                       <StyledTableCell colSpan={5} align="right">TOTAL COST w/ DISCOUNT: </StyledTableCell>
-                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+parseFloat(quotationBreakdown.total_cost_with_discount).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
+                                      <StyledTableCell align="center">{formik_quotation.values.currency+' '+formatNumber(quotationBreakdown.total_cost_with_discount)}</StyledTableCell>
                                     </StyledTableRow>
                                   </TableFooter>
                                   )

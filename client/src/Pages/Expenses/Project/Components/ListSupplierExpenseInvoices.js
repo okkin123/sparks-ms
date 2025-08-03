@@ -540,14 +540,14 @@ export default function ListSupplierExpenseInvoices(){
                             makePayment.ref_invoice_numbers.map((ref_invoice_number)=>(
                                 <Chip size="small" label={
                                     <>
-                                    {ref_invoice_number.invoice_number} - {ref_invoice_number.project_name} (
+                                    {ref_invoice_number.invoice_number} -
                                     <NumericFormat
                                         value={ref_invoice_number.amount_with_vat}
                                         displayType={'text'}
                                         thousandSeparator={true}
                                         decimalScale={2}
                                         fixedDecimalScale={true}
-                                    /> )
+                                    /> 
                                     </> } />
                             ))
                         }</Stack></div>

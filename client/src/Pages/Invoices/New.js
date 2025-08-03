@@ -41,6 +41,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import Dialog from '../../Components/Dialog';
 import AxiosInstance from '../../AxiosInstance';
+import numeral from 'numeral';
 
 
 
@@ -104,6 +105,11 @@ const InvoiceDetailSchema = Yup.object().shape({
     address: Yup.string()
     .required('This field is required!'),
   });
+
+  const formatNumber = (number) => {
+    return numeral(number).format('0,0.00');
+  };
+        
 export default function New(){
 
     const [modal, setModal] = useState({
@@ -260,7 +266,7 @@ export default function New(){
         }
         else
         {
-          if(parseFloat(quotationBreakdown.total_cost_with_vat) > parseFloat(values.remaining_quotation_balance))
+          if(parseFloat(quotationBreakdown.total_cost_with_vat) > parseFloat(values.remaining_quotation_balance.replace(/,/g, "")))
           {
             setError({
               open: true,
@@ -314,10 +320,10 @@ export default function New(){
           formik_invoice.setFieldValue('project_name', result.data.quotation[0].project_name);
           formik_invoice.setFieldValue('project_description', result.data.quotation[0].project_description);
           formik_invoice.setFieldValue('vat_percentage', result.data.quotation[0].vat_percentage);
-          formik_invoice.setFieldValue('amount_with_vat', result.data.quotation[0].amount_with_vat);
+          formik_invoice.setFieldValue('amount_with_vat', formatNumber(result.data.quotation[0].amount_with_vat));
           formik_invoice.setFieldValue('currency', result.data.quotation[0].currency);
-          formik_invoice.setFieldValue('total_invoice_amount_with_vat', result.data.quotation[0].total_invoice_amount_with_vat);
-          formik_invoice.setFieldValue('remaining_quotation_balance', result.data.quotation[0].remaining_quotation_balance);
+          formik_invoice.setFieldValue('total_invoice_amount_with_vat', formatNumber(result.data.quotation[0].total_invoice_amount_with_vat));
+          formik_invoice.setFieldValue('remaining_quotation_balance', formatNumber(result.data.quotation[0].remaining_quotation_balance));
 
           const updateInvoiceDetails = invoiceDetails.map(invoiceDetail => ({
             ...invoiceDetail,
@@ -408,9 +414,12 @@ export default function New(){
           {
             const fetchQuotationNumbers = [
                 ...quotationNumbers,
-                ...result.data.quotations.map(quotation => quotation.quotation_number)
+                ...result.data.quotations.map(quotation => ({
+                  quotation_number: quotation.quotation_number,
+                  project_name: quotation.project_name
+                }))
             ];
-    
+            
             setQuotationNumbers(fetchQuotationNumbers)
           }
           else
@@ -453,9 +462,10 @@ export default function New(){
                         onChange={(event)=>handleRefQuotationNumberChange(event.target.value)}
                         >
                         {quotationNumbers.map((element, key) => {
+        
                           return (
-                            <MenuItem key={key} value={element}>
-                                {element}
+                            <MenuItem key={key} value={element.quotation_number}>
+                                {element.quotation_number+'-'+element.project_name}
                             </MenuItem>
                             );
                         }) }

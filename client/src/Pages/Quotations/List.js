@@ -10,7 +10,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import dayjs from 'dayjs';
 import { NumericFormat } from 'react-number-format';
 
-
 const parentHeight = window.innerHeight;
 const parentWidth = window.innerWidth;
 
@@ -292,7 +291,7 @@ export default function List(props){
                  positionGlobalFilter='left'
                  initialState={{
                   density: 'compact',
-                  isLoading: loading,
+                  //isLoading: loading,
                   columnPinning: { left: ['locked','quotation_number', 'status'] },
                   showGlobalFilter: true,
                  }}
@@ -315,7 +314,7 @@ export default function List(props){
                   variant: 'outlined',
                  }}
                 paginationDisplayMode='pages'
-                 columns={columns} data={quotations} />
+                columns={columns} data={quotations} />
                 
                  </Box>
                  </Paper>
