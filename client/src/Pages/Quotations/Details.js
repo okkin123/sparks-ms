@@ -57,6 +57,9 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       fontSize: 10,
       color: theme.palette.primary.dark,
       padding: 2,
+      whiteSpace: 'normal',
+      wordBreak: 'break-word',
+      overflowWrap: 'break-word'
      
     },
     [`&.${tableCellClasses.footer}`]: {
@@ -64,7 +67,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
       fontSize: 10,
       color: theme.palette.primary.main,
       fontWeight: 'bold',
-      whiteSpace: 'nowrap',
+     whiteSpace: 'nowrap',
       padding: 2,
     }
 
@@ -173,7 +176,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               <TableHead>
               <StyledTableRow>
                   <StyledTableCell align="left">SN</StyledTableCell>
-                  <StyledTableCell sx={{ minWidth: 300, textAlign: 'center' }}>DESCRIPTION</StyledTableCell>
+                  <StyledTableCell sx={{textAlign: 'center' }}>DESCRIPTION</StyledTableCell>
                   <StyledTableCell align="center">QUANTITY</StyledTableCell>
                   <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
                   <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
@@ -182,7 +185,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
               <TableBody>
                   {quotation.project_description !== null ? <StyledTableRow>
                       <StyledTableCell align="left"></StyledTableCell>
-                      <StyledTableCellDescription sx={{ minWidth: 300 }}><pre>{quotation.project_description}</pre></StyledTableCellDescription>
+                      <StyledTableCellDescription><pre>{quotation.project_description}</pre></StyledTableCellDescription>
                       <StyledTableCell align="center"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
                       <StyledTableCell align="right"></StyledTableCell>
@@ -191,7 +194,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                       quotationDetails.map((quotationDetail, i)=>(
                           <StyledTableRow>
                               <StyledTableCell align="left">{i+1}</StyledTableCell>
-                              <StyledTableCell sx={{ minWidth: 300 }}>{quotationDetail.description}</StyledTableCell>
+                              <StyledTableCell>{quotationDetail.description}</StyledTableCell>
                               <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
                                <StyledTableCell align="right">{quotationDetail.unit_cost !== '' ? quotation.currency+' '+quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}</StyledTableCell>
                                         <StyledTableCell align="right">{quotation.currency+' '+quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
@@ -200,7 +203,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
                   }
                   { quotation.notes !== '' && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 300}}><strong>NOTES:</strong> <pre>{quotation.notes}</pre></StyledTableCell>
+                                <StyledTableCell><strong>NOTES:</strong> <pre>{quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -654,7 +657,7 @@ export default function Details(){
                         <TableHead>
                         <StyledTableRow>
                             <StyledTableCell align="left">SN</StyledTableCell>
-                            <StyledTableCell sx={{ minWidth: 350, textAlign: 'center' }}>DESCRIPTION</StyledTableCell>
+                            <StyledTableCell sx={{ textAlign: 'center'}}>DESCRIPTION</StyledTableCell>
                             <StyledTableCell align="center">QUANTITY</StyledTableCell>
                             <StyledTableCell align="right">UNIT COST ({quotation.currency})</StyledTableCell>
                             <StyledTableCell align="right">TOTAL COST({quotation.currency})</StyledTableCell>
@@ -663,7 +666,7 @@ export default function Details(){
                         <TableBody>
                             {quotation.project_description !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCellDescription sx={{ minWidth: 350}}><pre>{quotation.project_description}</pre></StyledTableCellDescription>
+                                <StyledTableCellDescription><pre>{quotation.project_description}</pre></StyledTableCellDescription>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
@@ -672,7 +675,7 @@ export default function Details(){
                                 quotationDetails.map((quotationDetail, i)=>(
                                     <StyledTableRow>
                                         <StyledTableCell align="left">{i+1}</StyledTableCell>
-                                        <StyledTableCell sx={{ minWidth: 350 }}>{quotationDetail.description}</StyledTableCell>
+                                        <StyledTableCell align="left">{quotationDetail.description}</StyledTableCell>
                                         <StyledTableCell align="center">{quotationDetail.qty}</StyledTableCell>
                                         <StyledTableCell align="right">{quotationDetail.unit_cost !== '' ? quotation.currency+' '+quotationDetail.unit_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}</StyledTableCell>
                                         <StyledTableCell align="right">{quotation.currency+' '+quotationDetail.total_cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</StyledTableCell>
@@ -681,7 +684,7 @@ export default function Details(){
                             }
                              { quotation.notes !== ''  && quotation.notes !== null ? <StyledTableRow>
                                 <StyledTableCell align="left"></StyledTableCell>
-                                <StyledTableCell sx={{ minWidth: 350}}><strong>NOTES:</strong><pre>{quotation.notes}</pre></StyledTableCell>
+                                <StyledTableCell><strong>NOTES:</strong><pre>{quotation.notes}</pre></StyledTableCell>
                                 <StyledTableCell align="center"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
                                 <StyledTableCell align="right"></StyledTableCell>
